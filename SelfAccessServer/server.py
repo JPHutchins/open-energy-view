@@ -1,5 +1,4 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import time
 import requests
 import json
 from base64 import b64encode
@@ -9,7 +8,9 @@ CERT_PATH = './cert/cert.crt'
 KEY_PATH = './cert/private.key'
 AUTH_PATH = './auth/auth.json'
 
+
 class ClientCredentials:
+    """Representaiton of credentials required for the PGE SMD API."""
     def __init__(self, client_id, client_secret, cert_crt, cert_key):
         self.client_id = client_id
         self.client_secret = client_secret
@@ -17,6 +18,7 @@ class ClientCredentials:
         self.auth_header = None
 
     def get_auth_header(self):
+        """Return the value for Authorization header."""
         _client_id = self.get_client_id()
         _client_secret = self.get_client_secret()
 
@@ -24,56 +26,61 @@ class ClientCredentials:
             f'{_client_id}:{_client_secret}'.encode('utf-8'))
         b64_string = bytes.decode(b64)
         self.auth_header = f'Basic {b64_string}'
-    
+
+        return self.auth_header
+
     def get_cert(self):
+        """Return the tuple ([public certificate], [private key])"""
         def get_path(kind):
             return input(f"SSL {kind} path: ")
-        
+
         cert_info = [self.cert[0], self.cert[1]]
 
         if not cert_info[0]:
             cert_info[0] = get_path("crt")
-        
+
         if not cert_info[1]:
             cert_info[1] = get_path("key")
-        
+
         self.cert = (cert_info[0], cert_info[1])
 
+        return self.cert
+
     def get_client_id(self):
+        """Return the PGE SMD Client_ID. Ask user if missing."""
         if self.client_id:
             return self.client_id
         self.client_id = input("PG&E Client_ID: ")
         return self.client_id
 
     def get_client_secret(self):
+        """Return the PGE SMD Client_Secret. Ask user if missing."""
         if self.client_secret:
             return self.client_secret
         self.client_secret = input("PG&E Client_Secret: ")
         return self.client_secret
 
     def get_access_token(self):
+        """Request and return access token from the PGE SMD Servers."""
         if not self.auth_header:
             self.get_auth_header()
-        
+
         if not self.cert[0] or self.cert[1]:
             self.get_cert()
 
         request_params = {'grant_type': 'client_credentials'}
-        header_params = {'Authorization' : self.auth_header}
-
-        print(header_params)
+        header_params = {'Authorization': self.auth_header}
 
         response = requests.post(
             TOKEN_URL,
-            data = request_params,
-            headers = header_params,
-            cert = self.cert)
+            data=request_params,
+            headers=header_params,
+            cert=self.cert)
 
         if str(response.status_code) == "200":
-            res = response.json()
-            res.update({"status": response.status_code})
-            return res
-        return {"status": response.status_code, "error": response.text}
+            return response.json()['client_access_token']
+        print({"status": response.status_code, "error": response.text})
+
 
 class holder:
     def __init__(self):
@@ -85,9 +92,11 @@ class holder:
     def print(self):
         print([message for message in self.messages])
 
+
 def catalog(data, library):
     library.add_message(data)
     library.print()
+
 
 class handler(BaseHTTPRequestHandler):
 
@@ -108,6 +117,7 @@ def run(server_class=HTTPServer):
     httpd = server_class(server_address, handler)
     httpd.serve_forever()
 
+
 if __name__ == '__main__':
 
     client_id = None
@@ -123,7 +133,6 @@ if __name__ == '__main__':
             except KeyError:
                 print("Auth file should be JSON with fields: \n"
                       "\"client_id\": and \"client_secret\":")
-                
 
     except FileNotFoundError:
         print("Auth file not found.")
