@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import requests
 import json
 import ssl
+import xml.etree.ElementTree as ET
 from base64 import b64encode
 
 # Enter your Third Party ID as listed in the Share My Data portal.
@@ -22,8 +23,8 @@ BULK_RESOURCE_URI =\
     f'{UTILITY_URI}{API_URI}/1_1/resource/Batch/Bulk/{THIRD_PARTY_ID}'
 
 
-class ClientCredentials:
-    """Representaiton of credentials required for the PGE SMD API."""
+class SelfAccessApi:
+    """Representaiton of the PG&E SMD API for Self Access Users."""
     def __init__(self, client_id, client_secret, cert_crt, cert_key):
         self.client_id = client_id
         self.client_secret = client_secret
@@ -113,6 +114,31 @@ class ClientCredentials:
                "error": response.text})
         return False
 
+    def get_resource_uri(self, xml_post):
+        """Get the current Bulk Resource URI."""
+        xml_root = ET.fromstring(xml_post)
+        return xml_root[0].text
+
+    def get_espi_data(self, resource_uri, access_token):
+        """Get the ESPI data from the API."""
+        header_params = {'Authorization': f'Bearer {access_token}'}
+
+        response = requests.get(
+            resource_uri,
+            data={},
+            headers=header_params,
+            cert=self.cert
+        )
+        if str(response.status_code) == "200":
+            xml_data = response.content
+            print(xml_data)
+            return xml_data
+        elif str(response.status_code) == "403":
+            access_token = self.get_access_token()
+            self.get_espi_data(resource_uri, access_token)
+        print({"status": response.status_code,
+               "error": response.text})
+
 
 class holder:
     def __init__(self):
@@ -135,17 +161,29 @@ class handler(BaseHTTPRequestHandler):
     library = holder()
 
     def do_POST(self):
-        if self.path == '/pgesmd':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            content_len = int(self.headers.get('Content-Length'))
-            body = self.rfile.read(content_len)
-            print(body)
-            catalog(body, self.library)
+        if not self.path == '/pgesmd':
+            return
+
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+
+        content_len = int(self.headers.get('Content-Length'))
+        xml_post = self.rfile.read(content_len)
+        catalog(xml_post, self.library)
+
+        api = SelfAccessApi(client_id,
+                            client_secret,
+                            CERT_PATH,
+                            KEY_PATH)
+
+        resource_uri = api.get_resource_uri(xml_post)
+
+        access_token = api.get_access_token()
+        api.get_espi_data(resource_uri, access_token)
 
 
-def run(server_class=HTTPServer):
+def run(api, server_class=HTTPServer):
     server_address = ('', PORT)
     httpd = server_class(server_address, handler)
 
@@ -177,16 +215,16 @@ if __name__ == '__main__':
     except FileNotFoundError:
         print("Auth file not found.")
 
-    creds = ClientCredentials(client_id,
-                              client_secret,
-                              CERT_PATH,
-                              KEY_PATH)
+    api = SelfAccessApi(client_id,
+                        client_secret,
+                        CERT_PATH,
+                        KEY_PATH)
 
-    access_token = creds.get_access_token()
+    access_token = api.get_access_token()
 
-    request_data = creds.async_request()
-    if request_data:
+    request_post = api.async_request()
+    if request_post:
         try:
-            run()
+            run(api)
         except KeyboardInterrupt:
             pass
