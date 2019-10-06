@@ -1,12 +1,25 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import requests
 import json
+import ssl
 from base64 import b64encode
 
-TOKEN_URL = 'https://api.pge.com/datacustodian/test/oauth/v2/token'
+# Enter your Third Party ID as listed in the Share My Data portal.
+THIRD_PARTY_ID = '50916'
+
+# Update the files referenced below with your credentials.
 CERT_PATH = './cert/cert.crt'
 KEY_PATH = './cert/private.key'
 AUTH_PATH = './auth/auth.json'
+
+# Port forwarding.  Forward 443 to this application:PORT.
+PORT = 7999
+
+TOKEN_URL = 'https://api.pge.com/datacustodian/test/oauth/v2/token'
+UTILITY_URI = 'https://api.pge.com'
+API_URI = '/GreenButtonConnect/espi'
+BULK_RESOURCE_URI =\
+    f'{UTILITY_URI}{API_URI}/1_1/resource/Batch/Bulk/{THIRD_PARTY_ID}'
 
 
 class ClientCredentials:
@@ -16,6 +29,7 @@ class ClientCredentials:
         self.client_secret = client_secret
         self.cert = (cert_crt, cert_key)
         self.auth_header = None
+        self.access_token = None
 
     def get_auth_header(self):
         """Return the value for Authorization header."""
@@ -78,8 +92,26 @@ class ClientCredentials:
             cert=self.cert)
 
         if str(response.status_code) == "200":
-            return response.json()['client_access_token']
+            self.access_token = response.json()['client_access_token']
+            return self.access_token
         print({"status": response.status_code, "error": response.text})
+
+    def async_request(self):
+        """Return True upon successful asynchronous request."""
+        header_params = {'Authorization': f'Bearer {self.access_token}'}
+
+        response = requests.get(
+            BULK_RESOURCE_URI,
+            data={},
+            headers=header_params,
+            cert=self.cert
+        )
+        if str(response.status_code) == "202":
+            print("Request successful, awaiting POST from server.")
+            return True
+        print({"status": response.status_code,
+               "error": response.text})
+        return False
 
 
 class holder:
@@ -109,12 +141,20 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             content_len = int(self.headers.get('Content-Length'))
             body = self.rfile.read(content_len)
+            print(body)
             catalog(body, self.library)
 
 
 def run(server_class=HTTPServer):
-    server_address = ('', 7999)
+    server_address = ('', PORT)
     httpd = server_class(server_address, handler)
+
+    httpd.socket = ssl.wrap_socket(
+        httpd.socket,
+        certfile=CERT_PATH,
+        keyfile=KEY_PATH,
+        server_side=True)
+
     httpd.serve_forever()
 
 
@@ -142,9 +182,11 @@ if __name__ == '__main__':
                               CERT_PATH,
                               KEY_PATH)
 
-    print(creds.get_access_token())
+    access_token = creds.get_access_token()
 
-    try:
-        run()
-    except KeyboardInterrupt:
-        pass
+    request_data = creds.async_request()
+    if request_data:
+        try:
+            run()
+        except KeyboardInterrupt:
+            pass

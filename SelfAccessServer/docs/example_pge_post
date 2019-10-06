@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <ns0:BatchList xmlns:ns0="http://naesb.org/espi">
+    <ns0:resources>https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/50916?correlationID=fffa5bc1-81f7-4239-b244-b462762f7724</ns0:resources>
+    <ns0:resources>https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/50916?correlationID=eea0dbcb-98eb-43c9-ba4e-9eeccc40c967</ns0:resources>
+  </ns0:BatchList>
+
+<?xml version="1.0" encoding="UTF-8"?>
+  <ns0:BatchList xmlns:ns0="http://naesb.org/espi">
+    <ns0:resources>https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/50916?correlationID=fffa5bc1-81f7-4239-b244-b462762f7724</ns0:resources>
+    <ns0:resources>https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/50916?correlationID=eea0dbcb-98eb-43c9-ba4e-9eeccc40c967</ns0:resources>
+  </ns0:BatchList>
+
