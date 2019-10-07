@@ -13,8 +13,13 @@ CERT_PATH = './cert/cert.crt'
 KEY_PATH = './cert/private.key'
 AUTH_PATH = './auth/auth.json'
 
-# Port forwarding.  Forward 443 to this application:PORT.
+# Port forwarding.  Forward external port 443 to this application:PORT.
 PORT = 7999
+
+# EmonCMS connection info.  https://github.com/emoncms
+EMONCMS_IP = 'http://192.168.0.40:8080'
+EMONCMS_WRITE_KEY = 'db4da6f33f8739ea50b0038d2fc96cec'
+EMONCMS_NODE = 30
 
 TOKEN_URL = 'https://api.pge.com/datacustodian/test/oauth/v2/token'
 UTILITY_URI = 'https://api.pge.com'
@@ -131,13 +136,55 @@ class SelfAccessApi:
         )
         if str(response.status_code) == "200":
             xml_data = response.content
-            print(xml_data)
             return xml_data
         elif str(response.status_code) == "403":
             access_token = self.get_access_token()
             self.get_espi_data(resource_uri, access_token)
         print({"status": response.status_code,
                "error": response.text})
+
+
+def get_emoncms_from_espi(xml_data):
+    """Parse ESPI data for export to emonCMS."""
+    root = ET.fromstring(xml_data)
+    ns = {'espi': 'http://naesb.org/espi'}
+
+    emoncms_data = []
+
+    multiplier = pow(10,
+                     int(root.find('.//espi:powerOfTenMultiplier', ns).text))
+
+    date_start = int(
+        root.find('.//espi:interval', ns).find('.//espi:start', ns).text)
+
+    interval_block = root.find('.//espi:IntervalBlock', ns)
+    for reading in interval_block.findall('.//espi:IntervalReading', ns):
+        start = int(reading.find('.//espi:start', ns).text)
+        value = int(reading.find('.//espi:value', ns).text)
+        watt_hours = int(value * multiplier)
+        offset = start - date_start
+
+        emoncms_data.append([offset, EMONCMS_NODE, watt_hours])
+
+    return (date_start, emoncms_data)
+
+
+def post_data_to_emoncms(for_emoncms):
+    """Send the bulk data to emonCMS."""
+    date_start, emoncms_data = for_emoncms
+
+    params = {'apikey': EMONCMS_WRITE_KEY,
+              'time': date_start,
+              'data': str(emoncms_data)}
+
+    print(params)
+
+    response = requests.post(
+        f'{EMONCMS_IP}/input/bulk',
+        params=params
+        )
+    if not response.text == 'ok':
+        print(response.text)
 
 
 class holder:
@@ -153,7 +200,6 @@ class holder:
 
 def catalog(data, library):
     library.add_message(data)
-    library.print()
 
 
 class handler(BaseHTTPRequestHandler):
@@ -164,6 +210,7 @@ class handler(BaseHTTPRequestHandler):
         if not self.path == '/pgesmd':
             return
 
+        print("Receieved POST.")
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
@@ -180,10 +227,12 @@ class handler(BaseHTTPRequestHandler):
         resource_uri = api.get_resource_uri(xml_post)
 
         access_token = api.get_access_token()
-        api.get_espi_data(resource_uri, access_token)
+        xml_data = api.get_espi_data(resource_uri, access_token)
+        for_emoncms = get_emoncms_from_espi(xml_data)
+        post_data_to_emoncms(for_emoncms)
 
 
-def run(api, server_class=HTTPServer):
+def run(server_class=HTTPServer):
     server_address = ('', PORT)
     httpd = server_class(server_address, handler)
 
@@ -225,6 +274,6 @@ if __name__ == '__main__':
     request_post = api.async_request()
     if request_post:
         try:
-            run(api)
+            run()
         except KeyboardInterrupt:
             pass
