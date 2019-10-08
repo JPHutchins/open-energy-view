@@ -2,16 +2,19 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import requests
 import json
 import ssl
+import os
 import xml.etree.ElementTree as ET
 from base64 import b64encode
+
+PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Enter your Third Party ID as listed in the Share My Data portal.
 THIRD_PARTY_ID = '50916'
 
 # Update the files referenced below with your credentials.
-CERT_PATH = './cert/cert.crt'
-KEY_PATH = './cert/private.key'
-AUTH_PATH = './auth/auth.json'
+CERT_PATH = f'{PROJECT_PATH}/cert/cert.crt'
+KEY_PATH = f'{PROJECT_PATH}/cert/private.key'
+AUTH_PATH = f'{PROJECT_PATH}/auth/auth.json'
 
 # Port forwarding.  Forward external port 443 to this application:PORT.
 PORT = 7999
