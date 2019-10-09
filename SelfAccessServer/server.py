@@ -133,11 +133,6 @@ class SelfAccessApi:
                       f'{response.status_code}: {response.text}')
         return False
 
-    def get_resource_uri(self, xml_post):
-        """Get the current Bulk Resource URI."""
-        xml_root = ET.fromstring(xml_post)
-        return xml_root[0].text
-
     def get_espi_data(self, resource_uri, access_token):
         """Get the ESPI data from the API."""
         header_params = {'Authorization': f'Bearer {access_token}'}
@@ -214,24 +209,30 @@ class handler(BaseHTTPRequestHandler):
             return
 
         _LOGGER.info(f'Received POST from {self.address_string}')
+
+        body = self.rfile.read(int(self.headers.getheader('Content-Length')))
+        resource_uri = ET.fromstring(body)[0].text
+        if not resource_uri[:len(UTILITY_URI)] == UTILITY_URI:
+            _LOGGER.error(f'POST from {self.address_string} contains:\n'
+                          f'{body}/n'
+                          f'{resource_uri[:len(UTILITY_URI)]}'
+                          f' != {UTILITY_URI}')
+            return
+
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-
-        content_len = int(self.headers.get('Content-Length'))
-        xml_post = self.rfile.read(content_len)
 
         api = SelfAccessApi(client_id,
                             client_secret,
                             CERT_PATH,
                             KEY_PATH)
 
-        resource_uri = api.get_resource_uri(xml_post)
-
         access_token = api.get_access_token()
         xml_data = api.get_espi_data(resource_uri, access_token)
         for_emoncms = get_emoncms_from_espi(xml_data)
         post_data_to_emoncms(for_emoncms)
+        return
 
 
 def run(server_class=HTTPServer):
