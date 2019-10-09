@@ -62,34 +62,27 @@ class SelfAccessApi:
 
     def get_cert(self):
         """Return the tuple ([public certificate], [private key])"""
-        def get_path(kind):
-            return input(f"SSL {kind} path: ")
+        if not self.cert[0]:
+            _LOGGER.error(f'Missing certificate file (symlink): {CERT_PATH}')
+            return
 
-        cert_info = [self.cert[0], self.cert[1]]
-
-        if not cert_info[0]:
-            cert_info[0] = get_path("crt")
-
-        if not cert_info[1]:
-            cert_info[1] = get_path("key")
-
-        self.cert = (cert_info[0], cert_info[1])
+        if not self.cert[1]:
+            _LOGGER.error(f'Missing key file (symlink): {KEY_PATH}')
+            return
 
         return self.cert
 
     def get_client_id(self):
-        """Return the PGE SMD Client_ID. Ask user if missing."""
+        """Return the PGE SMD Client_ID."""
         if self.client_id:
             return self.client_id
-        self.client_id = input("PG&E Client_ID: ")
-        return self.client_id
+        _LOGGER.error(f'Missing client_id in {AUTH_PATH}')
 
     def get_client_secret(self):
-        """Return the PGE SMD Client_Secret. Ask user if missing."""
+        """Return the PGE SMD Client_Secret."""
         if self.client_secret:
             return self.client_secret
-        self.client_secret = input("PG&E Client_Secret: ")
-        return self.client_secret
+        _LOGGER.error(f'Missing client_secret in {AUTH_PATH}')
 
     def get_access_token(self):
         """Request and return access token from the PGE SMD Servers."""
