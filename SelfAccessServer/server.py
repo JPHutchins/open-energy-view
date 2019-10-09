@@ -33,10 +33,10 @@ BULK_RESOURCE_URI =\
 
 LOG_LEVEL = 'DEBUG'
 
-_LOGGER = logging.getLogger('PGESMD Server')
-_LOGGER.basicConfig(level=logging.LOG_LEVEL,
+logging.basicConfig(level=logging.DEBUG,
                     filename='log',
                     format='%(levelname)s - %(asctime)s - %(message)s')
+_LOGGER = logging.getLogger('PGESMD Server')
 
 
 class SelfAccessApi:
@@ -51,7 +51,7 @@ class SelfAccessApi:
     def get_auth_header(self):
         """Return the value for Authorization header."""
         b64 = b64encode(
-            f'{self.client_id}:{self.clien_secret}'.encode('utf-8'))
+            f'{self.client_id}:{self.client_secret}'.encode('utf-8'))
         b64_string = bytes.decode(b64)
         self.auth_header = f'Basic {b64_string}'
 
@@ -136,6 +136,25 @@ class SelfAccessApi:
             self.get_espi_data(resource_uri, access_token)
         _LOGGER.error(f'get_espi_data failed.  {resource_uri} responded: \n'
                       f'{response.status_code}: {response.text}')
+
+
+def get_auth_file():
+    """Try to open auth.json and return (client_id, client_secret)."""
+    try:
+        with open(AUTH_PATH) as auth:
+            data = auth.read()
+            json_data = json.loads(data)
+            try:
+                client_id = json_data["client_id"]
+                client_secret = json_data["client_secret"]
+                return (client_id, client_secret)
+            except KeyError:
+                _LOGGER.error("Auth file should be JSON with fields: \n"
+                              "\"client_id\": and \"client_secret\":")
+            return None
+    except FileNotFoundError:
+        _LOGGER.error(f"Auth file not found at {AUTH_PATH}.")
+        return None
 
 
 def get_emoncms_from_espi(xml_data):
@@ -235,18 +254,11 @@ def run(server_class=HTTPServer):
 
 if __name__ == '__main__':
 
-    try:
-        with open(AUTH_PATH) as auth:
-            data = auth.read()
-            json = json.loads(data)
-            try:
-                client_id = json["client_id"]
-                client_secret = json["client_secret"]
-            except KeyError:
-                _LOGGER.error("Auth file should be JSON with fields: \n"
-                              "\"client_id\": and \"client_secret\":")
-    except FileNotFoundError:
-        _LOGGER.error("Auth file not found.")
+    client_id, client_secret = get_auth_file()
+    _LOGGER.debug(f'Using auth.json:\n'
+                  f'client_id: {client_id}\n'
+                  f'client_secret: {client_secret}'
+                  )
 
     api = SelfAccessApi(client_id,
                         client_secret,
