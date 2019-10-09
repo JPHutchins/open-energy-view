@@ -50,11 +50,8 @@ class SelfAccessApi:
 
     def get_auth_header(self):
         """Return the value for Authorization header."""
-        _client_id = self.get_client_id()
-        _client_secret = self.get_client_secret()
-
         b64 = b64encode(
-            f'{_client_id}:{_client_secret}'.encode('utf-8'))
+            f'{self.client_id}:{self.clien_secret}'.encode('utf-8'))
         b64_string = bytes.decode(b64)
         self.auth_header = f'Basic {b64_string}'
 
@@ -64,25 +61,13 @@ class SelfAccessApi:
         """Return the tuple ([public certificate], [private key])"""
         if not self.cert[0]:
             _LOGGER.error(f'Missing certificate file (symlink): {CERT_PATH}')
-            return
+            return None
 
         if not self.cert[1]:
             _LOGGER.error(f'Missing key file (symlink): {KEY_PATH}')
-            return
+            return None
 
         return self.cert
-
-    def get_client_id(self):
-        """Return the PGE SMD Client_ID."""
-        if self.client_id:
-            return self.client_id
-        _LOGGER.error(f'Missing client_id in {AUTH_PATH}')
-
-    def get_client_secret(self):
-        """Return the PGE SMD Client_Secret."""
-        if self.client_secret:
-            return self.client_secret
-        _LOGGER.error(f'Missing client_secret in {AUTH_PATH}')
 
     def get_access_token(self):
         """Request and return access token from the PGE SMD Servers."""
