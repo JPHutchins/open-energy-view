@@ -4,6 +4,7 @@ import json
 import ssl
 import os
 import xml.etree.ElementTree as ET
+import logging
 from base64 import b64encode
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +30,13 @@ UTILITY_URI = 'https://api.pge.com'
 API_URI = '/GreenButtonConnect/espi'
 BULK_RESOURCE_URI =\
     f'{UTILITY_URI}{API_URI}/1_1/resource/Batch/Bulk/{THIRD_PARTY_ID}'
+
+LOG_LEVEL = 'DEBUG'
+
+_LOGGER = logging.getLogger('PGESMD Server')
+_LOGGER.basicConfig(level=logging.LOG_LEVEL,
+                    filename='log',
+                    format='%(levelname)s - %(asctime)s - %(message)s')
 
 
 class SelfAccessApi:
@@ -101,13 +109,22 @@ class SelfAccessApi:
             cert=self.cert)
 
         if str(response.status_code) == "200":
-            self.access_token = response.json()['client_access_token']
-            return self.access_token
-        print({"status": response.status_code, "error": response.text})
+            try:
+                self.access_token = response.json()['client_access_token']
+                return self.access_token
+            except KeyError:
+                _LOGGER.error('get_access_token failed.  Server JSON response'
+                              'did not contain "client_access_token" key')
+
+        _LOGGER.error(f'get_access_token failed.\n'
+                      f'{response.status_code}: {response.text}')
 
     def async_request(self):
         """Return True upon successful asynchronous request."""
         header_params = {'Authorization': f'Bearer {self.access_token}'}
+
+        _LOGGER.debug(f'Sending request to {BULK_RESOURCE_URI} using'
+                      f'access_token {self.access_token}')
 
         response = requests.get(
             BULK_RESOURCE_URI,
@@ -116,10 +133,11 @@ class SelfAccessApi:
             cert=self.cert
         )
         if str(response.status_code) == "202":
-            print("Request successful, awaiting POST from server.")
+            _LOGGER.info('async_request successful,'
+                         ' awaiting POST from server.')
             return True
-        print({"status": response.status_code,
-               "error": response.text})
+        _LOGGER.error(f'async_request to Bulk Resource URI failed.\n'
+                      f'{response.status_code}: {response.text}')
         return False
 
     def get_resource_uri(self, xml_post):
@@ -143,8 +161,8 @@ class SelfAccessApi:
         elif str(response.status_code) == "403":
             access_token = self.get_access_token()
             self.get_espi_data(resource_uri, access_token)
-        print({"status": response.status_code,
-               "error": response.text})
+        _LOGGER.error(f'get_espi_data failed.  {resource_uri} responded: \n'
+                      f'{response.status_code}: {response.text}')
 
 
 def get_emoncms_from_espi(xml_data):
@@ -180,47 +198,35 @@ def post_data_to_emoncms(for_emoncms):
               'time': date_start,
               'data': str(emoncms_data)}
 
-    print(params)
+    _LOGGER.debug(f'Sending to emoncms with params: {params}')
 
     response = requests.post(
         f'{EMONCMS_IP}/input/bulk',
-        params=params
-        )
-    if not response.text == 'ok':
-        print(response.text)
+        params=params)
 
-
-class holder:
-    def __init__(self):
-        self.messages = []
-
-    def add_message(self, message):
-        self.messages.append(message)
-
-    def print(self):
-        print([message for message in self.messages])
-
-
-def catalog(data, library):
-    library.add_message(data)
+    if response:
+        if response.text == 'ok':
+            _LOGGER.info('Data sent to emonCMS.')
+            return True
+        _LOGGER.error(f'emonCMS replied with: {response.text}')
+        return False
+    _LOGGER.error(f'No response from emonCMS at {EMONCMS_IP}/input/bulk')
+    return False
 
 
 class handler(BaseHTTPRequestHandler):
-
-    library = holder()
 
     def do_POST(self):
         if not self.path == '/pgesmd':
             return
 
-        print("Receieved POST.")
+        _LOGGER.info(f'Received POST from {self.address_string}')
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
 
         content_len = int(self.headers.get('Content-Length'))
         xml_post = self.rfile.read(content_len)
-        catalog(xml_post, self.library)
 
         api = SelfAccessApi(client_id,
                             client_secret,
@@ -250,9 +256,6 @@ def run(server_class=HTTPServer):
 
 if __name__ == '__main__':
 
-    client_id = None
-    client_secret = None
-
     try:
         with open(AUTH_PATH) as auth:
             data = auth.read()
@@ -261,11 +264,10 @@ if __name__ == '__main__':
                 client_id = json["client_id"]
                 client_secret = json["client_secret"]
             except KeyError:
-                print("Auth file should be JSON with fields: \n"
-                      "\"client_id\": and \"client_secret\":")
-
+                _LOGGER.error("Auth file should be JSON with fields: \n"
+                              "\"client_id\": and \"client_secret\":")
     except FileNotFoundError:
-        print("Auth file not found.")
+        _LOGGER.error("Auth file not found.")
 
     api = SelfAccessApi(client_id,
                         client_secret,
