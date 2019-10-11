@@ -25,13 +25,11 @@ EMONCMS_IP = 'http://192.168.0.40:8080'
 EMONCMS_WRITE_KEY = 'db4da6f33f8739ea50b0038d2fc96cec'
 EMONCMS_NODE = 30
 
-TOKEN_URL = 'https://api.pge.com/datacustodian/test/oauth/v2/token'
+TOKEN_URI = 'https://api.pge.com/datacustodian/test/oauth/v2/token'
 UTILITY_URI = 'https://api.pge.com'
 API_URI = '/GreenButtonConnect/espi'
 BULK_RESOURCE_URI =\
     f'{UTILITY_URI}{API_URI}/1_1/resource/Batch/Bulk/{THIRD_PARTY_ID}'
-
-LOG_LEVEL = 'DEBUG'
 
 logging.basicConfig(level=logging.DEBUG,
                     filename='log',
@@ -41,12 +39,46 @@ _LOGGER = logging.getLogger('PGESMD Server')
 
 class SelfAccessApi:
     """Representaiton of the PG&E SMD API for Self Access Users."""
-    def __init__(self, client_id, client_secret, cert_crt, cert_key):
+    def __init__(self,
+                 third_party_id,
+                 client_id,
+                 client_secret,
+                 cert_crt_path,
+                 cert_key_path,
+                 auth_header=None,
+                 access_token=None,
+                 token_uri=None,
+                 utility_uri=None,
+                 api_uri=None,
+                 ):
+        self.third_party_id = third_party_id
         self.client_id = client_id
         self.client_secret = client_secret
-        self.cert = (cert_crt, cert_key)
-        self.auth_header = None
-        self.access_token = None
+        self.cert = (cert_crt_path, cert_key_path)
+        self.auth_header = auth_header
+        self.access_token = access_token
+
+        if token_uri:
+            self.token_uri = token_uri
+        else:
+            self.token_uri =\
+                'https://api.pge.com/datacustodian/test/oauth/v2/token'
+
+        if utility_uri:
+            self.utility_uri = utility_uri
+        else:
+            self.utility_uri =\
+                'https://api.pge.com'
+
+        if api_uri:
+            self.api_uri = api_uri
+        else:
+            self.api_uri =\
+                '/GreenButtonConnect/espi'
+
+        self.bulk_resource_uri = (f'{self.utility_uri}{self.api_uri}'
+                                  f'/1_1/resource/Batch/Bulk/'
+                                  f'{self.third_party_id}')
 
     def get_auth_header(self):
         """Return the value for Authorization header."""
@@ -60,11 +92,11 @@ class SelfAccessApi:
     def get_cert(self):
         """Return the tuple ([public certificate], [private key])"""
         if not self.cert[0]:
-            _LOGGER.error(f'Missing certificate file (symlink): {CERT_PATH}')
+            _LOGGER.error(f'Missing certificate file (symlink): {self.cert_crt_path}')
             return None
 
         if not self.cert[1]:
-            _LOGGER.error(f'Missing key file (symlink): {KEY_PATH}')
+            _LOGGER.error(f'Missing key file (symlink): {self.cert_key_path}')
             return None
 
         return self.cert
@@ -81,7 +113,7 @@ class SelfAccessApi:
         header_params = {'Authorization': self.auth_header}
 
         response = requests.post(
-            TOKEN_URL,
+            self.token_uri,
             data=request_params,
             headers=header_params,
             cert=self.cert)
@@ -101,11 +133,11 @@ class SelfAccessApi:
         """Return True upon successful asynchronous request."""
         header_params = {'Authorization': f'Bearer {self.access_token}'}
 
-        _LOGGER.debug(f'Sending request to {BULK_RESOURCE_URI} using'
+        _LOGGER.debug(f'Sending request to {self.bulk_resource_uri} using'
                       f'access_token {self.access_token}')
 
         response = requests.get(
-            BULK_RESOURCE_URI,
+            self.bulk_resource_uri,
             data={},
             headers=header_params,
             cert=self.cert
@@ -145,9 +177,12 @@ def get_auth_file():
             data = auth.read()
             json_data = json.loads(data)
             try:
+                third_party_id = json_data["third_party_id"]
                 client_id = json_data["client_id"]
                 client_secret = json_data["client_secret"]
-                return (client_id, client_secret)
+                cert_crt_path = json_data["cert_crt_path"]
+                cert_key_path = json_data["cert_key_path"]
+                return (third_party_id, client_id, client_secret, cert_crt_path, cert_key_path)
             except KeyError:
                 _LOGGER.error("Auth file should be JSON with fields: \n"
                               "\"client_id\": and \"client_secret\":")
@@ -206,21 +241,23 @@ def post_data_to_emoncms(for_emoncms):
     return False
 
 
-class handler(BaseHTTPRequestHandler):
+class PgePostHandler(BaseHTTPRequestHandler):
+    api = None
 
     def do_POST(self):
         if not self.path == '/pgesmd':
             return
 
         _LOGGER.info(f'Received POST from {self.address_string}')
+        print(self.api.auth_header)
 
-        body = self.rfile.read(int(self.headers.getheader('Content-Length')))
+        body = self.rfile.read(int(self.headers('Content-Length')))
         resource_uri = ET.fromstring(body)[0].text
-        if not resource_uri[:len(UTILITY_URI)] == UTILITY_URI:
+        if not resource_uri[:len(self.api.utility_uri)] == self.api.utility_uri:
             _LOGGER.error(f'POST from {self.address_string} contains:\n'
                           f'{body}/n'
-                          f'{resource_uri[:len(UTILITY_URI)]}'
-                          f' != {UTILITY_URI}')
+                          f'{resource_uri[:len(self.api.utility_uri)]}'
+                          f' != {self.api.utility_uri}')
             return
 
         self.send_response(200)
@@ -239,37 +276,43 @@ class handler(BaseHTTPRequestHandler):
         return
 
 
-def run(server_class=HTTPServer):
-    server_address = ('', PORT)
-    httpd = server_class(server_address, handler)
+class SelfAccessServer:
+    def __init__(self, api_instance):
+        PgePostHandler.api = api_instance
+        server = HTTPServer(('', PORT), PgePostHandler)
 
-    httpd.socket = ssl.wrap_socket(
-        httpd.socket,
-        certfile=CERT_PATH,
-        keyfile=KEY_PATH,
-        server_side=True)
+        server.socket = ssl.wrap_socket(
+            server.socket,
+            certfile=api_instance.get_cert()[0],
+            keyfile=api_instance.get_cert()[1],
+            server_side=True)
 
-    httpd.serve_forever()
+        server.serve_forever()
 
 
 if __name__ == '__main__':
 
-    client_id, client_secret = get_auth_file()
+    third_party_id, client_id, client_secret, cert_crt_path, cert_key_path = get_auth_file()
+
     _LOGGER.debug(f'Using auth.json:\n'
+                  f'third_party_id: {third_party_id}\n'
                   f'client_id: {client_id}\n'
-                  f'client_secret: {client_secret}'
+                  f'client_secret: {client_secret}\n'
+                  f'cert_crt_path: {cert_crt_path}\n'
+                  f'cert_key_path: {cert_key_path}'
                   )
 
-    api = SelfAccessApi(client_id,
+    api = SelfAccessApi(third_party_id,
+                        client_id,
                         client_secret,
-                        CERT_PATH,
-                        KEY_PATH)
+                        cert_crt_path,
+                        cert_key_path)
 
     access_token = api.get_access_token()
 
     request_post = api.async_request()
     if request_post:
         try:
-            run()
+            server = SelfAccessServer(api)
         except KeyboardInterrupt:
             pass
