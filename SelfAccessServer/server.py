@@ -92,7 +92,8 @@ class SelfAccessApi:
     def get_cert(self):
         """Return the tuple ([public certificate], [private key])"""
         if not self.cert[0]:
-            _LOGGER.error(f'Missing certificate file (symlink): {self.cert_crt_path}')
+            _LOGGER.error(f'Missing certificate file (symlink): '
+                          f'{self.cert_crt_path}')
             return None
 
         if not self.cert[1]:
@@ -126,7 +127,7 @@ class SelfAccessApi:
                 _LOGGER.error('get_access_token failed.  Server JSON response'
                               'did not contain "client_access_token" key')
 
-        _LOGGER.error(f'get_access_token failed.\n'
+        _LOGGER.error(f'get_access_token failed.  |  '
                       f'{response.status_code}: {response.text}')
 
     def async_request(self):
@@ -146,7 +147,7 @@ class SelfAccessApi:
             _LOGGER.info('async_request successful,'
                          ' awaiting POST from server.')
             return True
-        _LOGGER.error(f'async_request to Bulk Resource URI failed.\n'
+        _LOGGER.error(f'async_request to Bulk Resource URI failed.  |  '
                       f'{response.status_code}: {response.text}')
         return False
 
@@ -166,7 +167,7 @@ class SelfAccessApi:
         elif str(response.status_code) == "403":
             access_token = self.get_access_token()
             self.get_espi_data(resource_uri, access_token)
-        _LOGGER.error(f'get_espi_data failed.  {resource_uri} responded: \n'
+        _LOGGER.error(f'get_espi_data failed.  {resource_uri} responded: '
                       f'{response.status_code}: {response.text}')
 
 
@@ -182,9 +183,13 @@ def get_auth_file():
                 client_secret = json_data["client_secret"]
                 cert_crt_path = json_data["cert_crt_path"]
                 cert_key_path = json_data["cert_key_path"]
-                return (third_party_id, client_id, client_secret, cert_crt_path, cert_key_path)
+                return (third_party_id,
+                        client_id,
+                        client_secret,
+                        cert_crt_path,
+                        cert_key_path)
             except KeyError:
-                _LOGGER.error("Auth file should be JSON with fields: \n"
+                _LOGGER.error("Auth file should be JSON with fields: "
                               "\"client_id\": and \"client_secret\":")
             return None
     except FileNotFoundError:
@@ -248,29 +253,27 @@ class PgePostHandler(BaseHTTPRequestHandler):
         if not self.path == '/pgesmd':
             return
 
-        _LOGGER.info(f'Received POST from {self.address_string}')
-        print(self.api.auth_header)
+        _LOGGER.info(f'Received POST from {self.address_string()}')
 
-        body = self.rfile.read(int(self.headers('Content-Length')))
-        resource_uri = ET.fromstring(body)[0].text
-        if not resource_uri[:len(self.api.utility_uri)] == self.api.utility_uri:
-            _LOGGER.error(f'POST from {self.address_string} contains:\n'
-                          f'{body}/n'
+        body = self.rfile.read(int(self.headers.get('Content-Length')))
+        try:
+            resource_uri = ET.fromstring(body)[0].text
+        except ET.ParseError:
+            _LOGGER.error(f'Could not parse message: {body}')
+            return
+        if not resource_uri[:len(self.api.utility_uri)] ==\
+                self.api.utility_uri:
+            _LOGGER.error(f'POST from {self.address_string} contains: '
+                          f'{body}     '
                           f'{resource_uri[:len(self.api.utility_uri)]}'
                           f' != {self.api.utility_uri}')
             return
 
         self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
         self.end_headers()
 
-        api = SelfAccessApi(client_id,
-                            client_secret,
-                            CERT_PATH,
-                            KEY_PATH)
-
-        access_token = api.get_access_token()
-        xml_data = api.get_espi_data(resource_uri, access_token)
+        access_token = self.api.get_access_token()
+        xml_data = self.api.get_espi_data(resource_uri, access_token)
         for_emoncms = get_emoncms_from_espi(xml_data)
         post_data_to_emoncms(for_emoncms)
         return
@@ -292,13 +295,17 @@ class SelfAccessServer:
 
 if __name__ == '__main__':
 
-    third_party_id, client_id, client_secret, cert_crt_path, cert_key_path = get_auth_file()
+    (third_party_id,
+     client_id,
+     client_secret,
+     cert_crt_path,
+     cert_key_path) = get_auth_file()
 
-    _LOGGER.debug(f'Using auth.json:\n'
-                  f'third_party_id: {third_party_id}\n'
-                  f'client_id: {client_id}\n'
-                  f'client_secret: {client_secret}\n'
-                  f'cert_crt_path: {cert_crt_path}\n'
+    _LOGGER.debug(f'Using auth.json:  '
+                  f'third_party_id: {third_party_id}, '
+                  f'client_id: {client_id}, '
+                  f'client_secret: {client_secret}, '
+                  f'cert_crt_path: {cert_crt_path}, '
                   f'cert_key_path: {cert_key_path}'
                   )
 
