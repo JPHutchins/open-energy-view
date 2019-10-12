@@ -25,7 +25,7 @@ EMONCMS_IP = 'http://192.168.0.40:8080'
 EMONCMS_WRITE_KEY = 'db4da6f33f8739ea50b0038d2fc96cec'
 EMONCMS_NODE = 30
 
-TOKEN_URI = 'https://api.pge.com/datacustodian/test/oauth/v2/token'
+TOKEN_URI = 'https://api.pge.com/datacustodian/oauth/v2/token'
 UTILITY_URI = 'https://api.pge.com'
 API_URI = '/GreenButtonConnect/espi'
 BULK_RESOURCE_URI =\
@@ -50,6 +50,7 @@ class SelfAccessApi:
                  token_uri=None,
                  utility_uri=None,
                  api_uri=None,
+                 service_status_uri=None,
                  ):
         self.third_party_id = third_party_id
         self.client_id = client_id
@@ -62,7 +63,7 @@ class SelfAccessApi:
             self.token_uri = token_uri
         else:
             self.token_uri =\
-                'https://api.pge.com/datacustodian/test/oauth/v2/token'
+                'https://api.pge.com/datacustodian/oauth/v2/token'
 
         if utility_uri:
             self.utility_uri = utility_uri
@@ -75,6 +76,11 @@ class SelfAccessApi:
         else:
             self.api_uri =\
                 '/GreenButtonConnect/espi'
+
+        if service_status_uri:
+            self.service_status_uri = service_status_uri
+        else:
+            self.service_status_uri = 'https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ReadServiceStatus'
 
         self.bulk_resource_uri = (f'{self.utility_uri}{self.api_uri}'
                                   f'/1_1/resource/Batch/Bulk/'
@@ -93,11 +99,11 @@ class SelfAccessApi:
         """Return the tuple ([public certificate], [private key])"""
         if not self.cert[0]:
             _LOGGER.error(f'Missing certificate file (symlink): '
-                          f'{self.cert_crt_path}')
+                          f'{self.cert[0]}')
             return None
 
         if not self.cert[1]:
-            _LOGGER.error(f'Missing key file (symlink): {self.cert_key_path}')
+            _LOGGER.error(f'Missing key file (symlink): {self.cert[1]}')
             return None
 
         return self.cert
@@ -126,9 +132,11 @@ class SelfAccessApi:
             except KeyError:
                 _LOGGER.error('get_access_token failed.  Server JSON response'
                               'did not contain "client_access_token" key')
+                return None
 
         _LOGGER.error(f'get_access_token failed.  |  '
                       f'{response.status_code}: {response.text}')
+        return None
 
     def async_request(self):
         """Return True upon successful asynchronous request."""
@@ -195,6 +203,127 @@ def get_auth_file():
     except FileNotFoundError:
         _LOGGER.error(f"Auth file not found at {AUTH_PATH}.")
         return None
+
+
+class Register:
+    """Complete the PGE Share My Data API Connectivity Tests."""
+    # refer to: https://www.pge.com/en_US/residential/save-energy-money/analyze-your-usage/your-usage/view-and-share-your-data-with-smartmeter/reading-the-smartmeter/share-your-data/third-party-companies/testing-details.page
+
+    def __init__(self,
+                 client_id=None,
+                 client_secret=None,
+                 cert_crt_path=None,
+                 cert_key_path=None):
+
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._cert_crt_path = cert_crt_path
+        self._cert_key_path = cert_key_path
+        self._third_party_id = '00000'
+        self._api = None
+        self.access_token = None
+        self.testing_completed = False
+
+    def get_credentials(self):
+        self._client_id = input("Client ID:  ")
+        self._client_secret = input("Client Secret:  ")
+        self._cert_crt_path = input(
+            "Full path to SSL certificate file (cert, crt):  ")
+        self._cert_key_path = input(
+            "Full path to SSL private key file (private, key):  ")
+
+    def get_access_token(self):
+        if not (self._client_id or
+                self._client_secret or
+                self._cert_crt_path or
+                self._cert_key_path):
+            self.get_credentials()
+
+        self._api = SelfAccessApi(self._third_party_id,
+                                  self._client_id,
+                                  self._client_secret,
+                                  self._cert_crt_path,
+                                  self._cert_key_path,
+                                  token_uri='https://api.pge.com'
+                                            '/datacustodian/test/oauth/v2'
+                                            '/token')
+
+        print(f"Requesting client access token from {self._api.token_uri}")
+        self.access_token = self._api.get_access_token()
+        if self.access_token:
+            print(f"Access token received: {self.access_token}")
+            return
+        print("Request failed, see log.")
+
+    def get_service_status(self):
+        print(f"Requesting service status from {self._api.service_status_uri}")
+
+        header_params = {'Authorization': f'Bearer {self.access_token}'}
+        response = requests.get(
+            self._api.service_status_uri,
+            headers=header_params,
+            cert=self._api.cert
+        )
+        if not response:
+            print(f"No response from {self._api.service_status_uri}")
+            return False
+        if not response.status_code == '200':
+            print(f"Error: {response.status_code}, {response.text}")
+            return False
+        try:
+            root = ET.fromstring(response.text)
+            if root[0].text == '1':
+                print('Service status is online.')
+                return True
+            print('Service status is offline.')
+            return False
+        except ET.ParseError:
+            print(f"Could not parse XML: {response.text}")
+            return False
+
+    def get_sample_data(self):
+        _uri = 'https://api.pge.com/GreenButtonConnect/espi/1_1/resource/DownloadSampleData'
+
+        print(f"Requesting sample data from {_uri}")
+
+        header_params = {'Authorization': f'Bearer {self.access_token}'}
+        response = requests.get(
+            _uri,
+            headers=header_params,
+            cert=self._api.cert
+        )
+        if not response:
+            print(f"No response from {_uri}")
+            return False
+        if not response.status_code == '200':
+            print(f"Error: {response.status_code}, {response.text}")
+            return False
+        self.testing_completed = True
+        return True
+        # MAYBE parse this before returning True in future... maybe
+
+    def get_third_party_id(self):
+        print("Requesting Third Party ID {BulkID}.")
+
+        header_params = {'Authorization': f'Bearer {self.access_token}'}
+        response = requests.get(
+            'https://api.pge.com/GreenButtonConnect/espi/1_1'
+            '/resource/Authorization',
+            headers=header_params,
+            cert=self._api.cert)
+
+        if response.status_code == '200':
+            print(response.text)
+
+    def write_auth(self, filename=None):
+        if not filename:
+            filename = 'auth.json'
+        
+        _auth = {"third_party_id": self._third_party_id,
+                 "client_id": self._client_id,
+                 "client_secret": self._client_secret,
+                 "cert_crt_path": self._cert_crt_path,
+                 "cert_key_path": self._cert_key_path}
 
 
 def get_emoncms_from_espi(xml_data):
