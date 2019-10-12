@@ -180,7 +180,7 @@ class SelfAccessApi:
 
 
 def get_auth_file():
-    """Try to open auth.json and return (client_id, client_secret)."""
+    """Try to open auth.json and return tuple."""
     try:
         with open(AUTH_PATH) as auth:
             data = auth.read()
@@ -197,8 +197,10 @@ def get_auth_file():
                         cert_crt_path,
                         cert_key_path)
             except KeyError:
-                _LOGGER.error("Auth file should be JSON with fields: "
-                              "\"client_id\": and \"client_secret\":")
+                _LOGGER.error("Auth file should be JSON with keys: "
+                              "\"third_party_id\": and \"client_id\": and "
+                              "\"client_secret\": and \"cert_crt_path\": and "
+                              "\"cert_key_path\": ")
             return None
     except FileNotFoundError:
         _LOGGER.error(f"Auth file not found at {AUTH_PATH}.")
@@ -219,25 +221,50 @@ class Register:
         self._client_secret = client_secret
         self._cert_crt_path = cert_crt_path
         self._cert_key_path = cert_key_path
-        self._third_party_id = '00000'
+        self._third_party_id = ""
         self._api = None
         self.access_token = None
         self.testing_completed = False
 
     def get_credentials(self):
-        self._client_id = input("Client ID:  ")
-        self._client_secret = input("Client Secret:  ")
-        self._cert_crt_path = input(
-            "Full path to SSL certificate file (cert, crt):  ")
-        self._cert_key_path = input(
-            "Full path to SSL private key file (private, key):  ")
+        """Backup CLI method to retrieve credentials from user."""
+        return ("",
+                input("Client ID: "),
+                input("Client Secret: "),
+                input("Full path to SSL certificate file (cert, crt): "),
+                input("Full path to SSL private key file (private, key): ")
+                )
 
-    def get_access_token(self):
+    def get_access_token(self, method=get_auth_file):
+        """Get authorization information from method function and use it to
+           get the access token from the PGE API.
+
+        Keyword argument:
+        method -- a function that returns the tuple:
+            ([Third Party ID] string - use "" if unknown,
+             [Client ID] string,
+             [Client Secret] string,
+             [Full path to certificate] string,
+             [Full path to private key] string)
+             Default is get_auth_file() which will look in ./auth/auth.json
+        """
+
         if not (self._client_id or
                 self._client_secret or
                 self._cert_crt_path or
                 self._cert_key_path):
-            self.get_credentials()
+
+            auth = method()
+            if not auth or not len(auth) == 5:
+                print("Auth retrieval function failed, using CLI instead.")
+                auth = self.get_credentials()
+
+            print("Retrieved auth.")
+            (self._third_party_id,
+             self._client_id,
+             self._client_secret,
+             self._cert_crt_path,
+             self._cert_key_path) = auth
 
         self._api = SelfAccessApi(self._third_party_id,
                                   self._client_id,
@@ -267,7 +294,7 @@ class Register:
         if not response:
             print(f"No response from {self._api.service_status_uri}")
             return False
-        if not response.status_code == '200':
+        if not str(response.status_code) == '200':
             print(f"Error: {response.status_code}, {response.text}")
             return False
         try:
@@ -295,7 +322,7 @@ class Register:
         if not response:
             print(f"No response from {_uri}")
             return False
-        if not response.status_code == '200':
+        if not str(response.status_code) == '200':
             print(f"Error: {response.status_code}, {response.text}")
             return False
         self.testing_completed = True
@@ -312,18 +339,29 @@ class Register:
             headers=header_params,
             cert=self._api.cert)
 
-        if response.status_code == '200':
-            print(response.text)
+        if not response:
+            print("No response from server.")
+        if not str(response.status_code) == '200':
+            print(f"Error: {response.status_code}, {response.text}")
+            return ""
 
-    def write_auth(self, filename=None):
-        if not filename:
-            filename = 'auth.json'
-        
-        _auth = {"third_party_id": self._third_party_id,
-                 "client_id": self._client_id,
-                 "client_secret": self._client_secret,
-                 "cert_crt_path": self._cert_crt_path,
-                 "cert_key_path": self._cert_key_path}
+        def search_xml_for_id(root, tag, text, n, result):
+            for child in root:
+                if child.tag == tag:
+                    if child.text[:n] == text:
+                        result = child.text[n:]
+                        break
+                result = search_xml_for_id(child, tag, text, n, result)
+            return result
+
+        root = ET.fromstring(response.text)
+        tag = '{http://naesb.org/espi}resourceURI'
+        text = 'https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/'
+        return search_xml_for_id(root,
+                                 tag,
+                                 text,
+                                 len(text),
+                                 None)
 
 
 def get_emoncms_from_espi(xml_data):
