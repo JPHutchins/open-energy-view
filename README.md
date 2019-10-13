@@ -11,3 +11,10 @@ Consider that as of now, PG&E will require that you are forwarding port 443 to t
 
 If you are a PG&E customer and would like get started refer to their guide here:
 https://www.pge.com/en_US/residential/save-energy-money/analyze-your-usage/your-usage/view-and-share-your-data-with-smartmeter/reading-the-smartmeter/share-your-data/access-your-own-data.page
+
+## Resources
+Green Button and ESPI
+https://www.energy.gov/data/green-button
+https://green-button.github.io/developers/
+http://www.greenbuttondata.org/
+https://github.com/GreenButtonAlliance
