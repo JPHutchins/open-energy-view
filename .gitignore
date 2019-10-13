@@ -1,3 +1,4 @@
 .vscode/
 *.pyc
-SelfAccessServer/log
+log
+__pycache__/
