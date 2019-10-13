@@ -14,7 +14,11 @@ https://www.pge.com/en_US/residential/save-energy-money/analyze-your-usage/your-
 
 ## Resources
 Green Button and ESPI
+
 https://www.energy.gov/data/green-button
+
 https://green-button.github.io/developers/
+
 http://www.greenbuttondata.org/
+
 https://github.com/GreenButtonAlliance
