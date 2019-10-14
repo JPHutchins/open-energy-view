@@ -1,15 +1,7 @@
 import unittest
 import os
-from server import (SelfAccessApi,
-                    get_auth_file,
-                    get_emoncms_from_espi,
-                    post_data_to_emoncms,
 
-                    TOKEN_URL,
-                    UTILITY_URI,
-                    API_URI,
-                    BULK_RESOURCE_URI,
-                    )
+from api import SelfAccessApi
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 print(f'Testing in: {PROJECT_PATH}')
@@ -22,7 +14,8 @@ class TestSelfAccessApi(unittest.TestCase):
             SelfAccessApi()
 
     def setUp(self):
-        self.api = SelfAccessApi('client_id',
+        self.api = SelfAccessApi('55555',
+                                 'client_id',
                                  'client_secret',
                                  './certpath/cert.crt',
                                  './keypath/private.key')
@@ -31,3 +24,7 @@ class TestSelfAccessApi(unittest.TestCase):
         self.api.get_auth_header()
         self.assertEqual(self.api.auth_header,
                          'Basic Y2xpZW50X2lkOmNsaWVudF9zZWNyZXQ=')
+
+
+if __name__ == '__main__':
+    unittest.main()

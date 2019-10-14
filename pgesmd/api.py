@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 import logging
 from base64 import b64encode
 
-PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Enter your Third Party ID as listed in the Share My Data portal.
 THIRD_PARTY_ID = '50916'
@@ -208,21 +208,23 @@ def get_auth_file():
 
 
 class Register:
-    """Complete the PGE Share My Data API Connectivity Tests."""
+    """Complete the PGE Share My Data API Connectivity Tests.
+    
+    Keyword argument:
+        method -- a function that returns the tuple:
+            ([Third Party ID] string - use "" if unknown,
+             [Client ID] string,
+             [Client Secret] string,
+             [Full path to certificate] string,
+             [Full path to private key] string)
+             Default is get_auth_file() which will look in ./auth/auth.json
+    """
     # refer to: https://www.pge.com/en_US/residential/save-energy-money/analyze-your-usage/your-usage/view-and-share-your-data-with-smartmeter/reading-the-smartmeter/share-your-data/third-party-companies/testing-details.page
 
-    def __init__(self,
-                 client_id=None,
-                 client_secret=None,
-                 cert_crt_path=None,
-                 cert_key_path=None):
+    def __init__(self, method=get_auth_file):
+        self.auth = method()
 
-        self._client_id = client_id
-        self._client_secret = client_secret
-        self._cert_crt_path = cert_crt_path
-        self._cert_key_path = cert_key_path
-        self._third_party_id = ""
-        self._api = None
+        self._api = SelfAccessApi(*self.auth)
         self.access_token = None
         self.testing_completed = False
 
@@ -235,9 +237,8 @@ class Register:
                 input("Full path to SSL private key file (private, key): ")
                 )
 
-    def get_access_token(self, method=get_auth_file):
-        """Get authorization information from method function and use it to
-           get the access token from the PGE API.
+    def get_access_token(self):
+        """Get the access token from the PGE API.
 
         Keyword argument:
         method -- a function that returns the tuple:
@@ -249,31 +250,7 @@ class Register:
              Default is get_auth_file() which will look in ./auth/auth.json
         """
 
-        if not (self._client_id or
-                self._client_secret or
-                self._cert_crt_path or
-                self._cert_key_path):
-
-            auth = method()
-            if not auth or not len(auth) == 5:
-                print("Auth retrieval function failed, using CLI instead.")
-                auth = self.get_credentials()
-
-            print("Retrieved auth.")
-            (self._third_party_id,
-             self._client_id,
-             self._client_secret,
-             self._cert_crt_path,
-             self._cert_key_path) = auth
-
-        self._api = SelfAccessApi(self._third_party_id,
-                                  self._client_id,
-                                  self._client_secret,
-                                  self._cert_crt_path,
-                                  self._cert_key_path,
-                                  token_uri='https://api.pge.com'
-                                            '/datacustodian/test/oauth/v2'
-                                            '/token')
+        self._api.token_uri = 'https://api.pge.com/datacustodian/test/oauth/v2/token'
 
         print(f"Requesting client access token from {self._api.token_uri}")
         self.access_token = self._api.get_access_token()
