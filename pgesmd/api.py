@@ -5,6 +5,7 @@ import ssl
 import os
 import xml.etree.ElementTree as ET
 import logging
+import time
 from base64 import b64encode
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,6 +59,7 @@ class SelfAccessApi:
         self.cert = (cert_crt_path, cert_key_path)
         self.auth_header = auth_header
         self.access_token = access_token
+        self.access_token_exp = 0
 
         if token_uri:
             self.token_uri = token_uri
@@ -85,6 +87,12 @@ class SelfAccessApi:
         self.bulk_resource_uri = (f'{self.utility_uri}{self.api_uri}'
                                   f'/1_1/resource/Batch/Bulk/'
                                   f'{self.third_party_id}')
+
+    def need_token(self):
+        """Return True if the access token has expired, False otherwise."""
+        if localtime() > self.access_token_exp - 5:
+            return True
+        return False
 
     def get_auth_header(self):
         """Return the value for Authorization header."""
@@ -128,6 +136,8 @@ class SelfAccessApi:
         if str(response.status_code) == "200":
             try:
                 self.access_token = response.json()['client_access_token']
+                self.access_token_exp = localtime() + int(
+                    response.json()['expires_in']))
                 return self.access_token
             except KeyError:
                 _LOGGER.error('get_access_token failed.  Server JSON response'
