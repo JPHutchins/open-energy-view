@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import sys
 import requests
 import json
 import ssl
@@ -46,8 +47,6 @@ class SelfAccessApi:
                  client_secret,
                  cert_crt_path,
                  cert_key_path,
-                 auth_header=None,
-                 access_token=None,
                  token_uri=None,
                  utility_uri=None,
                  api_uri=None,
@@ -57,8 +56,7 @@ class SelfAccessApi:
         self.client_id = client_id
         self.client_secret = client_secret
         self.cert = (cert_crt_path, cert_key_path)
-        self.auth_header = auth_header
-        self.access_token = access_token
+        self.access_token = None
         self.access_token_exp = 0
 
         if token_uri:
@@ -88,41 +86,23 @@ class SelfAccessApi:
                                   f'/1_1/resource/Batch/Bulk/'
                                   f'{self.third_party_id}')
 
-    def need_token(self):
-        """Return True if the access token has expired, False otherwise."""
-        if localtime() > self.access_token_exp - 5:
-            return True
-        return False
-
-    def get_auth_header(self):
-        """Return the value for Authorization header."""
         b64 = b64encode(
             f'{self.client_id}:{self.client_secret}'.encode('utf-8'))
-        b64_string = bytes.decode(b64)
-        self.auth_header = f'Basic {b64_string}'
+        self.auth_header = f'Basic {bytes.decode(b64)}'
 
-        return self.auth_header
-
-    def get_cert(self):
-        """Return the tuple ([public certificate], [private key])"""
-        if not self.cert[0]:
-            _LOGGER.error(f'Missing certificate file (symlink): '
-                          f'{self.cert[0]}')
-            return None
-
-        if not self.cert[1]:
-            _LOGGER.error(f'Missing key file (symlink): {self.cert[1]}')
-            return None
-
-        return self.cert
+    def need_token(self):
+        """Return True if the access token has expired, False otherwise."""
+        if time.time() > self.access_token_exp - 5:
+            return True
+        return False
 
     def get_access_token(self):
         """Request and return access token from the PGE SMD Servers."""
         if not self.auth_header:
-            self.get_auth_header()
+            _LOGGER.critical('Missing self.auth_header, RI violated.')
 
         if not self.cert[0] or self.cert[1]:
-            self.get_cert()
+            _LOGGER.critical('Missing self.cert, RI violated.')
 
         request_params = {'grant_type': 'client_credentials'}
         header_params = {'Authorization': self.auth_header}
@@ -135,9 +115,10 @@ class SelfAccessApi:
 
         if str(response.status_code) == "200":
             try:
-                self.access_token = response.json()['client_access_token']
-                self.access_token_exp = localtime() + int(
-                    response.json()['expires_in']))
+                content = json.loads(response.text)
+                self.access_token = content['client_access_token']
+                self.access_token_exp = time.time() + int(
+                    content['expires_in'])
                 return self.access_token
             except KeyError:
                 _LOGGER.error('get_access_token failed.  Server JSON response'
@@ -150,6 +131,9 @@ class SelfAccessApi:
 
     def async_request(self):
         """Return True upon successful asynchronous request."""
+        if self.need_token():
+            self.get_access_token()
+
         header_params = {'Authorization': f'Bearer {self.access_token}'}
 
         _LOGGER.debug(f'Sending request to {self.bulk_resource_uri} using'
@@ -169,9 +153,12 @@ class SelfAccessApi:
                       f'{response.status_code}: {response.text}')
         return False
 
-    def get_espi_data(self, resource_uri, access_token):
+    def get_espi_data(self, resource_uri, retried=False):
         """Get the ESPI data from the API."""
-        header_params = {'Authorization': f'Bearer {access_token}'}
+        if self.need_token():
+            self.get_access_token()
+
+        header_params = {'Authorization': f'Bearer {self.access_token}'}
 
         response = requests.get(
             resource_uri,
@@ -182,9 +169,17 @@ class SelfAccessApi:
         if str(response.status_code) == "200":
             xml_data = response.content
             return xml_data
+        elif str(response.status_code) == "403" and not retried:
+            _LOGGER.error(f'get_espi_data failed. Refreshing token.'
+                          f'{resource_uri} responded: '
+                          f'{response.status_code}: {response.text}')
+            if self.get_access_token():
+                self.get_espi_data(resource_uri, retried=True)
         elif str(response.status_code) == "403":
-            access_token = self.get_access_token()
-            self.get_espi_data(resource_uri, access_token)
+            _LOGGER.error(f'get_espi_data failed. Check auth file.'
+                          f'{resource_uri} responded: '
+                          f'{response.status_code}: {response.text}')
+            return None
         _LOGGER.error(f'get_espi_data failed.  {resource_uri} responded: '
                       f'{response.status_code}: {response.text}')
 
@@ -426,8 +421,7 @@ class PgePostHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-        access_token = self.api.get_access_token()
-        xml_data = self.api.get_espi_data(resource_uri, access_token)
+        xml_data = self.api.get_espi_data(resource_uri)
         for_emoncms = get_emoncms_from_espi(xml_data)
         post_data_to_emoncms(for_emoncms)
         return
@@ -449,25 +443,21 @@ class SelfAccessServer:
 
 if __name__ == '__main__':
 
-    (third_party_id,
-     client_id,
-     client_secret,
-     cert_crt_path,
-     cert_key_path) = get_auth_file()
+    auth = get_auth_file()
+
+    if not auth:
+        # handle missing auth file
+        sys.exit()
 
     _LOGGER.debug(f'Using auth.json:  '
-                  f'third_party_id: {third_party_id}, '
-                  f'client_id: {client_id}, '
-                  f'client_secret: {client_secret}, '
-                  f'cert_crt_path: {cert_crt_path}, '
-                  f'cert_key_path: {cert_key_path}'
+                  f'third_party_id: {auth[0]}, '
+                  f'client_id: {auth[1]}, '
+                  f'client_secret: {auth[2]}, '
+                  f'cert_crt_path: {auth[3]}, '
+                  f'cert_key_path: {auth[4]}'
                   )
 
-    api = SelfAccessApi(third_party_id,
-                        client_id,
-                        client_secret,
-                        cert_crt_path,
-                        cert_key_path)
+    api = SelfAccessApi(*auth)
 
     access_token = api.get_access_token()
 
