@@ -9,6 +9,11 @@ import logging
 import time
 from base64 import b64encode
 
+from pgesmd.helpers import (
+    get_auth_file,
+    get_emoncms_from_espi,
+    post_data_to_emoncms)
+
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Enter your Third Party ID as listed in the Share My Data portal.
@@ -37,8 +42,6 @@ logging.basicConfig(level=logging.DEBUG,
                     filename='log',
                     format='%(levelname)s - %(asctime)s - %(message)s')
 _LOGGER = logging.getLogger('PGESMD Server')
-
-from pgesmd.helpers import get_auth_file, get_emoncms_from_espi, post_data_to_emoncms
 
 
 class SelfAccessApi:
