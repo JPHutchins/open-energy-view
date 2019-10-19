@@ -104,7 +104,7 @@ class SelfAccessApi:
         if not self.auth_header:
             _LOGGER.critical('Missing self.auth_header, RI violated.')
 
-        if not self.cert[0] or self.cert[1]:
+        if not self.cert[0] or not self.cert[1]:
             _LOGGER.critical('Missing self.cert, RI violated.')
 
         request_params = {'grant_type': 'client_credentials'}
@@ -365,8 +365,8 @@ class SelfAccessServer:
 
         server.socket = ssl.wrap_socket(
             server.socket,
-            certfile=api_instance.get_cert()[0],
-            keyfile=api_instance.get_cert()[1],
+            certfile=api_instance.cert[0],
+            keyfile=api_instance.cert[1],
             server_side=True)
 
         server.serve_forever()
