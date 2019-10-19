@@ -4,7 +4,7 @@ import threading
 import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-from api import SelfAccessApi
+from pgesmd.api import SelfAccessApi
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 print(f'Testing in: {PROJECT_PATH}')
@@ -33,7 +33,7 @@ class TestSelfAccessApi(unittest.TestCase):
                                  f'{PROJECT_PATH}/test/cert/cert.crt',
                                  f'{PROJECT_PATH}/test/cert/private.key',
                                  token_uri='http://localhost:8999/token')
-    
+
     def test_checkRI(self):
         self.assertTrue(checkRI(self.api))
         self.api.client_secret = None
@@ -65,7 +65,7 @@ class FakeServer(BaseHTTPRequestHandler):
 
         response = '{"client_access_token": "the-token", "expires_in": "3600"}'
         response = json.loads(response)
-        
+
         if self.path == '/token':
             self.wfile.write(json.dumps(response).encode("utf8"))
             return
@@ -75,6 +75,7 @@ class FakeServer(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
         self.wfile.write("Alive!\n".encode("utf8"))
+
 
 if __name__ == '__main__':
     httpd = HTTPServer(("localhost", 8999), FakeServer)

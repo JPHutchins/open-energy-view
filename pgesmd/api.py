@@ -38,6 +38,8 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s - %(asctime)s - %(message)s')
 _LOGGER = logging.getLogger('PGESMD Server')
 
+from pgesmd.helpers import get_auth_file, get_emoncms_from_espi, post_data_to_emoncms
+
 
 class SelfAccessApi:
     """Representaiton of the PG&E SMD API for Self Access Users."""
@@ -80,7 +82,8 @@ class SelfAccessApi:
         if service_status_uri:
             self.service_status_uri = service_status_uri
         else:
-            self.service_status_uri = 'https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ReadServiceStatus'
+            self.service_status_uri = 'https://api.pge.com/GreenButtonConnect'
+            '/espi/1_1/resource/ReadServiceStatus'
 
         self.bulk_resource_uri = (f'{self.utility_uri}{self.api_uri}'
                                   f'/1_1/resource/Batch/Bulk/'
@@ -184,37 +187,9 @@ class SelfAccessApi:
                       f'{response.status_code}: {response.text}')
 
 
-def get_auth_file():
-    """Try to open auth.json and return tuple."""
-    try:
-        with open(AUTH_PATH) as auth:
-            data = auth.read()
-            json_data = json.loads(data)
-            try:
-                third_party_id = json_data["third_party_id"]
-                client_id = json_data["client_id"]
-                client_secret = json_data["client_secret"]
-                cert_crt_path = json_data["cert_crt_path"]
-                cert_key_path = json_data["cert_key_path"]
-                return (third_party_id,
-                        client_id,
-                        client_secret,
-                        cert_crt_path,
-                        cert_key_path)
-            except KeyError:
-                _LOGGER.error("Auth file should be JSON with keys: "
-                              "\"third_party_id\": and \"client_id\": and "
-                              "\"client_secret\": and \"cert_crt_path\": and "
-                              "\"cert_key_path\": ")
-            return None
-    except FileNotFoundError:
-        _LOGGER.error(f"Auth file not found at {AUTH_PATH}.")
-        return None
-
-
-class Register:
+class PgeRegister:
     """Complete the PGE Share My Data API Connectivity Tests.
-    
+
     Keyword argument:
         method -- a function that returns the tuple:
             ([Third Party ID] string - use "" if unknown,
@@ -226,8 +201,10 @@ class Register:
     """
     # refer to: https://www.pge.com/en_US/residential/save-energy-money/analyze-your-usage/your-usage/view-and-share-your-data-with-smartmeter/reading-the-smartmeter/share-your-data/third-party-companies/testing-details.page
 
-    def __init__(self, method=get_auth_file):
-        self.auth = method()
+    def __init__(self,
+                 method=get_auth_file,
+                 auth_path=f'{PROJECT_PATH}/auth/auth.json'):
+        self.auth = method(auth_path)
 
         self._api = SelfAccessApi(*self.auth)
         self.access_token = None
@@ -255,7 +232,8 @@ class Register:
              Default is get_auth_file() which will look in ./auth/auth.json
         """
 
-        self._api.token_uri = 'https://api.pge.com/datacustodian/test/oauth/v2/token'
+        self._api.token_uri = 'https://api.pge.com/datacustodian'
+        '/test/oauth/v2/token'
 
         print(f"Requesting client access token from {self._api.token_uri}")
         self.access_token = self._api.get_access_token()
@@ -291,7 +269,8 @@ class Register:
             return False
 
     def get_sample_data(self):
-        _uri = 'https://api.pge.com/GreenButtonConnect/espi/1_1/resource/DownloadSampleData'
+        _uri = 'https://api.pge.com/GreenButtonConnect'
+        '/espi/1_1/resource/DownloadSampleData'
 
         print(f"Requesting sample data from {_uri}")
 
@@ -338,61 +317,13 @@ class Register:
 
         root = ET.fromstring(response.text)
         tag = '{http://naesb.org/espi}resourceURI'
-        text = 'https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/'
+        text = 'https://api.pge.com/GreenButtonConnect'
+        '/espi/1_1/resource/Batch/Bulk/'
         return search_xml_for_id(root,
                                  tag,
                                  text,
                                  len(text),
                                  None)
-
-
-def get_emoncms_from_espi(xml_data):
-    """Parse ESPI data for export to emonCMS."""
-    root = ET.fromstring(xml_data)
-    ns = {'espi': 'http://naesb.org/espi'}
-
-    emoncms_data = []
-
-    multiplier = pow(10,
-                     int(root.find('.//espi:powerOfTenMultiplier', ns).text))
-
-    date_start = int(
-        root.find('.//espi:interval', ns).find('.//espi:start', ns).text)
-
-    interval_block = root.find('.//espi:IntervalBlock', ns)
-    for reading in interval_block.findall('.//espi:IntervalReading', ns):
-        start = int(reading.find('.//espi:start', ns).text)
-        value = int(reading.find('.//espi:value', ns).text)
-        watt_hours = int(value * multiplier)
-        offset = start - date_start
-
-        emoncms_data.append([offset, EMONCMS_NODE, watt_hours])
-
-    return (date_start, emoncms_data)
-
-
-def post_data_to_emoncms(for_emoncms):
-    """Send the bulk data to emonCMS."""
-    date_start, emoncms_data = for_emoncms
-
-    params = {'apikey': EMONCMS_WRITE_KEY,
-              'time': date_start,
-              'data': str(emoncms_data)}
-
-    _LOGGER.debug(f'Sending to emoncms with params: {params}')
-
-    response = requests.post(
-        f'{EMONCMS_IP}/input/bulk',
-        params=params)
-
-    if response:
-        if response.text == 'ok':
-            _LOGGER.info('Data sent to emonCMS.')
-            return True
-        _LOGGER.error(f'emonCMS replied with: {response.text}')
-        return False
-    _LOGGER.error(f'No response from emonCMS at {EMONCMS_IP}/input/bulk')
-    return False
 
 
 class PgePostHandler(BaseHTTPRequestHandler):
@@ -443,10 +374,12 @@ class SelfAccessServer:
 
 if __name__ == '__main__':
 
-    auth = get_auth_file()
+    auth_path = f'{PROJECT_PATH}/auth/auth.json'
+    auth = get_auth_file(auth_path)
 
     if not auth:
         # handle missing auth file
+        print(f"Missing auth file at {auth_path}")
         sys.exit()
 
     _LOGGER.debug(f'Using auth.json:  '
