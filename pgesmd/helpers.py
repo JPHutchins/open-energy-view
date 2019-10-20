@@ -1,12 +1,14 @@
 import json
 import requests
 import logging
-import xml.etree.ElementTree as ET
+from operator import itemgetter
+from xml.etree import cElementTree as ET
 
 logging.basicConfig(level=logging.DEBUG,
                     filename='log',
                     format='%(levelname)s - %(asctime)s - %(message)s')
 _LOGGER = logging.getLogger('PGESMD Server')
+
 
 def get_auth_file(auth_path):
     """Try to open auth.json and return tuple."""
@@ -34,6 +36,32 @@ def get_auth_file(auth_path):
     except FileNotFoundError:
         _LOGGER.error(f"Auth file not found at {auth_path}.")
         return None
+
+
+def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
+    """Generator for iterating ESPI XML.
+
+    Sequentially yields a tuple for each Interval Reading:
+        (start, duration, value, watthours)
+    """
+    it = map(itemgetter(1), iter(ET.iterparse(xml_file)))
+
+    for data in it:
+        if data.tag == f'{ns}powerOfTenMultiplier':
+            mp = int(data.text)
+        if data.tag == f'{ns}IntervalBlock':
+            values = []
+            for interval in data.findall(f'{ns}IntervalReading'):
+                time_period = interval.find(f'{ns}timePeriod')
+
+                duration = time_period.find(f'{ns}duration').text
+                start = time_period.find(f'{ns}start').text
+                value = int(interval.find(f'{ns}value').text)
+                watt_h = int(value * pow(10, mp))
+
+                values.append((start, duration, value, watt_h))
+            yield values
+            data.clear()
 
 
 def get_emoncms_from_espi(xml_data,
