@@ -2,6 +2,7 @@ import unittest
 import os
 import threading
 import json
+import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from pgesmd.api import SelfAccessApi
@@ -49,10 +50,18 @@ class TestSelfAccessApi(unittest.TestCase):
 
         self.assertTrue(checkRI(self.api))
 
-    def test_get_access_token(self):
+    def test_token(self):
         self.assertTrue(checkRI(self.api))
 
         self.assertEqual(self.api.get_access_token(), 'the-token')
+        self.assertAlmostEqual(self.api.access_token_exp, time.time() + 3600, 1)
+        self.assertFalse(self.api.need_token())
+
+        self.api.access_token_exp -= 3540  # 59 minutes go by
+        self.assertFalse(self.api.need_token())
+
+        self.api.access_token_exp -= 60  # one hour goes by
+        self.assertTrue(self.api.need_token())
 
         self.assertTrue(checkRI(self.api))
 
