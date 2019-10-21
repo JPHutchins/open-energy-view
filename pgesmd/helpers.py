@@ -4,10 +4,10 @@ import logging
 from operator import itemgetter
 from xml.etree import cElementTree as ET
 
-logging.basicConfig(level=logging.DEBUG,
-                    filename='log',
-                    format='%(levelname)s - %(asctime)s - %(message)s')
-_LOGGER = logging.getLogger('PGESMD Server')
+_LOGGER = logging.getLogger(__name__)
+
+EMONCMS_IP = 'http://192.168.0.40:8080'
+EMONCMS_WRITE_KEY = 'db4da6f33f8739ea50b0038d2fc96cec'
 
 
 def get_auth_file(auth_path):

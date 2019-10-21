@@ -1,8 +1,5 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import sys
 import requests
 import json
-import ssl
 import os
 import xml.etree.ElementTree as ET
 import logging
@@ -11,32 +8,9 @@ from base64 import b64encode
 
 from pgesmd.helpers import (
     get_auth_file,
-    get_emoncms_from_espi,
-    post_data_to_emoncms)
+    )
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# Enter your Third Party ID as listed in the Share My Data portal.
-THIRD_PARTY_ID = '50916'
-
-# Update the files referenced below with your credentials.
-CERT_PATH = f'{PROJECT_PATH}/cert/cert.crt'
-KEY_PATH = f'{PROJECT_PATH}/cert/private.key'
-AUTH_PATH = f'{PROJECT_PATH}/auth/auth.json'
-
-# Port forwarding.  Forward external port 443 to this application:PORT.
-PORT = 7999
-
-# EmonCMS connection info.  https://github.com/emoncms
-EMONCMS_IP = 'http://192.168.0.40:8080'
-EMONCMS_WRITE_KEY = 'db4da6f33f8739ea50b0038d2fc96cec'
-EMONCMS_NODE = 30
-
-TOKEN_URI = 'https://api.pge.com/datacustodian/oauth/v2/token'
-UTILITY_URI = 'https://api.pge.com'
-API_URI = '/GreenButtonConnect/espi'
-BULK_RESOURCE_URI =\
-    f'{UTILITY_URI}{API_URI}/1_1/resource/Batch/Bulk/{THIRD_PARTY_ID}'
 
 logging.basicConfig(level=logging.DEBUG,
                     filename='log',
@@ -327,79 +301,3 @@ class PgeRegister:
                                  text,
                                  len(text),
                                  None)
-
-
-class PgePostHandler(BaseHTTPRequestHandler):
-    api = None
-
-    def do_POST(self):
-        if not self.path == '/pgesmd':
-            return
-
-        _LOGGER.info(f'Received POST from {self.address_string()}')
-
-        body = self.rfile.read(int(self.headers.get('Content-Length')))
-        try:
-            resource_uri = ET.fromstring(body)[0].text
-        except ET.ParseError:
-            _LOGGER.error(f'Could not parse message: {body}')
-            return
-        if not resource_uri[:len(self.api.utility_uri)] ==\
-                self.api.utility_uri:
-            _LOGGER.error(f'POST from {self.address_string} contains: '
-                          f'{body}     '
-                          f'{resource_uri[:len(self.api.utility_uri)]}'
-                          f' != {self.api.utility_uri}')
-            return
-
-        self.send_response(200)
-        self.end_headers()
-
-        xml_data = self.api.get_espi_data(resource_uri)
-        for_emoncms = get_emoncms_from_espi(xml_data)
-        post_data_to_emoncms(for_emoncms)
-        return
-
-
-class SelfAccessServer:
-    def __init__(self, api_instance):
-        PgePostHandler.api = api_instance
-        server = HTTPServer(('', PORT), PgePostHandler)
-
-        server.socket = ssl.wrap_socket(
-            server.socket,
-            certfile=api_instance.cert[0],
-            keyfile=api_instance.cert[1],
-            server_side=True)
-
-        server.serve_forever()
-
-
-if __name__ == '__main__':
-
-    auth_path = f'{PROJECT_PATH}/auth/auth.json'
-    auth = get_auth_file(auth_path)
-
-    if not auth:
-        # handle missing auth file
-        print(f"Missing auth file at {auth_path}")
-        sys.exit()
-
-    _LOGGER.debug(f'Using auth.json:  '
-                  f'third_party_id: {auth[0]}, '
-                  f'client_id: {auth[1]}, '
-                  f'client_secret: {auth[2]}, '
-                  f'cert_crt_path: {auth[3]}, '
-                  f'cert_key_path: {auth[4]}'
-                  )
-
-    api = SelfAccessApi(*auth)
-
-    access_token = api.get_access_token()
-
-    request_post = api.async_request()
-    if request_post:
-        try:
-            server = SelfAccessServer(api)
-        except KeyboardInterrupt:
-            pass
