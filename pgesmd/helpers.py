@@ -56,13 +56,13 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
             for interval in data.findall(f'{ns}IntervalReading'):
                 time_period = interval.find(f'{ns}timePeriod')
 
-                duration = time_period.find(f'{ns}duration').text
-                start = time_period.find(f'{ns}start').text
+                duration = int(time_period.find(f'{ns}duration').text)
+                start = int(time_period.find(f'{ns}start').text)
                 value = int(interval.find(f'{ns}value').text)
-                watt_h = int(value * pow(10, mp))
+                watt_hours = int(value * pow(10, mp))
 
                 # values.append((start, duration, value, watt_h))
-                yield (start, duration, value, watt_h)
+                yield (start, duration, value, watt_hours)
             # yield values
             data.clear()
 

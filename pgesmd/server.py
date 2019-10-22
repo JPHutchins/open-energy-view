@@ -2,11 +2,10 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from xml.etree import cElementTree as ET
 import ssl
 import logging
+import time
+import os
 
-from pgesmd.helpers import (
-    get_emoncms_from_espi,
-    post_data_to_emoncms
-    )
+PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -15,6 +14,7 @@ class PgePostHandler(BaseHTTPRequestHandler):
     api = None
 
     def do_POST(self):
+        """Download the ESPI XML and save to database."""
         if not self.path == '/pgesmd':
             return
 
@@ -38,8 +38,10 @@ class PgePostHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         xml_data = self.api.get_espi_data(resource_uri)
-        for_emoncms = get_emoncms_from_espi(xml_data)
-        post_data_to_emoncms(for_emoncms)
+        timestamp = time.strftime('%y.%m.%d %H:%M', time.localtime())
+        filename = f'{PROJECT_PATH}/data/espi_xml/{timestamp}.xml'
+        with open(filename, 'w') as file:
+            file.write(xml_data)
         return
 
 

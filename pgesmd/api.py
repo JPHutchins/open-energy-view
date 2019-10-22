@@ -199,17 +199,7 @@ class SelfAccessApi:
 
 
 class PgeRegister:
-    """Complete the PGE Share My Data API Connectivity Tests.
-
-    Keyword argument:
-        method -- a function that returns the tuple:
-            ([Third Party ID] string - use "" if unknown,
-             [Client ID] string,
-             [Client Secret] string,
-             [Full path to certificate] string,
-             [Full path to private key] string)
-             Default is get_auth_file() which will look in ./auth/auth.json
-    """
+    """Complete the PGE Share My Data API Connectivity Tests."""
     # refer to: https://www.pge.com/en_US/residential/save-energy-money/analyze-your-usage/your-usage/view-and-share-your-data-with-smartmeter/reading-the-smartmeter/share-your-data/third-party-companies/testing-details.page
 
     def __init__(self,
