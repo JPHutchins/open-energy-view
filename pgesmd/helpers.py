@@ -2,6 +2,7 @@ import json
 import os
 import requests
 import logging
+import time
 from operator import itemgetter
 from xml.etree import cElementTree as ET
 
@@ -65,6 +66,14 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
                 yield (start, duration, value, watt_hours)
             # yield values
             data.clear()
+
+
+def save_espi_xml(xml_data):
+    timestamp = time.strftime('%y.%m.%d %H:%M', time.localtime())
+    filename = f'{PROJECT_PATH}/data/espi_xml/{timestamp}.xml'
+    with open(filename, 'w') as file:
+        file.write(xml_data)
+    return filename
 
 
 def get_emoncms_from_espi(xml_data,

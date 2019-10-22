@@ -2,8 +2,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from xml.etree import cElementTree as ET
 import ssl
 import logging
-import time
 import os
+
+from pgesmd.helpers import (
+    save_espi_xml,
+    parse_espi_data
+)
+
+from pgesmd.database import EnergyHistory
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -12,6 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class PgePostHandler(BaseHTTPRequestHandler):
     api = None
+    callback = None
 
     def do_POST(self):
         """Download the ESPI XML and save to database."""
@@ -38,16 +45,18 @@ class PgePostHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         xml_data = self.api.get_espi_data(resource_uri)
-        timestamp = time.strftime('%y.%m.%d %H:%M', time.localtime())
-        filename = f'{PROJECT_PATH}/data/espi_xml/{timestamp}.xml'
-        with open(filename, 'w') as file:
-            file.write(xml_data)
+        filename = self.callback(xml_data)
+
+        db = EnergyHistory()
+        for entry in parse_espi_data(filename):
+            db.add_espi_to_table(entry)
         return
 
 
 class SelfAccessServer:
-    def __init__(self, api_instance):
+    def __init__(self, api_instance, callback=save_espi_xml):
         PgePostHandler.api = api_instance
+        PgePostHandler.callback = callback
         server = HTTPServer(('', 7999), PgePostHandler)
 
         server.socket = ssl.wrap_socket(
