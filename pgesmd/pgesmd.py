@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     access_token = api.get_access_token()
 
-    request_post = api.async_request()
+    request_post = api.async_request_latest_data()
     if request_post:
         try:
             server = SelfAccessServer(api)

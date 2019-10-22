@@ -109,7 +109,7 @@ class SelfAccessApi:
                       f'{response.status_code}: {response.text}')
         return None
 
-    def async_request(self):
+    def async_request_latest_data(self):
         """Return True upon successful asynchronous request."""
         if self.need_token():
             self.get_access_token()
@@ -123,6 +123,40 @@ class SelfAccessApi:
             self.bulk_resource_uri,
             data={},
             headers=header_params,
+            cert=self.cert
+        )
+        if str(response.status_code) == "202":
+            _LOGGER.info('async_request successful,'
+                         ' awaiting POST from server.')
+            return True
+        _LOGGER.error(f'async_request to Bulk Resource URI failed.  |  '
+                      f'{response.status_code}: {response.text}')
+        return False
+
+    def async_request_historical_data(self, days=730, end_date=None):
+        """Return True upon successful asynchronous request."""
+        if self.need_token():
+            self.get_access_token()
+
+        seconds_in_one_day = 86400
+
+        if not end_date:
+            end_date = int(time.time())
+        start_date = end_date - seconds_in_one_day * days
+
+        header_params = {'Authorization': f'Bearer {self.access_token}'}
+
+        params = {'published-min': start_date,
+                  'published-max': end_date}
+
+        _LOGGER.debug(f'Sending request to {self.bulk_resource_uri} using'
+                      f'access_token {self.access_token}')
+
+        response = requests.get(
+            self.bulk_resource_uri,
+            data={},
+            headers=header_params,
+            params=params,
             cert=self.cert
         )
         if str(response.status_code) == "202":

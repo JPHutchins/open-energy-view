@@ -1,4 +1,5 @@
 import json
+import os
 import requests
 import logging
 from operator import itemgetter
@@ -8,9 +9,10 @@ _LOGGER = logging.getLogger(__name__)
 
 EMONCMS_IP = 'http://192.168.0.40:8080'
 EMONCMS_WRITE_KEY = 'db4da6f33f8739ea50b0038d2fc96cec'
+PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def get_auth_file(auth_path):
+def get_auth_file(auth_path=f'{PROJECT_PATH}/auth/auth.json'):
     """Try to open auth.json and return tuple."""
     try:
         with open(auth_path) as auth:
