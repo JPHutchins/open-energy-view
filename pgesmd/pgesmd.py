@@ -53,8 +53,6 @@ if __name__ == '__main__':
 
     api = SelfAccessApi(*auth)
 
-    access_token = api.get_access_token()
-
     request_post = api.async_request_latest_data()
     if request_post:
         try:

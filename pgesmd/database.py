@@ -27,9 +27,16 @@ class EnergyHistory():
                             """
 
         self.conn = None
+
         try:
             self.conn = sqlite3.connect(
                 f'{PROJECT_PATH}/data/energy_history.db')
+        except Exception as e:
+            _LOGGER.error(e)
+
+        try:
+            self.cursor = self.conn.cursor()
+            self.cursor.execute(self.create_table)
         except Exception as e:
             _LOGGER.error(e)
 
@@ -49,5 +56,5 @@ class EnergyHistory():
             [raw value converted to watt hours]
             )
         """
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(self.insert_espi, espi_tuple)
+        with self.conn:
+            self.cursor.execute(self.insert_espi, espi_tuple)

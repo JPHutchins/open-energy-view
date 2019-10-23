@@ -12,10 +12,9 @@ from pgesmd.helpers import (
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-logging.basicConfig(level=logging.DEBUG,
-                    filename='log',
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "DEBUG"),
                     format='%(levelname)s - %(asctime)s - %(message)s')
-_LOGGER = logging.getLogger('PGESMD Server')
+_LOGGER = logging.getLogger(__name__)
 
 
 class SelfAccessApi:
@@ -181,7 +180,7 @@ class SelfAccessApi:
             cert=self.cert
         )
         if str(response.status_code) == "200":
-            xml_data = response.content
+            xml_data = response.text
             return xml_data
         elif str(response.status_code) == "403" and not retried:
             _LOGGER.error(f'get_espi_data failed. Refreshing token.'

@@ -18,7 +18,6 @@ _LOGGER = logging.getLogger(__name__)
 
 class PgePostHandler(BaseHTTPRequestHandler):
     api = None
-    callback = None
 
     def do_POST(self):
         """Download the ESPI XML and save to database."""
@@ -45,7 +44,7 @@ class PgePostHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         xml_data = self.api.get_espi_data(resource_uri)
-        filename = self.callback(xml_data)
+        filename = save_espi_xml(xml_data)
 
         db = EnergyHistory()
         for entry in parse_espi_data(filename):
@@ -54,9 +53,8 @@ class PgePostHandler(BaseHTTPRequestHandler):
 
 
 class SelfAccessServer:
-    def __init__(self, api_instance, callback=save_espi_xml):
+    def __init__(self, api_instance):
         PgePostHandler.api = api_instance
-        PgePostHandler.callback = callback
         server = HTTPServer(('', 7999), PgePostHandler)
 
         server.socket = ssl.wrap_socket(

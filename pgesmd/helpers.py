@@ -47,6 +47,7 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
     Sequentially yields a tuple for each Interval Reading:
         (start, duration, value, watthours)
     """
+    _LOGGER.debug(f"Trying to parse {xml_file}.")
     it = map(itemgetter(1), iter(ET.iterparse(xml_file)))
 
     for data in it:
@@ -69,7 +70,7 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
 
 
 def save_espi_xml(xml_data):
-    timestamp = time.strftime('%y.%m.%d %H:%M', time.localtime())
+    timestamp = time.strftime('%y.%m.%d %H:%M:%S', time.localtime())
     filename = f'{PROJECT_PATH}/data/espi_xml/{timestamp}.xml'
     with open(filename, 'w') as file:
         file.write(xml_data)
