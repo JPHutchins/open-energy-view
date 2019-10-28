@@ -2,6 +2,7 @@ import sqlite3
 import os
 import logging
 
+
 _LOGGER = logging.getLogger(__name__)
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
