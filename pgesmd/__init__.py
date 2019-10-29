@@ -39,12 +39,15 @@ def create_app(test_config=None):
         conn = sqlite3.connect(f'{PROJECT_PATH}/data/energy_history.db')
 
         cur = conn.cursor()
-        cur.execute("SELECT watt_hours, start"
-                    "FROM espi"
-                    "WHERE start BETWEEN ? and ?", (start, end))
+        cur.execute("""
+                    SELECT watt_hours, start
+                    FROM espi
+                    WHERE start BETWEEN ? and ?
+                    """, (start, end))
 
         values, labels = zip(*cur.fetchall())
-        labels = [time.strftime('%H:%M', time.localtime(l)) for l in labels]
+        values = [v for v in values]
+        labels = [time.strftime('%I%p', time.localtime(l)) for l in labels]
 
         return render_template('chart.html', values=values, labels=labels)
 

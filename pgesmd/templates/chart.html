@@ -42,6 +42,14 @@ var chartData = {
       spanGaps: false
   }]
 }
+
+const options = {
+  tooltips: {
+    callbacks: {
+      label: (item) => `${item.yLabel} Wh`,
+    },
+  },
+}
  
 // get chart canvas
 var ctx = document.getElementById("myChart").getContext("2d");
@@ -50,5 +58,6 @@ var ctx = document.getElementById("myChart").getContext("2d");
 var myChart = new Chart(ctx, {
   type: 'bar',
   data: chartData,
+  options,
 });
 </script>
