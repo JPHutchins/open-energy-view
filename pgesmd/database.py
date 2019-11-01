@@ -9,7 +9,7 @@ PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class EnergyHistory():
-    def __init__(self):
+    def __init__(self, path='/data/energy_history.db'):
         """Open the connection to energy_history.db."""
         self.cursor = None
         self.create_table = """CREATE TABLE IF NOT EXISTS espi (
@@ -31,7 +31,7 @@ class EnergyHistory():
 
         try:
             self.conn = sqlite3.connect(
-                f'{PROJECT_PATH}/data/energy_history.db')
+                f'{PROJECT_PATH}{path}')
         except Exception as e:
             _LOGGER.error(e)
 
@@ -58,4 +58,7 @@ class EnergyHistory():
             )
         """
         with self.conn:
-            self.cursor.execute(self.insert_espi, espi_tuple)
+            try:
+                self.cursor.execute(self.insert_espi, espi_tuple)
+            except sqlite3.IntegrityError:
+                _LOGGER.info("Fall clock change, ignoring one hour.")
