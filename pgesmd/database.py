@@ -11,13 +11,16 @@ class EnergyHistory():
     def __init__(self):
         """Open the connection to energy_history.db."""
         self.cursor = None
-        self.create_table = """CREATE TABLE IF NOT EXISTS espi (
-                                    start integer PRIMARY KEY,
-                                    duration integer,
-                                    value integer,
-                                    watt_hours integer);
-                            """
-
+        self.create_espi_table = """CREATE TABLE IF NOT EXISTS espi (
+                                    start INTEGER PRIMARY KEY,
+                                    duration INTEGER,
+                                    value INTEGER,
+                                    watt_hours INTEGER);
+                                """
+        self.create_daily_table = """CREATE TABLE IF NOT EXISTS daily (
+                                     day TEXT
+                                  """
+        )
         self.insert_espi = """INSERT INTO espi (
                                 start,
                                 duration,
@@ -34,9 +37,10 @@ class EnergyHistory():
         except Exception as e:
             _LOGGER.error(e)
 
+        self.cursor = None
         try:
             self.cursor = self.conn.cursor()
-            self.cursor.execute(self.create_table)
+            self.cursor.execute(self.create_espi_table)
         except Exception as e:
             _LOGGER.error(e)
 
