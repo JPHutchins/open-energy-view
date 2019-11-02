@@ -54,7 +54,7 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
         if data.tag == f'{ns}powerOfTenMultiplier':
             mp = int(data.text)
         if data.tag == f'{ns}IntervalBlock':
-            # values = []
+            previous_start = 0
             for interval in data.findall(f'{ns}IntervalReading'):
                 time_period = interval.find(f'{ns}timePeriod')
 
@@ -63,9 +63,11 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
                 value = int(interval.find(f'{ns}value').text)
                 watt_hours = int(value * pow(10, mp))
 
-                # values.append((start, duration, value, watt_h))
+                if start == previous_start:
+                    continue
+                previous_start = start
                 yield (start, duration, value, watt_hours)
-            # yield values
+
             data.clear()
 
 

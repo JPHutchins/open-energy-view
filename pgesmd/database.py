@@ -19,9 +19,9 @@ class EnergyHistory():
                                     watt_hours INTEGER);
                                 """
         self.create_daily_table = """CREATE TABLE IF NOT EXISTS daily (
-                                     day TEXT
+                                     date TEXT PRIMARY KEY,
+                                     baseline INTEGER);
                                   """
-        )
         self.insert_espi = """INSERT INTO espi (
                                 start,
                                 duration,
@@ -60,9 +60,16 @@ class EnergyHistory():
             [raw value from ESPI XML],
             [raw value converted to watt hours]
             )
+
+            The transition from Daylight Savings Time to Daylight Standard
+            Time are ignored as follows:
+            - If the "clocks are set back" the redundant UTC data is ignored
+              in order to maintain 24 hours per day.
+            - If the "clocks are set forward" then the missing data is filled
+              with the average of the previous and following values in order
+              to maintain 24 hours per day.
         """
-        with self.conn:
-            try:
-                self.cursor.execute(self.insert_espi, espi_tuple)
-            except sqlite3.IntegrityError:
-                _LOGGER.info("Fall clock change, ignoring one hour.")
+        try:
+            self.cursor.execute(self.insert_espi, espi_tuple)
+        except sqlite3.IntegrityError:
+            _LOGGER.info("Fall clock change, ignoring one hour.")

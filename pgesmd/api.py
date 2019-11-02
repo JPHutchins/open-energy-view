@@ -1,3 +1,5 @@
+"""Classes and methods to work with the PG&E Share My Data API."""
+
 import requests
 import json
 import os
@@ -18,7 +20,21 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SelfAccessApi:
-    """Representaiton of the PG&E SMD API for Self Access Users."""
+    """Representation of the PG&E SMD API for Self Access Users.
+
+    Attributes:
+        third_party_id: int,
+        client_id: string,
+        client_secret: string,
+        cert_crt_path: string,
+        cert_key_path: string
+
+    Keyword Arguments:
+        token_uri: string,
+        utility_uri: string,
+        api_uri: string,
+        service_status_uri: string
+    """
     def __init__(self,
                  third_party_id,
                  client_id,
@@ -30,6 +46,7 @@ class SelfAccessApi:
                  api_uri=None,
                  service_status_uri=None,
                  ):
+        """Initialize the API."""
         self.third_party_id = third_party_id
         self.client_id = client_id
         self.client_secret = client_secret

@@ -47,8 +47,8 @@ class PgePostHandler(BaseHTTPRequestHandler):
         filename = save_espi_xml(xml_data)
 
         db = EnergyHistory()
-        for entry in parse_espi_data(filename):
-            db.add_espi_to_table(entry)
+        db.cursor.executemany(db.insert_espi, parse_espi_data(filename))
+        db.cursor.execute("COMMIT")
         return
 
 

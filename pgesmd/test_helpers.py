@@ -69,17 +69,17 @@ class TestHelpers(unittest.TestCase):
             dump.append(entry)
 
         #  17,496 hours / 24 = 729 days of data
-        self.assertEqual(len(dump), 17496)
+        self.assertEqual(len(dump), 17494)
 
         #  check first and last data points, see actual XML file
         self.assertEqual(dump[0], (1508396400, 3600, 446800, 446))
-        self.assertEqual(dump[17495], (1571378400, 3600, 1643400, 1643))
+        self.assertEqual(dump[17493], (1571378400, 3600, 1643400, 1643))
         start = time.strftime(
             '%Y-%m-%d %H:%M:%S',
             time.localtime(int(dump[0][0])))
         end = time.strftime(
             '%Y-%m-%d %H:%M:%S',
-            time.localtime(int(dump[17495][0]) + int(dump[17495][1])))
+            time.localtime(int(dump[17493][0]) + int(dump[17493][1])))
         print(f"\nParsed two year data feed from {start} through {end}")
 
     def test_database_write(self):
@@ -93,8 +93,8 @@ class TestHelpers(unittest.TestCase):
 
         db = EnergyHistory(path='/test/data/energy_history_test.db')
 
-        for entry in parse_espi_data(xml):
-            db.add_espi_to_table(entry)
+        db.cursor.executemany(db.insert_espi, parse_espi_data(xml))
+        db.cursor.execute("COMMIT")
 
         conn = sqlite3.connect(
             f'{PROJECT_PATH}/test/data/energy_history_test.db')
@@ -106,6 +106,7 @@ class TestHelpers(unittest.TestCase):
         for start, answer in starts:
             cur.execute(query, (start,))
             result = cur.fetchall()
+            print(result)
             self.assertEqual(result[0][0], answer)
 
 
