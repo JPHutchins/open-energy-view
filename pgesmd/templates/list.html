@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+   <body>
+      <table border = 1>
+         <thead>
+            <td>Start</td>
+            <td>Duration</td>
+            <td>Value</td>
+            <td>Watt Hours</td>
+         </thead>
+         
+         {% for row in rows %}
+            <tr>
+               <td>{{row["start"]}}</td>
+               <td>{{row["duration"]}}</td>
+               <td>{{row["value"]}}</td>
+               <td>{{row["watt_hours"]}}</td>	
+            </tr>
+         {% endfor %}
+      </table>
+   </body>
+</html>

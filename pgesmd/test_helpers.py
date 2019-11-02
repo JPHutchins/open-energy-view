@@ -1,11 +1,13 @@
 import unittest
 import os
 import time
+import sqlite3
 
 from pgesmd.helpers import (
     get_auth_file,
     parse_espi_data
 )
+from pgesmd.database import EnergyHistory
 
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -79,6 +81,32 @@ class TestHelpers(unittest.TestCase):
             '%Y-%m-%d %H:%M:%S',
             time.localtime(int(dump[17495][0]) + int(dump[17495][1])))
         print(f"\nParsed two year data feed from {start} through {end}")
+
+    def test_database_write(self):
+        query = """
+                SELECT value
+                FROM espi
+                WHERE start=?
+                """
+
+        xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
+
+        db = EnergyHistory(path='/test/data/energy_history_test.db')
+
+        for entry in parse_espi_data(xml):
+            db.add_espi_to_table(entry)
+
+        conn = sqlite3.connect(
+            f'{PROJECT_PATH}/test/data/energy_history_test.db')
+
+        cur = conn.cursor()
+
+        starts = [(1508396400, 446800), (1571378400, 1643400)]
+
+        for start, answer in starts:
+            cur.execute(query, (start,))
+            result = cur.fetchall()
+            self.assertEqual(result[0][0], answer)
 
 
 if __name__ == '__main__':
