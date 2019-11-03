@@ -1,7 +1,9 @@
 import unittest
 import os
 import time
+import heapq
 import sqlite3
+from operator import itemgetter
 
 from pgesmd.helpers import (
     get_auth_file,
@@ -15,36 +17,34 @@ print(f'Testing in: {PROJECT_PATH}')
 
 
 answers = [
-           (1570086000, 3600, 1067300, 1067),
-           (1570089600, 3600, 916900, 916),
-           (1570093200, 3600, 912000, 912),
-           (1570096800, 3600, 759100, 759),
-           (1570100400, 3600, 594400, 594),
-           (1570104000, 3600, 650500, 650),
-           (1570107600, 3600, 676900, 676),
-           (1570111200, 3600, 759600, 759),
-           (1570114800, 3600, 695900, 695),
-           (1570118400, 3600, 853500, 853),
-           (1570122000, 3600, 1229500, 1229),
-           (1570125600, 3600, 871100, 871),
-           (1570129200, 3600, 826900, 826),
-           (1570132800, 3600, 1042899, 1042),
-           (1570136400, 3600, 1233600, 1233),
-           (1570140000, 3600, 1115900, 1115),
-           (1570143600, 3600, 1331000, 1331),
-           (1570147200, 3600, 3363100, 3363),
-           (1570150800, 3600, 4870100, 4870),
-           (1570154400, 3600, 5534300, 5534),
-           (1570158000, 3600, 5541900, 5541),
-           (1570161600, 3600, 6296300, 6296),
-           (1570165200, 3600, 5372200, 5372),
-           (1570168800, 3600, 4148399, 4148)
+           (1570086000, 3600, 1067300, 1067, '19/10/03'),
+           (1570089600, 3600, 916900, 916, '19/10/03'),
+           (1570093200, 3600, 912000, 912, '19/10/03'),
+           (1570096800, 3600, 759100, 759, '19/10/03'),
+           (1570100400, 3600, 594400, 594, '19/10/03'),
+           (1570104000, 3600, 650500, 650, '19/10/03'),
+           (1570107600, 3600, 676900, 676, '19/10/03'),
+           (1570111200, 3600, 759600, 759, '19/10/03'),
+           (1570114800, 3600, 695900, 695, '19/10/03'),
+           (1570118400, 3600, 853500, 853, '19/10/03'),
+           (1570122000, 3600, 1229500, 1229, '19/10/03'),
+           (1570125600, 3600, 871100, 871, '19/10/03'),
+           (1570129200, 3600, 826900, 826, '19/10/03'),
+           (1570132800, 3600, 1042899, 1042, '19/10/03'),
+           (1570136400, 3600, 1233600, 1233, '19/10/03'),
+           (1570140000, 3600, 1115900, 1115, '19/10/03'),
+           (1570143600, 3600, 1331000, 1331, '19/10/03'),
+           (1570147200, 3600, 3363100, 3363, '19/10/03'),
+           (1570150800, 3600, 4870100, 4870, '19/10/03'),
+           (1570154400, 3600, 5534300, 5534, '19/10/03'),
+           (1570158000, 3600, 5541900, 5541, '19/10/03'),
+           (1570161600, 3600, 6296300, 6296, '19/10/03'),
+           (1570165200, 3600, 5372200, 5372, '19/10/03'),
+           (1570168800, 3600, 4148399, 4148, '19/10/03')
            ]
 
 
 class TestHelpers(unittest.TestCase):
-    def setUp(self):
-        pass
 
     def test_get_auth_file(self):
         self.assertEqual(get_auth_file('bad_path'), None)
@@ -69,17 +69,18 @@ class TestHelpers(unittest.TestCase):
             dump.append(entry)
 
         #  17,496 hours / 24 = 729 days of data
-        self.assertEqual(len(dump), 17494)
+        self.assertEqual(len(dump), 17496)
 
         #  check first and last data points, see actual XML file
-        self.assertEqual(dump[0], (1508396400, 3600, 446800, 446))
-        self.assertEqual(dump[17493], (1571378400, 3600, 1643400, 1643))
+        self.assertEqual(dump[0], (1508396400, 3600, 446800, 446, '17/10/19'))
+        self.assertEqual(dump[17495], (1571378400, 3600, 1643400, 1643,
+                         '19/10/17'))
         start = time.strftime(
             '%Y-%m-%d %H:%M:%S',
             time.localtime(int(dump[0][0])))
         end = time.strftime(
             '%Y-%m-%d %H:%M:%S',
-            time.localtime(int(dump[17493][0]) + int(dump[17493][1])))
+            time.localtime(int(dump[17495][0]) + int(dump[17495][1])))
         print(f"\nParsed two year data feed from {start} through {end}")
 
     def test_database_write(self):
@@ -89,26 +90,49 @@ class TestHelpers(unittest.TestCase):
                 WHERE start=?
                 """
 
-        xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
-
         db = EnergyHistory(path='/test/data/energy_history_test.db')
+        xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
+        db.insert_espi_xml(xml)
 
-        db.cursor.executemany(db.insert_espi, parse_espi_data(xml))
-        db.cursor.execute("COMMIT")
-
-        conn = sqlite3.connect(
-            f'{PROJECT_PATH}/test/data/energy_history_test.db')
-
-        cur = conn.cursor()
+        cur = db.cursor
 
         starts = [(1508396400, 446800), (1571378400, 1643400)]
 
         for start, answer in starts:
             cur.execute(query, (start,))
             result = cur.fetchall()
-            print(result)
             self.assertEqual(result[0][0], answer)
+        
+        cur.execute('DROP TABLE espi')
+        cur.execute('DROP TABLE daily')
+
+    def test_database_daily_write(self):
+        db = EnergyHistory(path='/test/data/energy_history_test.db')
+        xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
+        db.insert_espi_xml(xml)
+
+        conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        cur = conn.cursor()
+        dates = conn.cursor()
+
+        dates.execute('SELECT date FROM daily')
+        for date in dates:
+            cur.execute('SELECT watt_hours FROM espi WHERE date=?', (date[0],))
+            min_heap = list(map(itemgetter(0), cur))
+            heapq.heapify(min_heap)
+            baseline = ((heapq.heappop(min_heap) +
+                         heapq.heappop(min_heap) +
+                         heapq.heappop(min_heap)) / 3)
+            baseline = int(round(baseline))
+
+        cur.execute('DROP TABLE espi')
+        cur.execute('DROP TABLE daily')
 
 
 if __name__ == '__main__':
+    conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+    cur = conn.cursor()
+    cur.execute('DROP TABLE IF EXISTS espi')
+    cur.execute('DROP TABLE IF EXISTS daily')
+
     unittest.main()

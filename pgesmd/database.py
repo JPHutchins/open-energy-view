@@ -2,6 +2,7 @@ import sqlite3
 import os
 import logging
 
+from pgesmd.helpers import parse_espi_data
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -11,12 +12,13 @@ PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 class EnergyHistory():
     def __init__(self, path='/data/energy_history.db'):
         """Open the connection to energy_history.db."""
-        self.cursor = None
         self.create_espi_table = """CREATE TABLE IF NOT EXISTS espi (
                                     start INTEGER PRIMARY KEY,
                                     duration INTEGER,
                                     value INTEGER,
-                                    watt_hours INTEGER);
+                                    watt_hours INTEGER,
+                                    date TEXT);
+
                                 """
         self.create_daily_table = """CREATE TABLE IF NOT EXISTS daily (
                                      date TEXT PRIMARY KEY,
@@ -26,10 +28,14 @@ class EnergyHistory():
                                 start,
                                 duration,
                                 value,
-                                watt_hours)
-                                VALUES (?,?,?,?)
+                                watt_hours,
+                                date)
+                                VALUES (?,?,?,?,?);
                             """
-
+        self.insert_days = """INSERT INTO daily (
+                               date)
+                               VALUES (?);
+                            """
         self.conn = None
 
         try:
@@ -42,6 +48,7 @@ class EnergyHistory():
         try:
             self.cursor = self.conn.cursor()
             self.cursor.execute(self.create_espi_table)
+            self.cursor.execute(self.create_daily_table)
         except Exception as e:
             _LOGGER.error(e)
 
@@ -60,16 +67,22 @@ class EnergyHistory():
             [raw value from ESPI XML],
             [raw value converted to watt hours]
             )
-
-            The transition from Daylight Savings Time to Daylight Standard
-            Time are ignored as follows:
-            - If the "clocks are set back" the redundant UTC data is ignored
-              in order to maintain 24 hours per day.
-            - If the "clocks are set forward" then the missing data is filled
-              with the average of the previous and following values in order
-              to maintain 24 hours per day.
         """
         try:
             self.cursor.execute(self.insert_espi, espi_tuple)
         except sqlite3.IntegrityError:
             _LOGGER.info("Fall clock change, ignoring one hour.")
+    
+    def insert_espi_xml(self, xml_file):
+        """Insert an ESPI XML file into the TABLE "espi".
+        
+        Additionally, the TABLE "daily" is updated with any dates that
+        correspond to the ESPI data.
+        """
+        date = None
+        for entry in parse_espi_data(xml_file):
+            self.cursor.execute(self.insert_espi, entry)
+            if not entry[4] == date:
+                date = entry[4]
+                self.cursor.execute(self.insert_days, (date,))
+        self.cursor.execute("COMMIT")

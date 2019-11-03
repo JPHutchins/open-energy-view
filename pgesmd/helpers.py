@@ -3,6 +3,7 @@ import os
 import requests
 import logging
 import time
+from datetime import datetime
 from operator import itemgetter
 from xml.etree import cElementTree as ET
 
@@ -42,19 +43,37 @@ def get_auth_file(auth_path=f'{PROJECT_PATH}/auth/auth.json'):
 
 
 def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
-    """Generator for iterating ESPI XML.
+    """Generate ESPI tuple from ESPI XML.
 
     Sequentially yields a tuple for each Interval Reading:
         (start, duration, value, watthours)
+
+    The transition from Daylight Savings Time to Daylight Standard
+    Time or inverse are ignored as follows:
+    - If the "clocks are set back" then a UTC data point is repeated.  The
+        repetition is ignored in order to maintain 24 hours per day.
+    - If the "clocks are set forward" then a UTC data point is missing.  The
+        missing hour is filled with the average of the previous and following
+        values in order to maintain 24 hours per day.
     """
     _LOGGER.debug(f"Trying to parse {xml_file}.")
-    it = map(itemgetter(1), iter(ET.iterparse(xml_file)))
 
+    # Find initial values
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+    for child in root.iter(f'{ns}timePeriod'):
+        first_start = int(child.find(f'{ns}start').text)
+        duration = int(child.find(f'{ns}duration').text)
+        break
+    previous = (first_start - duration, 0, 0, 0, 0)
+    root.clear()
+
+    # Find all values
+    it = map(itemgetter(1), iter(ET.iterparse(xml_file)))
     for data in it:
         if data.tag == f'{ns}powerOfTenMultiplier':
             mp = int(data.text)
         if data.tag == f'{ns}IntervalBlock':
-            previous_start = 0
             for interval in data.findall(f'{ns}IntervalReading'):
                 time_period = interval.find(f'{ns}timePeriod')
 
@@ -62,16 +81,27 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
                 start = int(time_period.find(f'{ns}start').text)
                 value = int(interval.find(f'{ns}value').text)
                 watt_hours = int(value * pow(10, mp))
+                date = datetime.fromtimestamp(start).strftime('%y/%m/%d')
 
-                if start == previous_start:
+                if start == previous[0]:  # clocks back
                     continue
-                previous_start = start
-                yield (start, duration, value, watt_hours)
+
+                if not start == previous[0] + duration:  # clocks forward
+                    start = previous[0] + duration
+                    value = int((previous[2] + value) / 2)
+                    watt_hours = int(value * pow(10, mp))
+                    previous = (start, duration, value, watt_hours)
+                    yield (start, duration, value, watt_hours, date)
+                    continue
+
+                previous = (start, duration, value, watt_hours, date)
+                yield (start, duration, value, watt_hours, date)
 
             data.clear()
 
 
 def save_espi_xml(xml_data):
+    """Save ESPI XML to a file named by timestamp."""
     timestamp = time.strftime('%y.%m.%d %H:%M:%S', time.localtime())
     filename = f'{PROJECT_PATH}/data/espi_xml/{timestamp}.xml'
     with open(filename, 'w') as file:
