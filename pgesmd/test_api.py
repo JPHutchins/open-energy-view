@@ -1,3 +1,5 @@
+"""Test the SelfAccessApi."""
+
 import unittest
 import os
 import threading
@@ -54,7 +56,8 @@ class TestSelfAccessApi(unittest.TestCase):
         self.assertTrue(checkRI(self.api))
 
         self.assertEqual(self.api.get_access_token(), 'the-token')
-        self.assertAlmostEqual(self.api.access_token_exp, time.time() + 3600, 1)
+        self.assertAlmostEqual(
+            self.api.access_token_exp, time.time() + 3600, 1)
         self.assertFalse(self.api.need_token())
 
         self.api.access_token_exp -= 3540  # 59 minutes go by

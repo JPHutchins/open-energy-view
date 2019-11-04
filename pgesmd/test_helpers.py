@@ -45,8 +45,10 @@ answers = [
 
 
 class TestHelpers(unittest.TestCase):
+    """Test pgesmd.helpers."""
 
     def test_get_auth_file(self):
+        """Test get_auth_file()."""
         self.assertEqual(get_auth_file('bad_path'), None)
         self.assertEqual(
             get_auth_file(f'{PROJECT_PATH}/test/auth/bad.json'), None)
@@ -59,6 +61,7 @@ class TestHelpers(unittest.TestCase):
                 '/home/jp/pgesmd/test/cert/private.key'))
 
     def test_parse_espi(self):
+        """Test parse_espi_data()."""
         xml = f'{PROJECT_PATH}/test/data/espi/espi_1_day.xml'
         for entry, answer in zip(parse_espi_data(xml), answers):
             self.assertEqual(entry, answer)
@@ -84,6 +87,7 @@ class TestHelpers(unittest.TestCase):
         print(f"\nParsed two year data feed from {start} through {end}")
 
     def test_database_write(self):
+        """Verify integrity of data after SQL INSERT."""
         query = "SELECT value FROM espi WHERE start=?"
 
         db = EnergyHistory(path='/test/data/energy_history_test.db')
@@ -103,6 +107,7 @@ class TestHelpers(unittest.TestCase):
         cur.execute('DROP TABLE daily')
 
     def test_database_daily_write(self):
+        """Verify that daily baseline was calculated correctly."""
         db = EnergyHistory(path='/test/data/energy_history_test.db')
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
         db.insert_espi_xml(xml)

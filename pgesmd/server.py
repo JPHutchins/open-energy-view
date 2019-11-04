@@ -1,3 +1,5 @@
+"""A server that handles POST from PGE SMD servers."""
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from xml.etree import cElementTree as ET
 import ssl
@@ -17,6 +19,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class PgePostHandler(BaseHTTPRequestHandler):
+    """Handle POST from PGE."""
+
     api = None
 
     def do_POST(self):
@@ -53,7 +57,10 @@ class PgePostHandler(BaseHTTPRequestHandler):
 
 
 class SelfAccessServer:
+    """Server class for PGE SMD Self Access API."""
+
     def __init__(self, api_instance):
+        """Initialize and start the server on construction."""
         PgePostHandler.api = api_instance
         server = HTTPServer(('', 7999), PgePostHandler)
 
