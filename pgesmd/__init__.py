@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 from flask import Flask, render_template, request
 import sqlite3
 
@@ -32,7 +33,7 @@ def create_app(test_config=None):
     def hello():
         return 'Hello, World!'
 
-    @app.route("/", methods=['GET'])
+    @app.route("/test-espi_chart", methods=['GET'])
     def chart():
         start = request.args.get('start', default=0)
         end = request.args.get('end', default=9571569200)
@@ -51,8 +52,8 @@ def create_app(test_config=None):
 
         return render_template('chart.html', values=values, labels=labels)
 
-    @app.route('/list')
-    def list():
+    @app.route('/test-espi_list')
+    def long_list():
         conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
         conn.row_factory = sqlite3.Row
 
@@ -61,5 +62,18 @@ def create_app(test_config=None):
 
         rows = cur.fetchall()
         return render_template("list.html", rows=rows)
+
+    @app.route('/test-baseline')
+    def baseline():
+        conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+
+        cur = conn.cursor()
+        cur.execute("SELECT baseline, date FROM daily")
+
+        values, labels = zip(*cur.fetchall())
+        values = [v for v in values]
+        labels = [datetime.strptime(l, '%y/%m/%d').strftime('%b %d %Y') for l in labels]
+
+        return render_template('line.html', values=values, labels=labels)
 
     return app
