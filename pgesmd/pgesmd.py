@@ -1,3 +1,5 @@
+"""Trial config flow for the PGE SMD API library."""
+
 import os
 import sys
 import logging

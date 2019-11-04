@@ -1,9 +1,9 @@
+"""Test the functions and methods in pgesmd.helpers."""
+
 import unittest
 import os
 import time
-import heapq
 import sqlite3
-from operator import itemgetter
 
 from pgesmd.helpers import (
     get_auth_file,
@@ -84,11 +84,7 @@ class TestHelpers(unittest.TestCase):
         print(f"\nParsed two year data feed from {start} through {end}")
 
     def test_database_write(self):
-        query = """
-                SELECT value
-                FROM espi
-                WHERE start=?
-                """
+        query = "SELECT value FROM espi WHERE start=?"
 
         db = EnergyHistory(path='/test/data/energy_history_test.db')
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
@@ -102,7 +98,7 @@ class TestHelpers(unittest.TestCase):
             cur.execute(query, (start,))
             result = cur.fetchall()
             self.assertEqual(result[0][0], answer)
-        
+
         cur.execute('DROP TABLE espi')
         cur.execute('DROP TABLE daily')
 
@@ -111,19 +107,27 @@ class TestHelpers(unittest.TestCase):
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
         db.insert_espi_xml(xml)
 
-        conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
-        cur = conn.cursor()
-        dates = conn.cursor()
+        cur = db.cursor
 
-        dates.execute('SELECT date FROM daily')
-        for date in dates:
-            cur.execute('SELECT watt_hours FROM espi WHERE date=?', (date[0],))
-            min_heap = list(map(itemgetter(0), cur))
-            heapq.heapify(min_heap)
-            baseline = ((heapq.heappop(min_heap) +
-                         heapq.heappop(min_heap) +
-                         heapq.heappop(min_heap)) / 3)
-            baseline = int(round(baseline))
+        cur.execute("SELECT watt_hours from espi WHERE date='17/10/19'")
+        wh_readings = cur.fetchall()
+        wh_readings.sort()
+        baseline_ans = int(round(
+            (wh_readings[0][0] + wh_readings[1][0] + wh_readings[2][0]) / 3))
+
+        cur.execute("SELECT baseline FROM daily WHERE date='17/10/19'")
+        baseline = cur.fetchall()[0][0]
+
+        cur.execute("SELECT watt_hours from espi WHERE date='19/10/17'")
+        wh_readings = cur.fetchall()
+        wh_readings.sort()
+        baseline_ans = int(round(
+            (wh_readings[0][0] + wh_readings[1][0] + wh_readings[2][0]) / 3))
+
+        cur.execute("SELECT baseline FROM daily WHERE date='19/10/17'")
+        baseline = cur.fetchall()[0][0]
+
+        self.assertEqual(baseline_ans, baseline)
 
         cur.execute('DROP TABLE espi')
         cur.execute('DROP TABLE daily')

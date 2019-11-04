@@ -1,3 +1,5 @@
+"""Helper functinos for pgesmd."""
+
 import json
 import os
 import requests
@@ -46,7 +48,7 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
     """Generate ESPI tuple from ESPI XML.
 
     Sequentially yields a tuple for each Interval Reading:
-        (start, duration, value, watthours)
+        (start, duration, value, watthours, date)
 
     The transition from Daylight Savings Time to Daylight Standard
     Time or inverse are ignored as follows:
@@ -80,7 +82,7 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
                 duration = int(time_period.find(f'{ns}duration').text)
                 start = int(time_period.find(f'{ns}start').text)
                 value = int(interval.find(f'{ns}value').text)
-                watt_hours = int(value * pow(10, mp))
+                watt_hours = int(value * pow(10, mp) * duration / 3600)
                 date = datetime.fromtimestamp(start).strftime('%y/%m/%d')
 
                 if start == previous[0]:  # clocks back
