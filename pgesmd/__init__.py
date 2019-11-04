@@ -36,7 +36,7 @@ def create_app(test_config=None):
     def chart():
         start = request.args.get('start', default=0)
         end = request.args.get('end', default=9571569200)
-        conn = sqlite3.connect(f'{PROJECT_PATH}/data/energy_history.db')
+        conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         cur = conn.cursor()
         cur.execute("""
@@ -53,7 +53,7 @@ def create_app(test_config=None):
 
     @app.route('/list')
     def list():
-        conn = sqlite3.connect(f'{PROJECT_PATH}/data/energy_history.db')
+        conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
         conn.row_factory = sqlite3.Row
 
         cur = conn.cursor()

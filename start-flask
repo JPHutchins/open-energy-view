@@ -1,4 +1,5 @@
 #!/bin/bash
+python3 -m pgesmd.test_gui
 export FLASK_APP=pgesmd
 export FLASK_ENV=development
 flask run

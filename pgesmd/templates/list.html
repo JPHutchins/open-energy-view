@@ -7,6 +7,7 @@
             <td>Duration</td>
             <td>Value</td>
             <td>Watt Hours</td>
+            <td>Date YY/MM/DD</td>
          </thead>
          
          {% for row in rows %}
@@ -14,7 +15,8 @@
                <td>{{row["start"]}}</td>
                <td>{{row["duration"]}}</td>
                <td>{{row["value"]}}</td>
-               <td>{{row["watt_hours"]}}</td>	
+               <td>{{row["watt_hours"]}}</td>
+               <td>{{row["date"]}}</td>	
             </tr>
          {% endfor %}
       </table>
