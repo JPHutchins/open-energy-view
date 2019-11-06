@@ -1,5 +1,5 @@
 import os
-import time
+import json
 from datetime import datetime
 from flask import Flask, render_template, request
 import sqlite3
@@ -32,7 +32,7 @@ def create_app(test_config=None):
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
-    
+
     @app.route("/test-gui")
     def test_gui():
         return render_template('test-gui.html')
@@ -41,7 +41,8 @@ def create_app(test_config=None):
     def chart():
         start = request.args.get('start', default=0)
         end = request.args.get('end', default=9571569200)
-        conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        conn = sqlite3.connect(
+            f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         cur = conn.cursor()
         cur.execute("""
@@ -49,16 +50,19 @@ def create_app(test_config=None):
                     FROM espi
                     WHERE start BETWEEN ? and ?
                     """, (start, end))
+        data = []
+        for values, starts in cur.fetchall():
+            # JS needs UTC in ms; the offset is to position the bar correctly
+            starts = starts * 1000 + 1800000
+            data.append({'x': starts, 'y': values})
+        data = str(json.dumps(data))
 
-        values, labels = zip(*cur.fetchall())
-        values = [v for v in values]
-        labels = [time.strftime('%I%p', time.localtime(l)) for l in labels]
-
-        return render_template('chart.html', values=values, labels=labels)
+        return render_template('date-chart.html', data=data)
 
     @app.route('/test-espi-list')
     def long_list():
-        conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        conn = sqlite3.connect(
+            f'{PROJECT_PATH}/test/data/energy_history_test.db')
         conn.row_factory = sqlite3.Row
 
         cur = conn.cursor()
@@ -69,13 +73,13 @@ def create_app(test_config=None):
 
     @app.route('/test-baseline')
     def baseline():
-        conn = sqlite3.connect(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        conn = sqlite3.connect(
+            f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         cur = conn.cursor()
         cur.execute("SELECT baseline, date FROM daily")
 
         values, labels = zip(*cur.fetchall())
-        values = [v for v in values]
         labels = [datetime.strptime(l, '%y/%m/%d').strftime('%b %d %Y') for l in labels]
 
         return render_template('line.html', values=values, labels=labels)
