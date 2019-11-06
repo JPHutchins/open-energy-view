@@ -48,16 +48,22 @@ def create_app(test_config=None):
         cur.execute("""
                     SELECT watt_hours, start
                     FROM espi
-                    WHERE start BETWEEN ? and ?
-                    """, (start, end))
+                    ORDER BY start ASC;
+                    """)
         data = []
+        lookup = {}
+        i = 0
         for values, starts in cur.fetchall():
-            # JS needs UTC in ms; the offset is to position the bar correctly
+            # JS needs epoch in ms; the offset is to position the bar correctly
             starts = starts * 1000 + 1800000
             data.append({'x': starts, 'y': values})
-        data = str(json.dumps(data))
+            lookup[starts] = i
+            i += 1
 
-        return render_template('date-chart.html', data=data)
+        data = str(json.dumps(data))
+        lookup = str(json.dumps(lookup))
+
+        return render_template('date-chart.html', data=data, lookup=lookup)
 
     @app.route('/test-espi-list')
     def long_list():
