@@ -52,18 +52,20 @@ def create_app(test_config=None):
                     """)
         data = []
         lookup = {}
+        dates = []
         i = 0
         for values, starts in cur.fetchall():
             # JS needs epoch in ms; the offset is to position the bar correctly
             starts = starts * 1000 + 1800000
             data.append({'x': starts, 'y': values})
+            dates.append(starts)
             lookup[starts] = i
             i += 1
 
         data = str(json.dumps(data))
         lookup = str(json.dumps(lookup))
 
-        return render_template('date-chart.html', data=data, lookup=lookup)
+        return render_template('date-chart.html', data=data, lookup=lookup, dates=dates)
 
     @app.route('/test-espi-list')
     def long_list():
