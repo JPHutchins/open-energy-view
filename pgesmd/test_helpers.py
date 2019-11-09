@@ -103,6 +103,18 @@ class TestHelpers(unittest.TestCase):
             result = cur.fetchall()
             self.assertEqual(result[0][0], answer)
 
+        cur.execute("SELECT first_entry FROM info")
+        self.assertEqual(starts[0][0], db.first_entry)
+        self.assertEqual(starts[0][0], cur.fetchone()[0])
+
+        cur.execute("SELECT last_entry FROM info")
+        self.assertEqual(starts[1][0], db.last_entry)
+        self.assertEqual(starts[1][0], cur.fetchone()[0])
+
+        cur.execute("SELECT max_watt_hour FROM info")
+        self.assertEqual(7947, db.max_watt_hour)
+        self.assertEqual(7947, cur.fetchone()[0])
+
         cur.execute('DROP TABLE espi')
         cur.execute('DROP TABLE daily')
 
