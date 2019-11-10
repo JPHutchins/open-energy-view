@@ -190,6 +190,7 @@ class EnergyHistory():
             espi_time = get_hours_mins(entry[0])
             if not c.test(espi_time):
                 part_sum += entry[3]
+                interval_date = entry[4]
             else:
                 interval_time = (entry[0] - interval_start) / 3600
                 part_avg = part_sum / interval_time
@@ -200,7 +201,7 @@ class EnergyHistory():
                     part_{part_i+1}_sum)
                     VALUES (?,?,?);
                     """, (
-                        entry[4],
+                        interval_date,
                         part_avg,
                         part_sum))
 
