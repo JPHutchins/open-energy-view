@@ -79,6 +79,18 @@ def create_app(test_config=None):
         rows = cur.fetchall()
         return render_template("list.html", rows=rows)
 
+    @app.route('/test-partitions-list')
+    def long_partslist():
+        conn = sqlite3.connect(
+            f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        conn.row_factory = sqlite3.Row
+
+        cur = conn.cursor()
+        cur.execute("select * from partitions")
+
+        rows = cur.fetchall()
+        return render_template("list-parts.html", rows=rows)
+
     @app.route('/test-baseline')
     def baseline():
         conn = sqlite3.connect(
