@@ -16,6 +16,30 @@ EMONCMS_WRITE_KEY = 'db4da6f33f8739ea50b0038d2fc96cec'
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+class Crosses:
+    """
+    Test whether or not a value has been crossed from the left side.
+    """
+
+    def __init__(self, target):
+        """Initialize."""
+        self.target = target
+        self.lessthan = False
+        self.greaterthan = False
+
+    def test(self, value):
+        """Return True if value has crossed the target, otherwise False."""
+        if value <= self.target and self.greaterthan:
+            return True
+        elif value >= self.target and self.lessthan:
+            return True
+        elif value < self.target:
+            self.lessthan = True
+            return False
+        self.greaterthan = True
+        return False
+
+
 def get_auth_file(auth_path=f'{PROJECT_PATH}/auth/auth.json'):
     """Try to open auth.json and return tuple."""
     try:
@@ -161,3 +185,4 @@ def post_data_to_emoncms(for_emoncms,
         return False
     _LOGGER.error(f'No response from emonCMS at {EMONCMS_IP}/input/bulk')
     return False
+
