@@ -17,26 +17,22 @@ PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class Crosses:
-    """
-    Test whether or not a value has been crossed from the left side.
-    """
+    """Test whether or not a number has been crossed from the 'left' side."""
 
     def __init__(self, target):
         """Initialize."""
         self.target = target
         self.lessthan = False
-        self.greaterthan = False
 
     def test(self, value):
         """Return True if value has crossed the target, otherwise False."""
-        if value <= self.target and self.greaterthan:
+        if value == self.target:
             return True
         elif value >= self.target and self.lessthan:
             return True
         elif value < self.target:
             self.lessthan = True
             return False
-        self.greaterthan = True
         return False
 
 
