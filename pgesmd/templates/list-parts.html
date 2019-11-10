@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+   <body>
+      <table border = 1>
+         <thead>
+            <td>date</td>
+            <td>Part 1 AVG</td>
+            <td>Part 1 SUM</td>
+            <td>Part 2 AVG</td>
+            <td>Part 2 SUM</td>
+            <td>Part 3 AVG</td>
+            <td>Part 3 SUM</td>
+            <td>Part 4 AVG</td>
+            <td>Part 4 SUM</td>
+            <td>Part 5 AVG</td>
+            <td>Part 5 SUM</td>
+         </thead>
+         
+         {% for row in rows %}
+            <tr>
+               <td>{{row["date"]}}</td>
+               <td>{{row["part_1_avg"]}}</td>
+               <td>{{row["part_1_sum"]}}</td>
+               <td>{{row["part_2_avg"]}}</td>
+               <td>{{row["part_2_sum"]}}</td>
+               <td>{{row["part_3_avg"]}}</td>
+               <td>{{row["part_3_sum"]}}</td>
+               <td>{{row["part_4_avg"]}}</td>
+               <td>{{row["part_4_sum"]}}</td>
+               <td>{{row["part_5_avg"]}}</td>
+               <td>{{row["part_5_sum"]}}</td>
+            </tr>
+         {% endfor %}
+      </table>
+   </body>
+</html>
