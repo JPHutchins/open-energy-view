@@ -90,6 +90,18 @@ def create_app(test_config=None):
 
         rows = cur.fetchall()
         return render_template("list-parts.html", rows=rows)
+    
+    @app.route('/test-info-list')
+    def info_list():
+        conn = sqlite3.connect(
+            f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        conn.row_factory = sqlite3.Row
+
+        cur = conn.cursor()
+        cur.execute("select * from info")
+
+        rows = cur.fetchall()
+        return render_template("list-info.html", rows=rows)
 
     @app.route('/test-baseline')
     def baseline():

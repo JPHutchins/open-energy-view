@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+   <body>
+      <table border = 1>
+         <thead>
+            <td>id</td>
+            <td>max_watt_hour</td>
+            <td>first_entry</td>
+            <td>last_entry</td>
+            <td>n_parts</td>
+            <td>Part 1 name</td>
+            <td>Part 1 time</td>
+            <td>Part 2 name</td>
+            <td>Part 2 time</td>
+            <td>Part 3 name</td>
+            <td>Part 3 time</td>
+            <td>Part 4 name</td>
+            <td>Part 4 time</td>
+            <td>Part 5 name</td>
+            <td>Part 5 time</td>
+         </thead>
+         
+         {% for row in rows %}
+            <tr>
+               <td>{{row["id"]}}</td>
+               <td>{{row["max_watt_hour"]}}</td>
+               <td>{{row["first_entry"]}}</td>
+               <td>{{row["last_entry"]}}</td>
+               <td>{{row["n_parts"]}}</td>
+               <td>{{row["part_1_name"]}}</td>
+               <td>{{row["part_1_time"]}}</td>
+               <td>{{row["part_2_name"]}}</td>
+               <td>{{row["part_2_time"]}}</td>
+               <td>{{row["part_3_name"]}}</td>
+               <td>{{row["part_3_time"]}}</td>
+               <td>{{row["part_4_name"]}}</td>
+               <td>{{row["part_4_time"]}}</td>
+               <td>{{row["part_5_name"]}}</td>
+               <td>{{row["part_5_time"]}}</td>
+            </tr>
+         {% endfor %}
+      </table>
+   </body>
+</html>
