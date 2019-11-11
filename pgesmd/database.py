@@ -60,6 +60,7 @@ class EnergyHistory():
         self.create_partitions_table = """
             CREATE TABLE IF NOT EXISTS partitions (
             date TEXT,
+            start INTEGER,
             part_1_avg INTEGER,
             part_1_sum INTEGER,
             part_2_avg INTEGER,
@@ -197,11 +198,13 @@ class EnergyHistory():
                 self.cursor.execute(f"""
                     INSERT INTO partitions (
                     date,
+                    start,
                     part_{part_i+1}_avg,
                     part_{part_i+1}_sum)
                     VALUES (?,?,?);
                     """, (
                         interval_date,
+                        interval_start,
                         part_avg,
                         part_sum))
 
