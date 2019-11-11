@@ -1,0 +1,128 @@
+<head>
+    <meta charset="utf-8" />
+    <title>ESPI chart</title>
+    <!-- import plugin script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+</head>
+
+<canvas id="bar-chart" width="800" height="450"></canvas>
+
+<input type="text" id="start-date" value="Oct 10 2019">
+<input type="text" id="end-date" value="Oct 17 2019">
+<button id="time-period">Set Time Period</button><br>
+<button id="previous-week">Previous Week</button>
+<button id="next-week">Next Week</button>
+
+<script>
+
+// to J.P. - provide a dictionary keyed by the UTC times from the database - the value will simply be an index
+// which can be used to perform lookup on the JSON list for chart.js.  Ideally all of the data can be sent
+// to client and then parsed and ranged there without making repeated requests back to the webserver.
+
+// or package as a dict from python?
+
+Chart.defaults.global.responsive = false;
+
+var data = {{ data | tojson }};
+var lookup = {{ lookup | tojson }};
+var dates = {{ dates | safe }};
+var colors = {{ colors | safe }};
+
+window.onload = function() {
+  var ctx = document.getElementById("bar-chart").getContext("2d");
+
+  window.espiChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      datasets: [{
+        data: data,
+        backgroundColor: colors,
+      }]
+    },
+    options: {
+      scales: {
+        xAxes: [{
+          type: 'time',
+          time: {
+              unit: 'day',
+              displayFormats: {
+                  minute: 'hA',
+                  hour: 'hA',
+                  day: 'ddd'
+              }
+          },
+          offset: true
+        }],
+        yAxes: [{
+          ticks: {
+              suggestedMin: 0,
+              suggestedMax: 5000
+          }
+      }]
+      },
+      legend: false,
+      tooltips: {
+        callbacks: {
+          label: function(tooltipItem, data) {
+            var label = data.datasets[tooltipItem.datasetIndex].label || '';
+            if (label) {
+              label += ': ';
+            }
+            label += tooltipItem.yLabel + ' Wh';
+        
+            return label;
+          },
+          title: function() {
+            return 'Average Hourly Power Usage';
+          }
+        }
+      }
+    }
+  });
+};
+
+function findIndex(dates, date) {
+  let start = 0, end = dates.length-1, mid = 0;
+
+  while (start <= end) {
+    mid = Math.floor((start + end) / 2);
+    if (dates[mid] === date) return mid;  
+    else if (dates[mid] < date) start = mid + 1;
+    else end = mid - 1;
+  }
+  return mid;
+}
+
+document.getElementById('time-period').addEventListener('click', function() {
+  var startDate = document.getElementById("start-date").value;
+  var endDate = document.getElementById("end-date").value;
+  startDate = moment(startDate).valueOf();
+  endDate = moment(endDate).valueOf();
+  var i = findIndex(dates, startDate);
+  var j = findIndex(dates, endDate);
+  espiChart.data.datasets[0].data = data.slice(i, j);
+  espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
+  window.espiChart.update();
+});
+
+document.getElementById('previous-week').addEventListener('click', function() {
+  var startDate = espiChart.data.datasets[0].data[0]["x"];
+  var i = findIndex(dates, startDate - 604800000);
+  var j =  lookup[startDate];
+  espiChart.data.datasets[0].data = data.slice(i, j);
+  espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
+  window.espiChart.update();
+});
+
+document.getElementById('next-week').addEventListener('click', function() {
+  curData = espiChart.data.datasets[0].data;
+  var startDate = curData[curData.length - 1]["x"];
+  var i = lookup[startDate] + 1;
+  var j =  findIndex(dates, startDate + 604800000) + 1;
+  espiChart.data.datasets[0].data = data.slice(i, j);
+  espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
+  window.espiChart.update();
+});
+
+</script>
