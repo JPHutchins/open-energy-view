@@ -1,9 +1,10 @@
 import os
-import json
 from datetime import datetime
 from flask import Flask, render_template, request
 from itertools import cycle
 import sqlite3
+
+from pgesmd.helpers import Crosses
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -55,18 +56,18 @@ def create_app(test_config=None):
         lookup = {}
         dates = []
         i = 0
-        for values, starts in cur.fetchall():
+        for value, start in cur.fetchall():
             # JS needs epoch in ms; the offset is to position the bar correctly
-            starts = starts * 1000 + 1800000
-            data.append({'x': starts, 'y': values})
-            dates.append(starts)
-            lookup[starts] = i
+            start = start * 1000 + 1800000
+            data.append({'x': start, 'y': value})
+            dates.append(start)
+            lookup[start] = i
             i += 1
 
-        data = str(json.dumps(data))
-        lookup = str(json.dumps(lookup))
-
-        return render_template('date-chart.html', data=data, lookup=lookup, dates=dates)
+        return render_template('date-chart.html',
+                               data=data,
+                               lookup=lookup,
+                               dates=dates)
 
     @app.route("/test-partitions-chart", methods=['GET'])
     def partitions_chart():
@@ -79,31 +80,51 @@ def create_app(test_config=None):
         n_parts = cur.fetchone()[0]
 
         part_names = []
+        part_times = []
         for i in range(1, n_parts + 1):
             cur.execute(f"""
-                        SELECT part_{i}_name
+                        SELECT part_{i}_name, part_{i}_time
                         FROM info;
                         """)
-            part_names.append(cur.fetchall()[0][0])
+            name, time = zip(*cur.fetchall())
+            part_names.append(*name)
+            part_times.append(*time)
 
-        part_1_color = '#800080'
+        part_intervals = []
+        j = 1
+        c = Crosses(part_times[j])
+        t = 0
+        for time in part_times:
+            for i in range(time, time + 24):
+                h = i % 24
+                if c.test(h):
+                    part_intervals.append(t)
+                    t = 0
+                    j = (j + 1) % n_parts
+                    c = Crosses(part_times[j])
+                    break
+                t += 1
+
+        part_1_color = '#0000A0'
         part_2_color = '#add8e6'
-        part_3_color = '#0000A0'
+        part_3_color = '#800080'
 
         colors_tuple = (part_1_color, part_2_color, part_3_color)
 
         part_value_lists = [None] * 5
         part_date_lists = [None] * 5
+        part_start_lists = [None] * 5
 
         for i in range(0, n_parts):
             cur.execute(f"""
-                        SELECT part_{i+1}_avg, date
+                        SELECT part_{i+1}_avg, date, start
                         FROM partitions
                         WHERE part_{i+1}_avg != 'None';
                         """)
-            part_value, part_date = zip(*cur.fetchall())
+            part_value, part_date, part_start = zip(*cur.fetchall())
             part_value_lists[i] = (list(part_value))
             part_date_lists[i] = (list(part_date))
+            part_start_lists[i] = (list(part_start))
 
         part_values = list(zip(
             part_value_lists[0],
@@ -114,16 +135,45 @@ def create_app(test_config=None):
             part_date_lists[0],
             part_date_lists[1],
             part_date_lists[2]))
+        
+        part_starts = list(zip(
+            part_start_lists[0],
+            part_start_lists[1],
+            part_start_lists[2]))
 
         values = [v for i in part_values for v in i]
         labels = [l for i in part_dates for l in i]
+        starts = [s for i in part_starts for s in i]
 
         colors = []
         color_picker = cycle(colors_tuple)
-        for foo in values:
-            colors.append(next(color_picker))
 
-        return render_template('partitions-chart.html', values=values, labels=labels, colors=colors)
+        intervals = cycle((part_intervals[0] * 1800000,
+                           part_intervals[1] * 1800000,
+                           part_intervals[2] * 1800000))
+
+        data = []
+        lookup = {}
+        dates = []
+        i = 0
+        for value, start in zip(values, starts):
+            # JS needs epoch in ms; the offset is to position the bar correctly
+            start = start * 1000 + next(intervals)
+            dates.append(start)
+            
+            data.append({'x': start, 'y': value})
+            colors.append(next(color_picker))
+            lookup[start] = i
+            i += 1
+
+        return render_template('date-chart-parts.html',
+                               values=values,
+                               labels=labels,
+                               colors=colors,
+                               starts=starts,
+                               data=data,
+                               lookup=lookup,
+                               dates=dates)
 
     @app.route('/test-espi-list')
     def long_list():
