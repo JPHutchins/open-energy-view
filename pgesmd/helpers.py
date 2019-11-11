@@ -181,4 +181,3 @@ def post_data_to_emoncms(for_emoncms,
         return False
     _LOGGER.error(f'No response from emonCMS at {EMONCMS_IP}/input/bulk')
     return False
-
