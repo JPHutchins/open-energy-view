@@ -1,0 +1,101 @@
+<head>
+    <meta charset="utf-8" />
+    <title>ESPI chart</title>
+    <!-- import plugin script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="static/Chart.mover.js"></script>
+</head>
+
+<canvas id="bar-chart" width="800" height="450"></canvas>
+
+<input type="text" id="start-date" value="Oct 10 2019">
+<input type="text" id="end-date" value="Oct 17 2019">
+<button id="time-period">Set Time Period</button><br>
+<button id="previous-week">Previous Week</button>
+<button id="next-week">Next Week</button>
+
+<script>
+
+// to J.P. - provide a dictionary keyed by the UTC times from the database - the value will simply be an index
+// which can be used to perform lookup on the JSON list for chart.js.  Ideally all of the data can be sent
+// to client and then parsed and ranged there without making repeated requests back to the webserver.
+
+// or package as a dict from python?
+
+Chart.defaults.global.responsive = false;
+
+var data = {{ data | tojson }};
+var lookup = {{ lookup | tojson }};
+var dates = {{ dates | safe }};
+
+window.onload = function() {
+  var ctx = document.getElementById("bar-chart").getContext("2d");
+
+  window.espiChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      datasets: [{
+        data: data,
+        backgroundColor: "#800080",
+      }]
+    },
+    options: {
+      scales: {
+        xAxes: [{
+          type: 'time',
+          time: {
+              displayFormats: {
+                  minute: 'hA',
+                  hour: 'hA',
+                  day: 'ddd'
+              }
+          },
+          offset: true
+        }]
+      },
+      legend: false,
+      tooltips: {
+        callbacks: {
+          label: function(tooltipItem, data) {
+            var label = data.datasets[tooltipItem.datasetIndex].label || '';
+            if (label) {
+              label += ': ';
+            }
+            label += tooltipItem.yLabel + ' Wh';
+        
+            return label;
+          },
+          title: function(tooltipItem, data) {
+            bar = moment(tooltipItem[0].xLabel);
+            start = bar.add(-30, 'm');
+            startString = start.format("dddd, MMMM Do YYYY, hA - ").toString();
+            end = bar.add(60, 'm');
+            interval = startString + end.format("hA").toString()
+            return interval;
+          }
+        }
+      }
+    }
+  });
+};
+
+document.getElementById('time-period').addEventListener('click', function() {
+  var slicePoints = getSlicePoints('start-date', 'end-date');
+  espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
+  window.espiChart.update();
+});
+
+document.getElementById('previous-week').addEventListener('click', function() {
+  var slicePoints = previousInterval('week', espiChart, dates, lookup);
+  espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
+  window.espiChart.update();
+});
+
+document.getElementById('next-week').addEventListener('click', function() {
+  var slicePoints = nextInterval('week', espiChart, dates, lookup);
+  espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
+  window.espiChart.update();
+});
+
+</script>

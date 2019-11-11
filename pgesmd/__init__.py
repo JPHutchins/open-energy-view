@@ -64,7 +64,7 @@ def create_app(test_config=None):
             lookup[start] = i
             i += 1
 
-        return render_template('date-chart.html',
+        return render_template('date-chart-new.html',
                                data=data,
                                lookup=lookup,
                                dates=dates)
