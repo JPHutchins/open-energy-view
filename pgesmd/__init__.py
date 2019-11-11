@@ -2,6 +2,7 @@ import os
 import json
 from datetime import datetime
 from flask import Flask, render_template, request
+from itertools import cycle
 import sqlite3
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,6 +67,63 @@ def create_app(test_config=None):
         lookup = str(json.dumps(lookup))
 
         return render_template('date-chart.html', data=data, lookup=lookup, dates=dates)
+
+    @app.route("/test-partitions-chart", methods=['GET'])
+    def partitions_chart():
+        conn = sqlite3.connect(
+            f'{PROJECT_PATH}/test/data/energy_history_test.db')
+
+        cur = conn.cursor()
+
+        cur.execute("SELECT n_parts FROM info WHERE id=0;")
+        n_parts = cur.fetchone()[0]
+
+        part_names = []
+        for i in range(1, n_parts + 1):
+            cur.execute(f"""
+                        SELECT part_{i}_name
+                        FROM info;
+                        """)
+            part_names.append(cur.fetchall()[0][0])
+
+        part_1_color = '#800080'
+        part_2_color = '#add8e6'
+        part_3_color = '#0000A0'
+
+        colors_tuple = (part_1_color, part_2_color, part_3_color)
+
+        part_value_lists = [None] * 5
+        part_date_lists = [None] * 5
+
+        for i in range(0, n_parts):
+            cur.execute(f"""
+                        SELECT part_{i+1}_avg, date
+                        FROM partitions
+                        WHERE part_{i+1}_avg != 'None';
+                        """)
+            part_value, part_date = zip(*cur.fetchall())
+            part_value_lists[i] = (list(part_value))
+            part_date_lists[i] = (list(part_date))
+
+        part_values = list(zip(
+            part_value_lists[0],
+            part_value_lists[1],
+            part_value_lists[2]))
+
+        part_dates = list(zip(
+            part_date_lists[0],
+            part_date_lists[1],
+            part_date_lists[2]))
+
+        values = [v for i in part_values for v in i]
+        labels = [l for i in part_dates for l in i]
+
+        colors = []
+        color_picker = cycle(colors_tuple)
+        for foo in values:
+            colors.append(next(color_picker))
+
+        return render_template('partitions-chart.html', values=values, labels=labels, colors=colors)
 
     @app.route('/test-espi-list')
     def long_list():
