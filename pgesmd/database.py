@@ -201,7 +201,7 @@ class EnergyHistory():
                     start,
                     part_{part_i+1}_avg,
                     part_{part_i+1}_sum)
-                    VALUES (?,?,?);
+                    VALUES (?,?,?,?);
                     """, (
                         interval_date,
                         interval_start,
