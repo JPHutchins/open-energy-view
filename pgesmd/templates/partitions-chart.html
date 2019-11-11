@@ -1,0 +1,41 @@
+<head>
+  <meta charset="utf-8" />
+  <title>Test Partitions</title>
+  <!-- import plugin script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+</head>
+
+<!-- bar chart canvas element -->
+<canvas id="myChart" width="1024" height="400"></canvas>
+
+<script>
+// Global parameters:
+// do not resize the chart canvas when its container does (keep at 600x400px)
+Chart.defaults.global.responsive = false;
+
+// define the chart data
+var chartData = {
+labels : [{% for item in labels %}
+           "{{item}}",
+          {% endfor %}],
+datasets : [{
+    backgroundColor: [{% for color in colors %}
+                        "{{color}}",
+                      {% endfor %}],
+    data : [{% for item in values %}
+              {{item}},
+            {% endfor %}],
+    spanGaps: false
+}]
+}
+
+// get chart canvas
+var ctx = document.getElementById("myChart").getContext("2d");
+
+// create the chart using the chart canvas
+var myChart = new Chart(ctx, {
+type: 'bar',
+data: chartData,
+});
+</script>
