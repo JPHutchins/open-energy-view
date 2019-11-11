@@ -24,8 +24,8 @@
 
 Chart.defaults.global.responsive = false;
 
-var data = JSON.parse({{ data | tojson }});
-var lookup = JSON.parse({{ lookup | tojson }});
+var data = {{ data | tojson }};
+var lookup = {{ lookup | tojson }};
 var dates = {{ dates | safe }};
 
 window.onload = function() {
@@ -46,7 +46,8 @@ window.onload = function() {
           time: {
               displayFormats: {
                   minute: 'hA',
-                  hour: 'hA'
+                  hour: 'hA',
+                  day: 'ddd'
               }
           },
           offset: true
