@@ -87,10 +87,13 @@ window.onload = function() {
           },
           title: function(tooltipItem, data) {
             x = moment(tooltipItem[0].xLabel).valueOf()
-            desc = data.info[lookup[x]].part_desc
-            name = data.info[lookup[x]].part_name
+            entry = data.info[lookup[x]]
+            desc = entry.part_desc
+            name = entry.part_name
+            sum = entry.part_sum
             date = moment(x).format('MMMM Do YYYY')
-            return date + "\n" + name + ", " + desc;
+            weekday = moment(x).format('dddd')
+            return weekday + " " + name + "\n" + date + "\n" + sum + " Wh used " + desc;
           }
         }
       }
