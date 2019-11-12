@@ -4,6 +4,7 @@
     <!-- import plugin script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="static/Chart.mover.js"></script>
 </head>
 
 <canvas id="bar-chart" width="800" height="450"></canvas>
@@ -106,50 +107,28 @@ var xAxesWeek = [{
   offset: true
 }]
 
-function findIndex(dates, date) {
-  let start = 0, end = dates.length-1, mid = 0;
-
-  while (start <= end) {
-    mid = Math.floor((start + end) / 2);
-    if (dates[mid] === date) return mid;  
-    else if (dates[mid] < date) start = mid + 1;
-    else end = mid - 1;
-  }
-  return mid;
-}
-
 document.getElementById('time-period').addEventListener('click', function() {
-  var startDate = document.getElementById("start-date").value;
-  var endDate = document.getElementById("end-date").value;
-  startDate = moment(startDate).valueOf();
-  endDate = moment(endDate).valueOf();
-  var i = findIndex(dates, startDate) + 1;
-  var j = findIndex(dates, endDate);
-  espiChart.data.datasets[0].data = data.slice(i, j);
-  espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
+  var slicePoints = getSlicePoints('start-date', 'end-date');
+  espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
+  espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end);
   window.espiChart.update();
-  displayDates(i, j)
+  displayDates(slicePoints.start, slicePoints.end)
 });
 
 document.getElementById('previous-week').addEventListener('click', function() {
-  var startDate = espiChart.data.datasets[0].data[0]["x"];
-  var i = findIndex(dates, moment(startDate).add(-1, "w").valueOf());
-  var j =  lookup[startDate];
-  espiChart.data.datasets[0].data = data.slice(i, j);
-  espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
+  var slicePoints = previousInterval('week', espiChart, dates, lookup);
+  espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
+  espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end)
   window.espiChart.update();
-  displayDates(i, j)
+  displayDates(slicePoints.start, slicePoints.end)
 });
 
 document.getElementById('next-week').addEventListener('click', function() {
-  curData = espiChart.data.datasets[0].data;
-  var startDate = curData[curData.length - 1]["x"];
-  var i = lookup[startDate] + 1;
-  var j =  findIndex(dates, moment(startDate).add(1, "w").valueOf()) + 1;
-  espiChart.data.datasets[0].data = data.slice(i, j);
-  espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
+  var slicePoints = nextInterval('week', espiChart, dates, lookup);
+  espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
+  espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end)
   window.espiChart.update();
-  displayDates(i, j)
+  displayDates(slicePoints.start, slicePoints.end)
 });
 
 function displayDates(i, j) {
