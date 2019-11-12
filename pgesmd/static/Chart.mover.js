@@ -1,8 +1,3 @@
-const intervalMap = {
-  day: 86400000,
-  week: 604800000
-}
-
 function findIndex(dates, date) {
   let start = 0, end = dates.length-1, mid = 0;
 
@@ -19,28 +14,26 @@ function getSlicePoints(startId, endId) {
   var startDate = moment(document.getElementById(startId).value).valueOf();
   var endDate = moment(document.getElementById(endId).value).valueOf();
   var result = {
-    start: findIndex(dates, startDate) + 1, // TZ and DST issues?
+    start: findIndex(dates, startDate) + 1,
     end: findIndex(dates, endDate)
   };
   return result;
 }
   
 function previousInterval(interval, chart, dates, lookup) {
-  intv = intervalMap[interval];
   var startDate = chart.data.datasets[0].data[0]["x"];
   var result = {
-    start: findIndex(dates, startDate - intv),
+    start: findIndex(dates, moment(startDate).add(-1, interval).valueOf()),
     end: lookup[startDate]
   };
   return result;
 }
 
 function nextInterval(interval, chart, dates, lookup) {
-  intv = intervalMap[interval];
   var startDate = chart.data.datasets[0].data[chart.data.datasets[0].data.length - 1]["x"];
   var result = {
     start: lookup[startDate] + 1,
-    end: findIndex(dates, startDate + intv) + 1
+    end: findIndex(dates, moment(startDate).add(1, interval).valueOf()) + 1
   };
   return result;
 }

@@ -36,6 +36,7 @@ for (item of info) {
 
 console.log(colors)
 
+document.write()
 
 window.onload = function() {
   var ctx = document.getElementById("bar-chart").getContext("2d");
@@ -120,7 +121,7 @@ document.getElementById('time-period').addEventListener('click', function() {
 
 document.getElementById('previous-week').addEventListener('click', function() {
   var startDate = espiChart.data.datasets[0].data[0]["x"];
-  var i = findIndex(dates, startDate - 604800000);
+  var i = findIndex(dates, moment(startDate).add(-1, "w").valueOf());
   var j =  lookup[startDate];
   espiChart.data.datasets[0].data = data.slice(i, j);
   espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
@@ -131,7 +132,7 @@ document.getElementById('next-week').addEventListener('click', function() {
   curData = espiChart.data.datasets[0].data;
   var startDate = curData[curData.length - 1]["x"];
   var i = lookup[startDate] + 1;
-  var j =  findIndex(dates, startDate + 604800000) + 1;
+  var j =  findIndex(dates, moment(startDate).add(1, "w").valueOf()) + 1;
   espiChart.data.datasets[0].data = data.slice(i, j);
   espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
   window.espiChart.update();
