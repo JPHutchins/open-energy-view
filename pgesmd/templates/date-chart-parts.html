@@ -54,18 +54,7 @@ window.onload = function() {
     },
     options: {
       scales: {
-        xAxes: [{
-          type: 'time',
-          time: {
-              unit: 'day',
-              displayFormats: {
-                  minute: 'hA',
-                  hour: 'hA',
-                  day: 'ddd'
-              }
-          },
-          offset: true
-        }],
+        xAxes: xAxesWeek,
         yAxes: [{
           ticks: {
               suggestedMin: 0,
@@ -100,6 +89,20 @@ window.onload = function() {
     }
   });
 };
+
+var xAxesWeek = [{
+  type: 'time',
+  bounds: 'ticks',
+  time: {
+      unit: 'day',
+      displayFormats: {
+          minute: 'hA',
+          hour: 'hA',
+          day: 'dddd'
+      },
+  },
+  offset: true
+}]
 
 function findIndex(dates, date) {
   let start = 0, end = dates.length-1, mid = 0;
