@@ -74,6 +74,30 @@ def create_app(test_config=None):
         conn = sqlite3.connect(
             f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT
+            max_watt_hour,
+            first_entry,
+            last_entry,
+            n_parts
+            FROM info
+            WHERE id=0;
+            """)
+
+        (max_watt_hour,
+         first_entry,
+         last_entry,
+         n_parts) = cur.fetchone()
+
+        db_info = {
+            'max_watt_hour': max_watt_hour,
+            'first_entry': first_entry,
+            'last_entry': last_entry,
+            'n_parts': n_parts
+        }
+
         part_1_color = '#0000A0'
         part_2_color = '#add8e6'
         part_3_color = '#800080'
@@ -82,12 +106,10 @@ def create_app(test_config=None):
                         part_2_color,
                         part_3_color)
 
-        cur = conn.cursor()
-
         data = []
         lookup = {}
         dates = []
-        info = []
+        part_info = []
 
         cur.execute("""
             SELECT
@@ -134,8 +156,8 @@ def create_app(test_config=None):
             # This list is used for a binary search lookup of index
             dates.append(bar_center)
 
-            # This list of objects contains the complete info from the DB
-            info.append({
+            # This list of objects contains the complete part_info from the DB
+            part_info.append({
                 'start': start,
                 'start_iso_8601': start_iso_8601,
                 'end': end,
@@ -157,7 +179,8 @@ def create_app(test_config=None):
         # End of the long for block
         
         return render_template('date-chart-parts.html',
-                               info=info,
+                               db_info=db_info,
+                               part_info=part_info,
                                data=data,
                                lookup=lookup,
                                dates=dates)
