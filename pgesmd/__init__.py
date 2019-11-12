@@ -314,7 +314,7 @@ def create_app(test_config=None):
         cur.execute("SELECT baseline, date FROM daily")
 
         values, labels = zip(*cur.fetchall())
-        labels = [datetime.strptime(l, '%y/%m/%d').strftime('%b %d %Y') for l in labels]
+        labels = [datetime.strptime(l, '%Y-%m-%d').strftime('%b %d %Y') for l in labels]
 
         return render_template('line.html', values=values, labels=labels)
 
