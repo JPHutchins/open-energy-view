@@ -115,7 +115,7 @@ document.getElementById('time-period').addEventListener('click', function() {
   var endDate = document.getElementById("end-date").value;
   startDate = moment(startDate).valueOf();
   endDate = moment(endDate).valueOf();
-  var i = findIndex(dates, startDate);
+  var i = findIndex(dates, startDate) + 1;
   var j = findIndex(dates, endDate);
   espiChart.data.datasets[0].data = data.slice(i, j);
   espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
