@@ -24,10 +24,10 @@ Chart.defaults.global.responsive = false;
 var data = {{ data | tojson }};
 var lookup = {{ lookup | tojson }};
 var dates = {{ dates | safe }};
-var info = {{ info | safe }};
+var part_info = {{ part_info | safe }};
 
 colors = []
-for (item of info) {
+for (item of part_info) {
   colors.push(item.part_color)
 }
 
@@ -40,9 +40,9 @@ window.onload = function() {
   window.espiChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      info: info,
+      part_info: part_info,
       datasets: [{
-        data: data,
+        data: onloadData,
         backgroundColor: colors
       }]
     },
@@ -76,7 +76,7 @@ var tooltipsCallbacksWeek = {
   },
   title: function(tooltipItem, data) {
     x = moment(tooltipItem[0].xLabel).valueOf()
-    entry = data.info[lookup[x]]
+    entry = data.part_info[lookup[x]]
     desc = entry.part_desc
     name = entry.part_name
     sum = entry.part_sum
@@ -99,6 +99,10 @@ var xAxesWeek = [{
   },
   offset: true
 }]
+
+function getOnloadData(data) {
+
+}
 
 document.getElementById('time-period').addEventListener('click', function() {
   var slicePoints = getSlicePoints('start-date', 'end-date');
@@ -125,8 +129,8 @@ document.getElementById('next-week').addEventListener('click', function() {
 });
 
 function displayDates(i, j) {
-  document.getElementById("firstChartDate").innerHTML = info[i].date;
-  document.getElementById("lastChartDate").innerHTML = info[j].date;
+  document.getElementById("firstChartDate").innerHTML = part_info[i].date;
+  document.getElementById("lastChartDate").innerHTML = part_info[j].date;
 };
 
 
