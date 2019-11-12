@@ -37,3 +37,8 @@ function nextInterval(interval, chart, dates, lookup) {
   };
   return result;
 }
+
+function displayDates(i, j) {
+  document.getElementById("firstChartDate").innerHTML = info[i].date;
+  document.getElementById("lastChartDate").innerHTML = info[j].date;
+}

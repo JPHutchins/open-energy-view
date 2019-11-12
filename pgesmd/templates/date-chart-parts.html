@@ -13,6 +13,9 @@
 <button id="time-period">Set Time Period</button><br>
 <button id="previous-week">Previous Week</button>
 <button id="next-week">Next Week</button>
+<h id="firstChartDate">???</h>
+ - 
+<h id="lastChartDate">???</h>
 
 <script>
 
@@ -117,6 +120,7 @@ document.getElementById('time-period').addEventListener('click', function() {
   espiChart.data.datasets[0].data = data.slice(i, j);
   espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
   window.espiChart.update();
+  displayDates(i, j)
 });
 
 document.getElementById('previous-week').addEventListener('click', function() {
@@ -126,6 +130,7 @@ document.getElementById('previous-week').addEventListener('click', function() {
   espiChart.data.datasets[0].data = data.slice(i, j);
   espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
   window.espiChart.update();
+  displayDates(i, j)
 });
 
 document.getElementById('next-week').addEventListener('click', function() {
@@ -136,6 +141,13 @@ document.getElementById('next-week').addEventListener('click', function() {
   espiChart.data.datasets[0].data = data.slice(i, j);
   espiChart.data.datasets[0].backgroundColor = colors.slice(i, j)
   window.espiChart.update();
+  displayDates(i, j)
 });
+
+function displayDates(i, j) {
+  document.getElementById("firstChartDate").innerHTML = info[i].date;
+  document.getElementById("lastChartDate").innerHTML = info[j].date;
+};
+
 
 </script>
