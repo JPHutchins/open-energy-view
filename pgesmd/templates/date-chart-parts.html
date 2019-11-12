@@ -13,6 +13,7 @@
 <button id="time-period">Set Time Period</button><br>
 <button id="previous-week">Previous Week</button>
 <button id="next-week">Next Week</button>
+<button id="latest-week">Latest Week</button>
 <h id="firstChartDate">???</h>
  - 
 <h id="lastChartDate">???</h>
@@ -21,6 +22,7 @@
 
 Chart.defaults.global.responsive = false;
 
+var db_info = {{ db_info | tojson }};
 var data = {{ data | tojson }};
 var lookup = {{ lookup | tojson }};
 var dates = {{ dates | safe }};
@@ -31,7 +33,7 @@ for (item of part_info) {
   colors.push(item.part_color)
 }
 
-console.log(colors)
+console.log(db_info)
 
 document.write()
 
@@ -41,6 +43,7 @@ window.onload = function() {
     type: 'bar',
     data: {
       part_info: part_info,
+      db_info: db_info,
       datasets: [{
         data: onloadData,
         backgroundColor: colors
@@ -100,9 +103,17 @@ var xAxesWeek = [{
   offset: true
 }]
 
-function getOnloadData(data) {
+var slicePoints = getLatestWeeksData(data, db_info);
+onloadData = data.slice(slicePoints.start, slicePoints.end);
+displayDates(slicePoints.start, slicePoints.end);
 
-}
+document.getElementById('latest-week').addEventListener('click', function() {
+  var slicePoints = getLatestWeeksData(data, db_info);
+  espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
+  espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end);
+  window.espiChart.update();
+  displayDates(slicePoints.start, slicePoints.end)
+});
 
 document.getElementById('time-period').addEventListener('click', function() {
   var slicePoints = getSlicePoints('start-date', 'end-date');
