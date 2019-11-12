@@ -4,6 +4,7 @@ import sqlite3
 import os
 import logging
 import heapq
+import pytz
 from datetime import datetime
 
 from pgesmd.helpers import parse_espi_data, Crosses
@@ -11,6 +12,7 @@ from pgesmd.helpers import parse_espi_data, Crosses
 _LOGGER = logging.getLogger(__name__)
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+timezone = pytz.timezone("US/Pacific")
 
 
 class EnergyHistory():
@@ -72,6 +74,22 @@ class EnergyHistory():
             part_5_avg INTEGER,
             part_5_sum INTEGER);
             """
+        self.create_partitions_table_b = """
+            CREATE TABLE IF NOT EXISTS partitions_b (
+            start INTEGER,
+            start_iso_8601,
+            end INTEGER,
+            end_iso_8601,
+            middle INTEGER,
+            middle_iso_8601,
+            date TEXT,
+            part_type INTEGER,
+            part_name TEXT,
+            part_desc TEXT,
+            part_color TEXT,
+            part_avg INTEGER,
+            part_sum INTEGER);
+            """
         self.insert_espi = """
             INSERT INTO espi (
             start,
@@ -100,6 +118,7 @@ class EnergyHistory():
             self.cursor.execute(self.create_daily_table)
             self.cursor.execute(self.create_info_table)
             self.cursor.execute(self.create_partitions_table)
+            self.cursor.execute(self.create_partitions_table_b)
         except Exception as e:
             _LOGGER.error(e)
 
@@ -125,6 +144,40 @@ class EnergyHistory():
                 f"UPDATE info SET part_{i}_time = ?, part_{i}_name = ?;", (
                     part[0], part[1]))
             i += 1
+        
+        part_times, names = zip(*self.partitions)
+        self.part_intervals = []
+        j = 1
+        c = Crosses(part_times[j])
+        t = 0
+        for time in part_times:
+            for i in range(time, time + 24):
+                h = i % 24
+                if c.test(h):
+                    self.part_intervals.append(t)
+                    t = 0
+                    j = (j + 1) % len(self.partitions)
+                    c = Crosses(part_times[j])
+                    break
+                t += 1
+
+        self.part_desc = []
+        for i in range(len(part_times)):
+            start = part_times[i]
+            end = part_times[(i+1) % len(part_times)]
+
+            if start <= 12:
+                start = str(start) + "AM"
+            else:
+                start = str(start - 12) + "PM"
+            
+            if end <= 12:
+                end = str(end) + "AM"
+            else:
+                end = str(end - 12) + "PM"
+            
+            self.part_desc.append(start + " - " + end)
+            
 
     def insert_espi_xml(self, xml_file, baseline_points=3):
         """Insert an ESPI XML file into the database.
@@ -170,9 +223,9 @@ class EnergyHistory():
 
         date = next(parse_espi_data(xml_file))[4]
         min_heap = []
+        part_type = 0
         part_sum = 0
-        interval_start = next(parse_espi_data(xml_file))[0]
-        part_i = 0
+        part_start = next(parse_espi_data(xml_file))[0]
         c = Crosses(self.partitions[1][0])
 
         for entry in parse_espi_data(xml_file):
@@ -191,34 +244,59 @@ class EnergyHistory():
             espi_time = get_hours_mins(entry[0])
             if not c.test(espi_time):
                 part_sum += entry[3]
-                interval_date = entry[4]
+                part_date = entry[4]
             else:
-                interval_time = (entry[0] - interval_start) / 3600
-                part_avg = part_sum / interval_time
+                part_name = self.partitions[part_type][1]
+                part_end = entry[0]
+                part_end_iso = timezone.localize(
+                    datetime.utcfromtimestamp(part_end))
+                part_interval = part_end - part_start
+                part_avg = part_sum / part_interval * 3600
+                part_middle = part_start + (part_interval / 2)
+                part_middle_iso = timezone.localize(
+                    datetime.utcfromtimestamp(part_middle))
+                part_start_iso = timezone.localize(
+                    datetime.utcfromtimestamp(part_start))
                 self.cursor.execute(f"""
-                    INSERT INTO partitions (
-                    date,
+                    INSERT INTO partitions_b (
                     start,
-                    part_{part_i+1}_avg,
-                    part_{part_i+1}_sum)
-                    VALUES (?,?,?,?);
+                    start_iso_8601,
+                    end,
+                    end_iso_8601,
+                    middle,
+                    middle_iso_8601,
+                    date,
+                    part_type,
+                    part_name,
+                    part_desc,
+                    part_avg,
+                    part_sum)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?);
                     """, (
-                        interval_date,
-                        interval_start,
+                        part_start,
+                        part_start_iso,
+                        part_end,
+                        part_end_iso,
+                        part_middle,
+                        part_middle_iso,
+                        part_date,
+                        part_type,
+                        part_name,
+                        self.part_desc[part_type],
                         part_avg,
                         part_sum))
 
-                if part_i < len(self.partitions) - 1:
-                    part_i += 1
+                if part_type < len(self.partitions) - 1:
+                    part_type += 1
                     c = Crosses(self.partitions[
-                        (part_i + 1) % len(self.partitions)]
+                        (part_type + 1) % len(self.partitions)]
                         [0])
                 else:
-                    part_i = 0
+                    part_type = 0
                     c = Crosses(self.partitions[1][0])
 
                 part_sum = entry[3]
-                interval_start = entry[0]
+                part_start = entry[0]
 
             #  Keep track of daily values
             min_heap.append(entry[3])

@@ -27,17 +27,25 @@ Chart.defaults.global.responsive = false;
 var data = {{ data | tojson }};
 var lookup = {{ lookup | tojson }};
 var dates = {{ dates | safe }};
-var colors = {{ colors | safe }};
+var info = {{ info | safe }};
+
+colors = []
+for (item of info) {
+  colors.push(item.part_color)
+}
+
+console.log(colors)
+
 
 window.onload = function() {
   var ctx = document.getElementById("bar-chart").getContext("2d");
-
   window.espiChart = new Chart(ctx, {
     type: 'bar',
     data: {
+      info: info,
       datasets: [{
         data: data,
-        backgroundColor: colors,
+        backgroundColor: colors
       }]
     },
     options: {
@@ -73,8 +81,12 @@ window.onload = function() {
         
             return label;
           },
-          title: function() {
-            return 'Average Hourly Power Usage';
+          title: function(tooltipItem, data) {
+            x = moment(tooltipItem[0].xLabel).valueOf()
+            desc = data.info[lookup[x]].part_desc
+            name = data.info[lookup[x]].part_name
+            date = moment(x).format('MMMM Do YYYY')
+            return date + "\n" + name + ", " + desc;
           }
         }
       }

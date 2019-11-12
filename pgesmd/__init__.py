@@ -69,8 +69,102 @@ def create_app(test_config=None):
                                lookup=lookup,
                                dates=dates)
 
-    @app.route("/test-partitions-chart", methods=['GET'])
+    @app.route("/test-partitions-chart")
     def partitions_chart():
+        conn = sqlite3.connect(
+            f'{PROJECT_PATH}/test/data/energy_history_test.db')
+
+        part_1_color = '#0000A0'
+        part_2_color = '#add8e6'
+        part_3_color = '#800080'
+
+        colors_tuple = (part_1_color,
+                        part_2_color,
+                        part_3_color)
+
+        cur = conn.cursor()
+
+        data = []
+        lookup = {}
+        dates = []
+        info = []
+
+        cur.execute("""
+            SELECT
+            start,
+            start_iso_8601,
+            end,
+            end_iso_8601,
+            middle,
+            middle_iso_8601,
+            date,
+            part_type,
+            part_name,
+            part_desc,
+            part_color,
+            part_avg,
+            part_sum
+            FROM partitions_b;
+            """)
+
+        # Behold, an unfortunately lengthy indented for block
+        i = 0
+        for (   start,
+                start_iso_8601,
+                end,
+                end_iso_8601,
+                middle,
+                middle_iso_8601,
+                date,
+                part_type,
+                part_name,
+                part_desc,
+                part_color,
+                part_avg,
+                part_sum) in cur.fetchall():
+
+            # JS needs epoch in ms; the offset is given by using the middle
+            bar_center = middle * 1000
+
+            # This list of objects can be passed direclty to Chart.js
+            data.append({
+                'x': bar_center,
+                'y': part_avg})
+
+            # This list is used for a binary search lookup of index
+            dates.append(bar_center)
+
+            # This list of objects contains the complete info from the DB
+            info.append({
+                'start': start,
+                'start_iso_8601': start_iso_8601,
+                'end': end,
+                'end_iso_8601': end_iso_8601,
+                'middle': middle,
+                'middle_iso_8601': middle_iso_8601,
+                'date': date,
+                'part_type': part_type,
+                'part_name': part_name,
+                'part_desc': part_desc,
+                'part_color': colors_tuple[part_type],
+                'part_avg': part_avg,
+                'part_sum': part_sum})
+
+            # This object allows for reverse lookup if start is known
+            lookup[bar_center] = i
+            i += 1
+
+        # End of the long for block
+        
+        return render_template('date-chart-parts.html',
+                               info=info,
+                               data=data,
+                               lookup=lookup,
+                               dates=dates)
+
+
+    @app.route("/test-partitions-chart-old", methods=['GET'])
+    def partitions_chart_old():
         conn = sqlite3.connect(
             f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
@@ -194,10 +288,10 @@ def create_app(test_config=None):
         conn.row_factory = sqlite3.Row
 
         cur = conn.cursor()
-        cur.execute("select * from partitions")
+        cur.execute("select * from partitions_b")
 
         rows = cur.fetchall()
-        return render_template("list-parts.html", rows=rows)
+        return render_template("list-parts_b.html", rows=rows)
     
     @app.route('/test-info-list')
     def info_list():
