@@ -257,6 +257,8 @@ class EnergyHistory():
                     datetime.utcfromtimestamp(part_middle))
                 part_start_iso = timezone.localize(
                     datetime.utcfromtimestamp(part_start))
+
+                #  Insert into the partitions table    
                 self.cursor.execute(f"""
                     INSERT INTO partitions_b (
                     start,
@@ -286,14 +288,10 @@ class EnergyHistory():
                         part_avg,
                         part_sum))
 
-                if part_type < len(self.partitions) - 1:
-                    part_type += 1
-                    c = Crosses(self.partitions[
-                        (part_type + 1) % len(self.partitions)]
-                        [0])
-                else:
-                    part_type = 0
-                    c = Crosses(self.partitions[1][0])
+                part_type = (part_type + 1) % len(self.partitions)
+                c = Crosses(self.partitions[
+                    (part_type + 1) % len(self.partitions)]
+                    [0])
 
                 part_sum = entry[3]
                 part_start = entry[0]
