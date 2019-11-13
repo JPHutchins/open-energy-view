@@ -6,6 +6,9 @@
     <script src="static/Chart.mover.js"></script>
 </head>
 
+<h id="firstChartDate">???</h>
+ - 
+<h id="lastChartDate">???</h>
 <canvas id="bar-chart" width="800" height="450"></canvas>
 
 <input type="text" id="start-date" value="Oct 10 2019">
@@ -13,10 +16,11 @@
 <button id="time-period">Set Time Period</button><br>
 <button id="previous-week">Previous Week</button>
 <button id="next-week">Next Week</button>
-<button id="latest-week">Latest Week</button>
-<h id="firstChartDate">???</h>
- - 
-<h id="lastChartDate">???</h>
+<button id="latest-week">Latest Week</button><br>
+<button id="previous-day">Previous Day</button>
+<button id="next-day">Next Day</button>
+<button id="latest-day">Latest Day</button>
+
 
 <script>
 
@@ -27,15 +31,23 @@ var data = {{ data | tojson }};
 var lookup = {{ lookup | tojson }};
 var dates = {{ dates | safe }};
 var part_info = {{ part_info | safe }};
+var hourly_data = {{ hourly_data | tojson }};
+var hourly_dates = {{ hourly_dates | safe }};
+var hourly_lookup = {{ hourly_lookup | tojson }};
 
 colors = []
 for (item of part_info) {
   colors.push(item.part_color)
 }
 
-console.log(db_info)
+hourly_colors = []
+for (item of hourly_data) {
+  hourly_colors.push(item.color)
+}
 
-document.write()
+var slicePoints = getLatestWeeksData(data, db_info);
+onloadData = data.slice(slicePoints.start, slicePoints.end);
+displayDates(slicePoints.start, slicePoints.end);
 
 window.onload = function() {
   var ctx = document.getElementById("bar-chart").getContext("2d");
@@ -50,6 +62,7 @@ window.onload = function() {
       }]
     },
     options: {
+      onClick: graphClickEvent,
       scales: {
         xAxes: xAxesWeek,
         yAxes: [{
@@ -66,6 +79,28 @@ window.onload = function() {
     }
   });
 };
+
+var tooltipsCallbacksDay = {
+  label: function(tooltipItem, data) {
+    var label = data.datasets[tooltipItem.datasetIndex].label || '';
+    if (label) {
+      label += ': ';
+    }
+    label += tooltipItem.yLabel + ' Wh';
+
+    return label;
+  },
+  title: function(tooltipItem, data) {
+    bar = moment(tooltipItem[0].xLabel);
+    start = bar.add(-30, 'm');
+    date = start.format('MMMM Do YYYY')
+    weekday = start.format('dddd')
+    start_hour = start.format('hA').toString()
+    end = bar.add(60, 'm');
+    interval = weekday + "\n" + date + "\n" + start_hour + " - " + end.format("hA").toString()
+    return interval;
+  }
+}
 
 var tooltipsCallbacksWeek = {
   label: function(tooltipItem, data) {
@@ -100,17 +135,62 @@ var xAxesWeek = [{
           day: 'dddd'
       },
   },
-  offset: true
+  offset: false
 }]
 
-var slicePoints = getLatestWeeksData(data, db_info);
-onloadData = data.slice(slicePoints.start, slicePoints.end);
-displayDates(slicePoints.start, slicePoints.end);
+var xAxesDay = [{
+  type: 'time',
+  bounds: 'ticks',
+  time: {
+      unit: 'hour',
+      displayFormats: {
+          minute: 'hA',
+          hour: 'hA',
+          day: 'dddd'
+      },
+  },
+  offset: false
+}]
+
+function graphClickEvent(event, array){
+  if (array[0]) {
+    index = array[0]._index;
+
+    start = moment(espiChart.data.datasets[0].data[index]['x']).startOf('day');
+    start = start.valueOf();
+
+    end = moment(start).add(1, 'day');
+    end = end.valueOf();
+
+    console.log(start, end)
+
+    start = findEspiIndex(hourly_dates, start);
+    end = findEspiIndex(hourly_dates, end);
+
+    espiChart.options.tooltips.callbacks = tooltipsCallbacksDay;
+    espiChart.options.scales.xAxes = xAxesDay;
+    espiChart.data.datasets[0].data = hourly_data.slice(start, end);
+    espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(start, end)
+
+    window.espiChart.update();
+  }
+}
+
+document.getElementById('latest-day').addEventListener('click', function() {
+  last_index = hourly_data.length;
+  espiChart.data.datasets[0].data = hourly_data.slice(last_index - 24, last_index);
+  espiChart.options.tooltips.callbacks = tooltipsCallbacksDay;
+  espiChart.options.scales.xAxes = xAxesDay;
+  espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(last_index - 24, last_index);
+  window.espiChart.update();
+});
 
 document.getElementById('latest-week').addEventListener('click', function() {
   var slicePoints = getLatestWeeksData(data, db_info);
   espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
   espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end);
+  espiChart.options.tooltips.callbacks = tooltipsCallbacksWeek;
+  espiChart.options.scales.xAxes = xAxesWeek;
   window.espiChart.update();
   displayDates(slicePoints.start, slicePoints.end)
 });
@@ -137,6 +217,20 @@ document.getElementById('next-week').addEventListener('click', function() {
   espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end)
   window.espiChart.update();
   displayDates(slicePoints.start, slicePoints.end)
+});
+
+document.getElementById('previous-day').addEventListener('click', function() {
+  var slicePoints = previousInterval('day', espiChart, hourly_dates, hourly_lookup);
+  espiChart.data.datasets[0].data = hourly_data.slice(slicePoints.start, slicePoints.end);
+  espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(slicePoints.start, slicePoints.end)
+  window.espiChart.update();
+});
+
+document.getElementById('next-day').addEventListener('click', function() {
+  var slicePoints = nextInterval('day', espiChart, hourly_dates, hourly_lookup);
+  espiChart.data.datasets[0].data = hourly_data.slice(slicePoints.start, slicePoints.end);
+  espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(slicePoints.start, slicePoints.end)
+  window.espiChart.update();
 });
 
 function displayDates(i, j) {
