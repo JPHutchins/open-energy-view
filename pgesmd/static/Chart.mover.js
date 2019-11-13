@@ -80,10 +80,10 @@ function getLatestWeeksData(part_data, db_info) {
 
 function getCurrentWeeksData(part_data, current_moment) {
   i = findEspiIndex(dates, current_moment);
-  while (moment(part_data[i]["x"]).format('dddd') != 'Friday') {
-    i--;
+  while (moment(part_data[i]["x"]).format('dddd') != 'Saturday') {
+    i++;
   };
-  end = i + 1;
+  end = i;
   start = findEspiIndex(dates, moment(part_data[end]["x"]).add(-1, "w").valueOf());
   var result = {
     start: start,
