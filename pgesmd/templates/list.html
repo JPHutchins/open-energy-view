@@ -3,11 +3,12 @@
    <body>
       <table border = 1>
          <thead>
-            <td>Start</td>
-            <td>Duration</td>
-            <td>Value</td>
-            <td>Watt Hours</td>
-            <td>Date YY/MM/DD</td>
+            <td>start</td>
+            <td>duration</td>
+            <td>value</td>
+            <td>watt_hours</td>
+            <td>date</td>
+            <td>part_type</td>
          </thead>
          
          {% for row in rows %}
@@ -17,6 +18,7 @@
                <td>{{row["value"]}}</td>
                <td>{{row["watt_hours"]}}</td>
                <td>{{row["date"]}}</td>	
+               <td>{{row["part_type"]}}</td>	
             </tr>
          {% endfor %}
       </table>

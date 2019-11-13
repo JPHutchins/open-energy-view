@@ -52,7 +52,8 @@ class EnergyHistory():
             duration INTEGER,
             value INTEGER,
             watt_hours INTEGER,
-            date TEXT);
+            date TEXT,
+            part_type);
             """
         self.create_daily_table = """
             CREATE TABLE IF NOT EXISTS daily (
@@ -96,8 +97,9 @@ class EnergyHistory():
             duration,
             value,
             watt_hours,
-            date)
-            VALUES (?,?,?,?,?);
+            date,
+            part_type)
+            VALUES (?,?,?,?,?,?);
             """
         self.insert_days = """
             INSERT INTO daily (
@@ -229,9 +231,7 @@ class EnergyHistory():
         c = Crosses(self.partitions[1][0])
 
         for entry in parse_espi_data(xml_file):
-            #  Insert into the ESPI table
-            self.cursor.execute(self.insert_espi, entry)
-
+            
             #  Update the info about the data
             if entry[0] < self.first_entry:
                 self.first_entry = entry[0]
@@ -305,6 +305,10 @@ class EnergyHistory():
                 self.cursor.execute(self.insert_days, (date, baseline))
                 min_heap = []
                 date = entry[4]
+            
+            #  Insert into the ESPI table
+            espi_insert = entry + (part_type,)
+            self.cursor.execute(self.insert_espi, espi_insert)
 
         #  Push the data from the last day
         baseline = calculate_baseline(min_heap)
