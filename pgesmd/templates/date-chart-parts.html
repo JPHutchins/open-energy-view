@@ -47,6 +47,7 @@ for (item of hourly_data) {
 
 var slicePoints = getLatestWeeksData(data, db_info);
 onloadData = data.slice(slicePoints.start, slicePoints.end);
+graphClickEvent = partClickEvent;
 displayDates(slicePoints.start, slicePoints.end);
 
 window.onload = function() {
@@ -152,7 +153,7 @@ var xAxesDay = [{
   offset: false
 }]
 
-function graphClickEvent(event, array){
+function partClickEvent(event, array) {
   if (array[0]) {
     index = array[0]._index;
 
@@ -169,8 +170,29 @@ function graphClickEvent(event, array){
 
     espiChart.options.tooltips.callbacks = tooltipsCallbacksDay;
     espiChart.options.scales.xAxes = xAxesDay;
+    espiChart.options.onClick = hourClickEvent
     espiChart.data.datasets[0].data = hourly_data.slice(start, end);
     espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(start, end)
+
+    window.espiChart.update();
+  }
+}
+
+function hourClickEvent(event, array) {
+  if (array[0]) {
+    index = array[0]._index;
+
+    start = moment(espiChart.data.datasets[0].data[index]['x']).valueOf();
+
+    console.log(data)
+
+    var sp = getCurrentWeeksData(data, start);
+
+    espiChart.options.tooltips.callbacks = tooltipsCallbacksWeek;
+    espiChart.options.scales.xAxes = xAxesWeek;
+    espiChart.options.onClick = partClickEvent
+    espiChart.data.datasets[0].data = data.slice(sp.start, sp.end);
+    espiChart.data.datasets[0].backgroundColor = colors.slice(sp.start, sp.end)
 
     window.espiChart.update();
   }
