@@ -107,7 +107,7 @@ def create_app(test_config=None):
         }
 
         cur.execute("""
-                    SELECT watt_hours, start
+                    SELECT watt_hours, start, part_type
                     FROM espi
                     ORDER BY start ASC;
                     """)
@@ -116,13 +116,13 @@ def create_app(test_config=None):
         hourly_lookup = {}
         hourly_dates = []
         i = 0
-        for value, start in cur.fetchall():
+        for value, start, part_type in cur.fetchall():
             # JS needs epoch in ms; the offset is to position the bar correctly
             start = start * 1000 + 1800000
             hourly_data.append({
                 'x': start,
                 'y': value,
-                'color': colors_tuple[i // 8 % 3]})
+                'color': colors_tuple[part_type]})
             hourly_dates.append(start)
             hourly_lookup[start] = i
             i += 1
