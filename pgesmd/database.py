@@ -21,9 +21,9 @@ class EnergyHistory():
     def __init__(self,
                  path='/data/energy_history.db',
                  partitions=[
-                     (0, "Night"),
-                     (8, "Day"),
-                     (16, "Evening")]):
+                     (22, "Night"),
+                     (6, "Day"),
+                     (17, "Evening")]):
         """Open the connection to database and create tables."""
         self.path = path
         self.partitions = partitions
