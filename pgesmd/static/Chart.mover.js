@@ -77,3 +77,17 @@ function getLatestWeeksData(part_data, db_info) {
   };
   return result;
 }
+
+function getCurrentWeeksData(part_data, current_moment) {
+  i = findEspiIndex(dates, current_moment);
+  while (moment(part_data[i]["x"]).format('dddd') != 'Friday') {
+    i--;
+  };
+  end = i + 1;
+  start = findEspiIndex(dates, moment(part_data[end]["x"]).add(-1, "w").valueOf());
+  var result = {
+    start: start,
+    end: end
+  };
+  return result;
+}
