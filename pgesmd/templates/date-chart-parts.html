@@ -6,10 +6,19 @@
     <script src="static/Chart.mover.js"></script>
 </head>
 
-<h id="firstChartDate">???</h>
- - 
-<h id="lastChartDate">???</h>
-<canvas id="bar-chart" width="800" height="450"></canvas>
+
+<div id = "heading" style="width:800;height:100;border-style:solid;margin:10;padding:20">
+    <h id="firstChartDate"></h>
+    - 
+   <h id="lastChartDate"></h>
+  
+</div>
+
+<div id = "chart" style="width:800;height:450;border-style:solid;margin:10;padding:20">
+
+  <canvas id="bar-chart"></canvas>
+
+</div>
 
 <input type="text" id="start-date" value="Oct 10 2019">
 <input type="text" id="end-date" value="Oct 17 2019">
@@ -24,7 +33,7 @@
 
 <script>
 
-Chart.defaults.global.responsive = false;
+
 
 var db_info = {{ db_info | tojson }};
 var data = {{ data | tojson }};
@@ -34,6 +43,7 @@ var part_info = {{ part_info | safe }};
 var hourly_data = {{ hourly_data | tojson }};
 var hourly_dates = {{ hourly_dates | safe }};
 var hourly_lookup = {{ hourly_lookup | tojson }};
+
 
 colors = []
 for (item of part_info) {
@@ -47,8 +57,8 @@ for (item of hourly_data) {
 
 var slicePoints = getLatestWeeksData(data, db_info);
 onloadData = data.slice(slicePoints.start, slicePoints.end);
+onloadDataLine = data.slice(slicePoints.start, slicePoints.end);
 graphClickEvent = partClickEvent;
-displayDates(slicePoints.start, slicePoints.end);
 
 window.onload = function() {
   var ctx = document.getElementById("bar-chart").getContext("2d");
@@ -60,6 +70,9 @@ window.onload = function() {
       datasets: [{
         data: onloadData,
         backgroundColor: colors
+      }, {
+        data: onloadDataLine,
+        type: 'line'
       }]
     },
     options: {
@@ -133,7 +146,7 @@ var xAxesWeek = [{
       displayFormats: {
           minute: 'hA',
           hour: 'hA',
-          day: 'dddd'
+          day: 'ddd'
       },
   },
   offset: false
@@ -175,6 +188,7 @@ function partClickEvent(event, array) {
     espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(start, end)
 
     window.espiChart.update();
+    displayDates();
   }
 }
 
@@ -195,6 +209,7 @@ function hourClickEvent(event, array) {
     espiChart.data.datasets[0].backgroundColor = colors.slice(sp.start, sp.end)
 
     window.espiChart.update();
+    displayDates();
   }
 }
 
@@ -205,6 +220,7 @@ document.getElementById('latest-day').addEventListener('click', function() {
   espiChart.options.scales.xAxes = xAxesDay;
   espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(last_index - 24, last_index);
   window.espiChart.update();
+  displayDates();
 });
 
 document.getElementById('latest-week').addEventListener('click', function() {
@@ -213,8 +229,11 @@ document.getElementById('latest-week').addEventListener('click', function() {
   espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end);
   espiChart.options.tooltips.callbacks = tooltipsCallbacksWeek;
   espiChart.options.scales.xAxes = xAxesWeek;
+
+  espiChart.data.datasets[1].data = hourly_data.slice(slicePoints.start *24/3, slicePoints.end*24/3);
+
   window.espiChart.update();
-  displayDates(slicePoints.start, slicePoints.end)
+  displayDates();
 });
 
 document.getElementById('time-period').addEventListener('click', function() {
@@ -222,7 +241,7 @@ document.getElementById('time-period').addEventListener('click', function() {
   espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
   espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end);
   window.espiChart.update();
-  displayDates(slicePoints.start, slicePoints.end)
+  displayDates();
 });
 
 document.getElementById('previous-week').addEventListener('click', function() {
@@ -230,7 +249,7 @@ document.getElementById('previous-week').addEventListener('click', function() {
   espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
   espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end)
   window.espiChart.update();
-  displayDates(slicePoints.start, slicePoints.end)
+  displayDates();
 });
 
 document.getElementById('next-week').addEventListener('click', function() {
@@ -238,7 +257,7 @@ document.getElementById('next-week').addEventListener('click', function() {
   espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
   espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end)
   window.espiChart.update();
-  displayDates(slicePoints.start, slicePoints.end)
+  displayDates();
 });
 
 document.getElementById('previous-day').addEventListener('click', function() {
@@ -246,6 +265,7 @@ document.getElementById('previous-day').addEventListener('click', function() {
   espiChart.data.datasets[0].data = hourly_data.slice(slicePoints.start, slicePoints.end);
   espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(slicePoints.start, slicePoints.end)
   window.espiChart.update();
+  displayDates();
 });
 
 document.getElementById('next-day').addEventListener('click', function() {
@@ -253,11 +273,13 @@ document.getElementById('next-day').addEventListener('click', function() {
   espiChart.data.datasets[0].data = hourly_data.slice(slicePoints.start, slicePoints.end);
   espiChart.data.datasets[0].backgroundColor = hourly_colors.slice(slicePoints.start, slicePoints.end)
   window.espiChart.update();
+  displayDates();
 });
 
-function displayDates(i, j) {
-  document.getElementById("firstChartDate").innerHTML = part_info[i].date;
-  document.getElementById("lastChartDate").innerHTML = part_info[j].date;
+function displayDates() {
+  let chart = espiChart.data.datasets[0].data
+  document.getElementById("firstChartDate").innerHTML = moment(chart[0]['x']).format("MMM Do");
+  document.getElementById("lastChartDate").innerHTML = moment(chart[chart.length - 1]['x']).format("MMM Do, YYYY");
 };
 
 
