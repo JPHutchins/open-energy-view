@@ -71,6 +71,14 @@ def create_app(test_config=None):
 
     @app.route("/test-partitions-chart")
     def partitions_chart():
+        part_1_color = '#0000A0'
+        part_2_color = '#add8e6'
+        part_3_color = '#800080'
+
+        colors_tuple = (part_1_color,
+                        part_2_color,
+                        part_3_color)
+
         conn = sqlite3.connect(
             f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
@@ -98,14 +106,28 @@ def create_app(test_config=None):
             'n_parts': n_parts
         }
 
-        part_1_color = '#0000A0'
-        part_2_color = '#add8e6'
-        part_3_color = '#800080'
+        cur.execute("""
+                    SELECT watt_hours, start
+                    FROM espi
+                    ORDER BY start ASC;
+                    """)
+        
+        hourly_data = []
+        hourly_lookup = {}
+        hourly_dates = []
+        i = 0
+        for value, start in cur.fetchall():
+            # JS needs epoch in ms; the offset is to position the bar correctly
+            start = start * 1000 + 1800000
+            hourly_data.append({
+                'x': start,
+                'y': value,
+                'color': colors_tuple[i // 8 % 3]})
+            hourly_dates.append(start)
+            hourly_lookup[start] = i
+            i += 1
 
-        colors_tuple = (part_1_color,
-                        part_2_color,
-                        part_3_color)
-
+        
         data = []
         lookup = {}
         dates = []
@@ -183,7 +205,10 @@ def create_app(test_config=None):
                                part_info=part_info,
                                data=data,
                                lookup=lookup,
-                               dates=dates)
+                               dates=dates,
+                               hourly_data=hourly_data,
+                               hourly_dates=hourly_dates,
+                               hourly_lookup=hourly_lookup)
 
 
     @app.route("/test-partitions-chart-old", methods=['GET'])
