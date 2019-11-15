@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from flask import Flask, render_template, request
 from itertools import cycle
+import pandas as pd
 import sqlite3
 
 from pgesmd.helpers import Crosses
@@ -364,6 +365,52 @@ def create_app(test_config=None):
         values, labels = zip(*cur.fetchall())
         labels = [datetime.strptime(l, '%Y-%m-%d').strftime('%b %d %Y') for l in labels]
 
-        return render_template('line.html', values=values, labels=labels)
+        cur = conn.cursor()
+        cur.execute("SELECT min, date FROM daily")
+
+        values_min, labels_min = zip(*cur.fetchall())
+
+        cur = conn.cursor()
+        cur.execute("SELECT date, min FROM daily")
+
+        data = cur.fetchall()
+
+        window = 30
+
+        df = pd.DataFrame(data, columns=['Date', 'Daily Minimum'])
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.set_index('Date')
+        
+        ra = df.rolling(window=window).mean()
+        rs = df.rolling(window=window).std()
+
+        rsra = zip(df['Daily Minimum'], ra['Daily Minimum'], rs['Daily Minimum'], list(df.index))
+       
+        smooth = []
+        for d_min, d_avg, d_std, date in rsra:
+            hi = d_avg + (d_std)
+            lo = d_avg - (d_std)
+            if d_min < lo or d_min > hi:
+                smooth.append((date, d_avg))
+            else:
+                smooth.append((date, d_min))
+
+        df_smooth = pd.DataFrame(smooth, columns=['Date', 'Daily Minimum'])
+        df_smooth['Date'] = pd.to_datetime(df_smooth['Date'])
+        df_smooth = df_smooth.set_index('Date')
+
+        ra_smooth = df_smooth.rolling(window=window).mean()
+
+        result = ra_smooth['Daily Minimum']
+
+        mean = [x for x in result]
+        mean = mean[window-1:]
+        
+        return render_template('line.html',
+                               values=values,
+                               labels=labels,
+                               value_min=values_min,
+                               mean=mean
+                               )
 
     return app
