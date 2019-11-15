@@ -58,7 +58,8 @@ class EnergyHistory():
         self.create_daily_table = """
             CREATE TABLE IF NOT EXISTS daily (
             date TEXT PRIMARY KEY,
-            baseline INTEGER);
+            baseline INTEGER,
+            min INTEGER);
             """
         self.create_partitions_table = """
             CREATE TABLE IF NOT EXISTS partitions (
@@ -104,8 +105,9 @@ class EnergyHistory():
         self.insert_days = """
             INSERT INTO daily (
             date,
-            baseline)
-            VALUES (?,?);
+            baseline,
+            min)
+            VALUES (?,?,?);
             """
 
         try:
@@ -302,7 +304,9 @@ class EnergyHistory():
             #  Push daily changes
             if not entry[4] == date:
                 baseline = calculate_baseline(min_heap)
-                self.cursor.execute(self.insert_days, (date, baseline))
+                daily_min = heapq.nsmallest(1, min_heap)[0]
+                self.cursor.execute(
+                    self.insert_days, (date, baseline, daily_min))
                 min_heap = []
                 date = entry[4]
             
@@ -312,7 +316,8 @@ class EnergyHistory():
 
         #  Push the data from the last day
         baseline = calculate_baseline(min_heap)
-        self.cursor.execute(self.insert_days, (date, baseline))
+        daily_min = heapq.nsmallest(1, min_heap)[0]
+        self.cursor.execute(self.insert_days, (date, baseline, daily_min))
 
         #  Update the info table
         self.cursor.execute(
