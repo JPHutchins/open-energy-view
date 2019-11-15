@@ -11,35 +11,38 @@
 <script>
 // Global parameters:
 // do not resize the chart canvas when its container does (keep at 600x400px)
-Chart.defaults.global.responsive = false;
+Chart.defaults.global.responsive = true;
  
 // define the chart data
 var chartData = {
   labels : [{% for item in labels %}
              "{{item}}",
             {% endfor %}],
-  datasets : [{
-      label: '{{ legend }}',
-      fill: true,
-      backgroundColor: "rgba(75,192,192,0.4)",
-      borderColor: "rgba(75,192,192,1)",
-      borderCapStyle: 'butt',
-      borderDash: [],
-      borderDashOffset: 0.0,
-      borderJoinStyle: 'miter',
-      pointBorderColor: "rgba(75,192,192,1)",
-      pointBackgroundColor: "#fff",
-      pointBorderWidth: 1,
-      pointHoverRadius: 5,
-      pointHoverBackgroundColor: "rgba(75,192,192,1)",
-      pointHoverBorderColor: "rgba(220,220,220,1)",
-      pointHoverBorderWidth: 2,
-      pointRadius: 1,
-      pointHitRadius: 10,
-      data : [{% for item in values %}
-                {{item}},
-              {% endfor %}],
-      spanGaps: false
+  datasets : [
+    {
+    label: 'Daily Minimum Watt Hour',
+    fill: false,
+    borderWidth: 1,
+    backgroundColor: "#408be0",
+    borderColor: "#408be0",
+    pointRadius: 0,
+    data : [{% for item in value_min %}
+              {{item}},
+            {% endfor %}],
+    spanGaps: false
+  },
+  {
+    label: 'pandas *%&#ery',
+    fill: false,
+    borderWidth: 3,
+    order: 1,
+    backgroundColor: "#FF0000",
+    borderColor: "#FF0000",
+    pointRadius: 0,
+    data : [{% for item in mean %}
+              {{item}},
+            {% endfor %}],
+    spanGaps: false
   }]
 }
 
