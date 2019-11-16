@@ -59,7 +59,9 @@ class EnergyHistory():
             CREATE TABLE IF NOT EXISTS daily (
             date TEXT PRIMARY KEY,
             baseline INTEGER,
-            min INTEGER);
+            min INTEGER,
+            day_avg,
+            day_sum);
             """
         self.create_partitions_table = """
             CREATE TABLE IF NOT EXISTS partitions (
@@ -225,31 +227,34 @@ class EnergyHistory():
             t = datetime.fromtimestamp(time)
             return float(t.strftime('%H')) + (float(t.strftime('%M')) / 60)
 
-        date = next(parse_espi_data(xml_file))[4]
+        prev_date = next(parse_espi_data(xml_file))[4]
         min_heap = []
         part_type = 0
         part_sum = 0
         part_start = next(parse_espi_data(xml_file))[0]
         c = Crosses(self.partitions[1][0])
 
+        day_sum = 0
+
         for entry in parse_espi_data(xml_file):
+            start, duration, value, watt_hours, date = entry
             
             #  Update the info about the data
-            if entry[0] < self.first_entry:
-                self.first_entry = entry[0]
-            if entry[0] > self.last_entry:
-                self.last_entry = entry[0]
-            if entry[3] > self.max_watt_hour:
-                self.max_watt_hour = entry[3]
+            if start < self.first_entry:
+                self.first_entry = start
+            if start > self.last_entry:
+                self.last_entry = start
+            if watt_hours > self.max_watt_hour:
+                self.max_watt_hour = watt_hours
 
             #  Calculate the daily partitions
-            espi_time = get_hours_mins(entry[0])
+            espi_time = get_hours_mins(start)
             if not c.test(espi_time):
-                part_sum += entry[3]
-                part_date = entry[4]
+                part_sum += watt_hours
+                part_date = date
             else:
                 part_name = self.partitions[part_type][1]
-                part_end = entry[0]
+                part_end = start
                 part_end_iso = timezone.localize(
                     datetime.utcfromtimestamp(part_end))
                 part_interval = part_end - part_start
@@ -295,20 +300,21 @@ class EnergyHistory():
                     (part_type + 1) % len(self.partitions)]
                     [0])
 
-                part_sum = entry[3]
-                part_start = entry[0]
+                part_sum = watt_hours
+                part_start = start
 
             #  Keep track of daily values
-            min_heap.append(entry[3])
+            min_heap.append(watt_hours)
+            day_sum += watt_hours
 
             #  Push daily changes
-            if not entry[4] == date:
+            if not date == prev_date:
                 baseline = calculate_baseline(min_heap)
                 daily_min = heapq.nsmallest(1, min_heap)[0]
                 self.cursor.execute(
-                    self.insert_days, (date, baseline, daily_min))
+                    self.insert_days, (prev_date, baseline, daily_min))
                 min_heap = []
-                date = entry[4]
+                prev_date = date
             
             #  Insert into the ESPI table
             espi_insert = entry + (part_type,)
@@ -317,7 +323,7 @@ class EnergyHistory():
         #  Push the data from the last day
         baseline = calculate_baseline(min_heap)
         daily_min = heapq.nsmallest(1, min_heap)[0]
-        self.cursor.execute(self.insert_days, (date, baseline, daily_min))
+        self.cursor.execute(self.insert_days, (prev_date, baseline, daily_min))
 
         #  Update the info table
         self.cursor.execute(
