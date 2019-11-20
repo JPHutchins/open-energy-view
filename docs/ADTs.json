@@ -1,0 +1,168 @@
+/*
+
+A representation of the EnergyDatabase data as a JS object.
+
+"info"
+ - Information about the database.
+
+"data"
+ - The smallest data interval.  Omitted for hourly readings.
+
+"hour"
+ - The smallest analyzed data interval.  Keys prefixed with i are the index
+   values of a larger data interval to which this interval belongs.
+
+Intervals contain a reference to the bounding indexes of the next smallest
+interval that they divide into as well as a reference to the single index
+of the next largest interval to which they belong.  From the largest interval,
+year, one can find the index of first hour by looking:
+
+part[
+    day[
+        month[
+            year.i_month_start
+             ].i_day_start
+        ].i_part_start
+    ].i_hour_start
+]
+
+*/
+
+{
+    "info": {
+        "max_watt_hour": 0,
+        "first_entry": 0,
+        "last_entry": 0,
+        "n_parts": 0,
+        "part_values": [],
+        "last_update": 0
+    },
+
+    "data": [
+        {
+            "x": 0,
+            "y": 0,
+
+            "sum": 0,
+
+            "type": "data",
+            "part": 0,
+            "duration": 0,
+
+            "i_hour": 0,
+            "i_part": 0,
+            "i_day": 0,
+            "i_week": 0,
+            "i_month": 0,
+            "i_year": 0
+        }
+    ],
+
+    "hour": [
+        {
+            "x": 0,
+            "y": 0,
+
+            "sum": 0,
+
+            "type": "hour",
+            "part": 0,
+
+            "i_data_start": 0,
+            "i_data_end": 0,
+
+            "i_part": 0,
+            "i_day": 0,
+            "i_week": 0,
+            "i_month": 0,
+            "i_year": 0
+        }
+    ],
+
+    "part": [
+        {
+            "x": 0,
+            "y": 0,
+
+            "sum": 0,
+
+            "type": "part",
+            "part": 0,
+
+            "i_hour_start": 0,
+            "i_hour_end": 0,
+
+            "i_day": 0,
+            "i_week": 0,
+            "i_month": 0,
+            "i_year": 0
+        }
+    ],
+
+    "day": [
+        {
+            "x": 0,
+            "y": 0,
+
+            "sum": 0,
+
+            "type": "day",
+
+            "i_part_start": 0,
+            "i_part_end": 0,
+
+            "i_week": 0,
+            "i_month": 0,
+            "i_year": 0
+        }
+    ],
+
+    "week": [
+        {
+            "x": 0,
+            "y": 0,
+
+            "sum": 0,
+
+            "type": "week",
+
+            "i_day_start": 0,
+            "i_day_end": 0,
+
+            "i_month": 0,
+            "i_year": 0
+        }
+    ],
+
+    "month": [
+        {
+            "x": 0,
+            "y": 0,
+
+            "sum": 0,
+
+            "type": "month",
+
+            "i_day_start": 0,
+            "i_day_end": 0,
+            "i_week_start": 0,
+            "i_week_end": 0,
+
+            "i_year": 0
+        }
+    ],
+
+    "year": [
+        {
+            "x": 0,
+            "y": 0,
+
+            "sum": 0,
+
+            "type": "year",
+
+            "i_month_start": 0,
+            "i_month_end": 0
+        }
+    ]
+}
