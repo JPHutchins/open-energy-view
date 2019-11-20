@@ -54,7 +54,9 @@ part[
             "i_day": 0,
             "i_week": 0,
             "i_month": 0,
-            "i_year": 0
+            "i_year": 0,
+
+            "lookup": 0
         }
     ],
 
@@ -75,7 +77,9 @@ part[
             "i_day": 0,
             "i_week": 0,
             "i_month": 0,
-            "i_year": 0
+            "i_year": 0,
+
+            "lookup": 0
         }
     ],
 
@@ -95,7 +99,9 @@ part[
             "i_day": 0,
             "i_week": 0,
             "i_month": 0,
-            "i_year": 0
+            "i_year": 0,
+
+            "lookup": 0
         }
     ],
 
@@ -113,7 +119,9 @@ part[
 
             "i_week": 0,
             "i_month": 0,
-            "i_year": 0
+            "i_year": 0,
+
+            "lookup": 0
         }
     ],
 
@@ -130,7 +138,9 @@ part[
             "i_day_end": 0,
 
             "i_month": 0,
-            "i_year": 0
+            "i_year": 0,
+
+            "lookup": 0
         }
     ],
 
@@ -148,7 +158,9 @@ part[
             "i_week_start": 0,
             "i_week_end": 0,
 
-            "i_year": 0
+            "i_year": 0,
+
+            "lookup": 0
         }
     ],
 
@@ -162,7 +174,9 @@ part[
             "type": "year",
 
             "i_month_start": 0,
-            "i_month_end": 0
+            "i_month_end": 0,
+
+            "lookup": 0
         }
     ]
 }
