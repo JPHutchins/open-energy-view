@@ -272,7 +272,6 @@ class EnergyHistory():
                 part_sum += watt_hours
                 part_date = date
             else:
-                part_name = self.partitions[part_type][1]
                 part_end = start
                 part_end_iso = timezone.localize(
                     datetime.utcfromtimestamp(part_end))
@@ -355,9 +354,19 @@ class EnergyHistory():
         """Return the JSON representation of the EnergyHistory DB."""
         cur = self.cursor
 
-        #  Get the hour TABLE as index reference
+        #  Get the table index references
         cur.execute("SELECT start FROM hour ORDER BY start ASC;")
         hour_list = list(zip(*cur.fetchall()))
+        cur.execute("SELECT start FROM part ORDER BY start ASC;")
+        part_list = list(zip(*cur.fetchall()))
+        cur.execute("SELECT start FROM day ORDER BY start ASC;")
+        day_list = list(zip(*cur.fetchall()))
+        cur.execute("SELECT start FROM week ORDER BY start ASC;")
+        week_list = list(zip(*cur.fetchall()))
+        cur.execute("SELECT start FROM month ORDER BY start ASC;")
+        month_list = list(zip(*cur.fetchall()))
+        cur.execute("SELECT start FROM year ORDER BY start ASC;")
+        year_list = list(zip(*cur.fetchall()))
         
         #  Get the info TABLE.
         cur.execute("""

@@ -70,9 +70,6 @@ window.onload = function() {
       datasets: [{
         data: onloadData,
         backgroundColor: colors
-      }, {
-        data: onloadDataLine,
-        type: 'line'
       }]
     },
     options: {
@@ -230,7 +227,7 @@ document.getElementById('latest-week').addEventListener('click', function() {
   espiChart.options.tooltips.callbacks = tooltipsCallbacksWeek;
   espiChart.options.scales.xAxes = xAxesWeek;
 
-  espiChart.data.datasets[1].data = hourly_data.slice(slicePoints.start *24/3, slicePoints.end*24/3);
+  //espiChart.data.datasets[1].data = hourly_data.slice(slicePoints.start *24/3, slicePoints.end*24/3);
 
   window.espiChart.update();
   displayDates();
@@ -246,6 +243,7 @@ document.getElementById('time-period').addEventListener('click', function() {
 
 document.getElementById('previous-week').addEventListener('click', function() {
   var slicePoints = previousInterval('week', espiChart, dates, lookup);
+  //  generalize next four lines
   espiChart.data.datasets[0].data = data.slice(slicePoints.start, slicePoints.end);
   espiChart.data.datasets[0].backgroundColor = colors.slice(slicePoints.start, slicePoints.end)
   window.espiChart.update();
