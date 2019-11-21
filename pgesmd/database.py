@@ -356,14 +356,14 @@ class EnergyHistory():
         cur = self.cursor
 
         #  Set timedeltas
-        one_day = timedelta(days=1)
-        one_week = timedelta(weeks=1)
-        one_month = relativedelta(months=1)
-        one_year = relativedelta(years=1)
+        ONE_DAY = timedelta(days=1)
+        ONE_WEEK = timedelta(weeks=1)
+        ONE_MONTH = relativedelta(months=1)
+        ONE_YEAR = relativedelta(years=1)
 
         #  Set time deltas in milliseconds
-        ms_half_hour = 1800000
-        ms_hour = 3600000
+        MS_HALF_HOUR = 1800000
+        MS_HOUR = 3600000
 
         #  Get the table index references
         cur.execute("SELECT start FROM hour ORDER BY start ASC;")
@@ -418,8 +418,8 @@ class EnergyHistory():
 
             # JS needs epoch in ms, offset is to center bar
             start = start * 1000
-            bar_center = int((start_time + one_week / 2).timestamp()) * 1000
-            end = int((start_time + one_week).timestamp()) * 1000
+            bar_center = int((start_time + ONE_WEEK / 2).timestamp()) * 1000
+            end = int((start_time + ONE_WEEK).timestamp()) * 1000
 
             i_month = bisect_left(
                 [month_obj['lookup'] for month_obj in self.json['month']],
@@ -463,8 +463,8 @@ class EnergyHistory():
 
             # JS needs epoch in ms, offset is to center bar
             start = start * 1000
-            bar_center = int((start_time + one_day / 2).timestamp()) * 1000
-            end = int((start_time + one_day).timestamp()) * 1000
+            bar_center = int((start_time + ONE_DAY / 2).timestamp()) * 1000
+            end = int((start_time + ONE_DAY).timestamp()) * 1000
 
             i_week = bisect_left(
                 [week_obj['lookup'] for week_obj in self.json['week']],
@@ -563,8 +563,8 @@ class EnergyHistory():
 
             # JS needs epoch in ms; the offset is to position the bar correctly
             start = start * 1000
-            bar_center = start + ms_half_hour
-            end = start + ms_hour
+            bar_center = start + MS_HALF_HOUR
+            end = start + MS_HOUR
 
             i_part = bisect_left(
                     [part_obj['lookup'] for part_obj in self.json['part']],
