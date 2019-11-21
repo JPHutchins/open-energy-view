@@ -403,6 +403,55 @@ class EnergyHistory():
             'last_update': last_update
         }
 
+#  month ----------------------------------------------------------------------
+        #  Get the month TABLE
+        cur.execute("""
+            SELECT start, month_avg, month_sum
+            FROM month
+            ORDER BY start ASC;
+            """)
+
+        i = 0
+        for start, month_avg, month_sum in cur.fetchall():
+
+            start_time = datetime.fromtimestamp(start)
+
+            # JS needs epoch in ms, offset is to center bar
+            start = start * 1000
+            bar_center = int((start_time + ONE_MONTH / 2).timestamp()) * 1000
+            end = int((start_time + ONE_MONTH).timestamp()) * 1000
+
+            i_year = bisect_left(
+                [year_obj['lookup'] for year_obj in self.json['year']],
+                start)
+
+            # This list of objects can be passed directly to Chart.js
+            self.json['part'].append({
+                'x': bar_center,
+                'y': month_avg,
+                
+                'sum': month_sum,
+
+                'type': 'month',
+                'interval_start': start,
+                'interval_end': end,
+
+                'i_week_start': bisect_left(week_list, start),
+                'i_week_end': bisect_left(week_list, end),
+                'i_day_start': bisect_left(day_list, start),
+                'i_day_end': bisect_left(day_list, end),
+                'i_part_start': bisect_left(part_list, start),
+                'i_part_end': bisect_left(part_list, end),
+                'i_hour_start': bisect_left(hour_list, start),
+                'i_hour_end': bisect_left(hour_list, end),
+
+                'i_year': i_year,
+
+                'lookup'[start]: i
+                })
+            i += 1
+#  /month ---------------------------------------------------------------------
+
 #  week -----------------------------------------------------------------------
         #  Get the week TABLE
         cur.execute("""
@@ -445,7 +494,7 @@ class EnergyHistory():
                 'lookup'[start]: i
                 })
             i += 1
-#  /week  ----------------------------------------------------------------------
+#  /week ----------------------------------------------------------------------
 
 #  day  -----------------------------------------------------------------------
         #  Get the day TABLE
