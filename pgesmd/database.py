@@ -290,6 +290,28 @@ class EnergyHistory():
             cur_week = cur_datetime.isocalendar()[1]
             cur_month = cur_datetime.strftime('%m')
             cur_year = cur_datetime.isocalendar()[0]
+
+            #  Push monthly changes
+            if cur_month != prev_month:
+                middle = int(cur_datetime + ONE_MONTH / 2)
+                self.cursor.execute("""
+                    INSERT INTO month (
+                        start,
+                        middle,
+                        end,
+                        date,
+                        month_avg,
+                        month_sum)
+                    VALUES (?,?,?,?,?,?);""", (
+                        month_start,
+                        middle,
+                        start,
+                        prev_date,
+                        month_sum / month_cnt,
+                        month_sum))
+                #  Reinitialize month values for next iteration
+                prev_month = cur_month
+                month_sum, month_cnt, month_start = 0, 0, start
             
             #  Push weekly changes
             if cur_week != prev_week:
