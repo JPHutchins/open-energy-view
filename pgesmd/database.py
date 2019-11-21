@@ -176,13 +176,6 @@ class EnergyHistory():
         self.cursor.execute(
             "UPDATE info SET n_parts = ?;", (len(self.partitions),))
 
-        i = 1
-        for part in self.partitions:
-            self.cursor.execute(
-                f"UPDATE info SET part_{i}_time = ?, part_{i}_name = ?;", (
-                    part[0], part[1]))
-            i += 1
-
         part_times, names = zip(*self.partitions)
         self.part_intervals = []
         j = 1
@@ -252,9 +245,8 @@ class EnergyHistory():
         """
         #  Set timedeltas
         S_ONE_DAY = int(timedelta(days=1).total_seconds())
-        S_ONE_WEEK = int(timedelta(weeks=1).total_second())
+        S_ONE_WEEK = int(timedelta(weeks=1).total_seconds())
         ONE_MONTH = relativedelta(months=1)
-        ONE_YEAR = relativedelta(years=1)
 
         def calculate_baseline(min_heap, baseline_points=baseline_points):
             return int(round(sum(heapq.nsmallest(
@@ -315,7 +307,7 @@ class EnergyHistory():
 
             #  Push monthly changes
             if cur_month != prev_month:
-                middle = int(cur_datetime + ONE_MONTH / 2)
+                middle = int((cur_datetime + ONE_MONTH / 2).timestamp())
                 self.cursor.execute("""
                     INSERT INTO month (
                         start,
