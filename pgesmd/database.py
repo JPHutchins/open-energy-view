@@ -291,6 +291,28 @@ class EnergyHistory():
             cur_month = cur_datetime.strftime('%m')
             cur_year = cur_datetime.isocalendar()[0]
 
+            #  Push yearly changes
+            if cur_year != prev_year:
+                middle = start - 26 * S_ONE_WEEK
+                self.cursor.execute("""
+                    INSERT INTO year (
+                        start,
+                        middle,
+                        end,
+                        date,
+                        year_avg,
+                        year_sum)
+                    VALUES (?,?,?,?,?,?);""", (
+                        year_start,
+                        middle,
+                        start,
+                        prev_date,
+                        year_sum / year_cnt,
+                        year_sum))
+                #  Reinitialize year values for next iteration
+                prev_year = cur_year
+                year_sum, year_cnt, year_start = 0, 0, start
+
             #  Push monthly changes
             if cur_month != prev_month:
                 middle = int(cur_datetime + ONE_MONTH / 2)
@@ -453,13 +475,10 @@ class EnergyHistory():
             year_sum += watt_hours
             year_cnt += 1
 
-             #  Keep track of daily minimum
+            #  Keep track of daily minimum
             min_heap.append(watt_hours)
 
         #  Push the data from the last entries
-        baseline = calculate_baseline(min_heap)
-        daily_min = heapq.nsmallest(1, min_heap)[0]
-        self.cursor.execute(self.insert_days, (prev_date, baseline, daily_min))
 
         #  Update the info table
         self.cursor.execute(
