@@ -6,6 +6,7 @@ import logging
 import heapq
 import pytz
 from datetime import datetime
+from bisect import bisect_left
 
 from pgesmd.helpers import parse_espi_data, Crosses
 
@@ -27,6 +28,16 @@ class EnergyHistory():
         """Open the connection to database and create tables."""
         self.path = path
         self.partitions = partitions
+        self.json = {
+            "info": {},
+            "data": [],
+            "hour": [],
+            "part": [],
+            "day": [],
+            "week": [],
+            "month": [],
+            "year": []
+        }
 
         self.create_info_table = """
             CREATE TABLE IF NOT EXISTS info (
@@ -35,19 +46,11 @@ class EnergyHistory():
             first_entry INTEGER DEFAULT 4102444799,
             last_entry INTEGER DEFAULT 0,
             n_parts INTEGER,
-            part_1_name TEXT,
-            part_1_time INTEGER,
-            part_2_name TEXT,
-            part_2_time INTEGER,
-            part_3_name TEXT,
-            part_3_time INTEGER,
-            part_4_name TEXT,
-            part_4_time INTEGER,
-            part_5_name TEXT,
-            part_5_time INTEGER);
+            part_values INTEGER,
+            last_update INTEGER);
             """
-        self.create_espi_table = """
-            CREATE TABLE IF NOT EXISTS espi (
+        self.create_data_table = """
+            CREATE TABLE IF NOT EXISTS data (
             start INTEGER PRIMARY KEY,
             duration INTEGER,
             value INTEGER,
@@ -55,31 +58,17 @@ class EnergyHistory():
             date TEXT,
             part_type);
             """
-        self.create_daily_table = """
-            CREATE TABLE IF NOT EXISTS daily (
-            date TEXT PRIMARY KEY,
-            baseline INTEGER,
-            min INTEGER,
-            day_avg,
-            day_sum);
-            """
-        self.create_partitions_table = """
-            CREATE TABLE IF NOT EXISTS partitions (
+        self.create_hour_table = """
+            CREATE TABLE IF NOT EXISTS hour (
+            start INTEGER PRIMARY KEY,
+            duration INTEGER,
+            value INTEGER,
+            watt_hours INTEGER,
             date TEXT,
-            start INTEGER,
-            part_1_avg INTEGER,
-            part_1_sum INTEGER,
-            part_2_avg INTEGER,
-            part_2_sum INTEGER,
-            part_3_avg INTEGER,
-            part_3_sum INTEGER,
-            part_4_avg INTEGER,
-            part_4_sum INTEGER,
-            part_5_avg INTEGER,
-            part_5_sum INTEGER);
+            part_type);
             """
-        self.create_partitions_table_b = """
-            CREATE TABLE IF NOT EXISTS partitions_b (
+        self.create_part_table = """
+            CREATE TABLE IF NOT EXISTS part (
             start INTEGER,
             start_iso_8601,
             end INTEGER,
@@ -88,14 +77,42 @@ class EnergyHistory():
             middle_iso_8601,
             date TEXT,
             part_type INTEGER,
-            part_name TEXT,
-            part_desc TEXT,
-            part_color TEXT,
             part_avg INTEGER,
             part_sum INTEGER);
             """
-        self.insert_espi = """
-            INSERT INTO espi (
+        self.create_day_table = """
+            CREATE TABLE IF NOT EXISTS day (
+            start INTEGER,
+            date TEXT PRIMARY KEY,
+            baseline INTEGER,
+            min INTEGER,
+            day_avg,
+            day_sum);
+            """
+        self.create_week_table = """
+            CREATE TABLE IF NOT EXISTS week (
+            start INTEGER,
+            date TEXT PRIMARY KEY,
+            week_avg,
+            week_sum);
+            """
+        self.create_month_table = """
+            CREATE TABLE IF NOT EXISTS month (
+            start INTEGER,
+            date TEXT PRIMARY KEY,
+            month_avg,
+            month_sum);
+            """
+        self.create_year_table = """
+            CREATE TABLE IF NOT EXISTS year (
+            start INTEGER,
+            date TEXT PRIMARY KEY,
+            year_avg,
+            year_sum);
+            """
+
+        self.insert_hour = """
+            INSERT INTO hour (
             start,
             duration,
             value,
@@ -120,11 +137,14 @@ class EnergyHistory():
 
         try:
             self.cursor = self.conn.cursor()
-            self.cursor.execute(self.create_espi_table)
-            self.cursor.execute(self.create_daily_table)
             self.cursor.execute(self.create_info_table)
-            self.cursor.execute(self.create_partitions_table)
-            self.cursor.execute(self.create_partitions_table_b)
+            self.cursor.execute(self.create_data_table)
+            self.cursor.execute(self.create_hour_table)
+            self.cursor.execute(self.create_part_table)
+            self.cursor.execute(self.create_day_table)
+            self.cursor.execute(self.create_week_table)
+            self.cursor.execute(self.create_month_table)
+            self.cursor.execute(self.create_year_table)
         except Exception as e:
             _LOGGER.error(e)
 
@@ -150,7 +170,7 @@ class EnergyHistory():
                 f"UPDATE info SET part_{i}_time = ?, part_{i}_name = ?;", (
                     part[0], part[1]))
             i += 1
-        
+
         part_times, names = zip(*self.partitions)
         self.part_intervals = []
         j = 1
@@ -176,14 +196,13 @@ class EnergyHistory():
                 start = str(start) + "AM"
             else:
                 start = str(start - 12) + "PM"
-            
+
             if end <= 12:
                 end = str(end) + "AM"
             else:
                 end = str(end - 12) + "PM"
-            
+
             self.part_desc.append(start + " - " + end)
-            
 
     def insert_espi_xml(self, xml_file, baseline_points=3):
         """Insert an ESPI XML file into the database.
@@ -267,7 +286,7 @@ class EnergyHistory():
 
                 #  Insert into the partitions table    
                 self.cursor.execute(f"""
-                    INSERT INTO partitions_b (
+                    INSERT INTO part (
                     start,
                     start_iso_8601,
                     end,
@@ -276,11 +295,9 @@ class EnergyHistory():
                     middle_iso_8601,
                     date,
                     part_type,
-                    part_name,
-                    part_desc,
                     part_avg,
                     part_sum)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?);
+                    VALUES (?,?,?,?,?,?,?,?,?,?);
                     """, (
                         part_start,
                         part_start_iso,
@@ -290,8 +307,6 @@ class EnergyHistory():
                         part_middle_iso,
                         part_date,
                         part_type,
-                        part_name,
-                        self.part_desc[part_type],
                         part_avg,
                         part_sum))
 
@@ -335,3 +350,226 @@ class EnergyHistory():
 
         #  Commit changes to the database
         self.cursor.execute("COMMIT")
+
+    def get_json(self, type='json'):
+        """Return the JSON representation of the EnergyHistory DB."""
+        cur = self.cursor
+
+        #  Get the hour TABLE as index reference
+        cur.execute("SELECT start FROM hour ORDER BY start ASC;")
+        hour_list = list(zip(*cur.fetchall()))
+        
+        #  Get the info TABLE.
+        cur.execute("""
+            SELECT max_watt_hour, first_entry, last_entry, n_parts,
+                part_values, last_update
+            FROM info
+            WHERE id=0;
+            """)
+
+        (max_watt_hour,
+         first_entry,
+         last_entry,
+         n_parts,
+         part_values,
+         last_update) = cur.fetchone()
+
+        self.json['info'] = {
+            'max_watt_hour': max_watt_hour,
+            'first_entry': first_entry,
+            'last_entry': last_entry,
+            'n_parts': n_parts,
+            'part_values': part_values,
+            'last_update': last_update
+        }
+
+#  week -----------------------------------------------------------------------
+        #  Get the week TABLE
+        cur.execute("""
+            SELECT start, week_avg, week_sum
+            FROM week
+            ORDER BY start ASC;
+            """)
+
+        i = 0
+        for start, week_avg, week_sum in cur.fetchall():
+
+            # JS needs epoch in ms, offset is to center bar
+            start = start * 1000
+            bar_center = start + 302400000
+            end = start + 604800000  # DST issues?
+
+            i_month = bisect_left(
+                [month_obj['lookup'] for month_obj in self.json['month']],
+                start)
+
+            # This list of objects can be passed directly to Chart.js
+            self.json['part'].append({
+                'x': bar_center,
+                'y': week_avg,
+                
+                'sum': week_sum,
+
+                'type': 'week',
+                'interval_start': start,
+                'interval_end': end,
+
+                'i_hour_start': bisect_left(hour_list, start),
+                'i_hour_end': bisect_left(hour_list, end),
+
+                'i_month': i_month,
+                'i_year': self.json['month'][i_month]['i_year'],
+
+                'lookup'[start]: i
+                })
+            i += 1
+#  /week  ----------------------------------------------------------------------
+
+#  day  -----------------------------------------------------------------------
+        #  Get the day TABLE
+        cur.execute("""
+            SELECT start, day_avg, day_sum
+            FROM day
+            ORDER BY start ASC;
+            """)
+
+        # Behold, an unfortunately lengthy indented for block
+        i = 0
+        for start, day_avg, day_sum in cur.fetchall():
+
+            # JS needs epoch in ms, offset is to center bar
+            start = start * 1000
+            bar_center = start + 43200000
+            end = start + 86400000  # DST issues?
+
+            i_week = bisect_left(
+                [week_obj['lookup'] for week_obj in self.json['week']],
+                start)
+
+            # This list of objects can be passed directly to Chart.js
+            self.json['part'].append({
+                'x': bar_center,
+                'y': day_avg,
+                
+                'sum': day_sum,
+
+                'type': 'day',
+                'interval_start': start,
+                'interval_end': end,
+
+                'i_hour_start': bisect_left(hour_list, start),
+                'i_hour_end': bisect_left(hour_list, end),
+
+                'i_week': i_week,
+                'i_month': self.json['week'][i_week]['i_month'],
+                'i_year': self.json['week'][i_week]['i_year'],
+
+                'lookup'[start]: i
+                })
+            i += 1
+#  /day  ----------------------------------------------------------------------
+
+#  part -----------------------------------------------------------------------
+        #  Get the part TABLE
+        cur.execute("""
+            SELECT start, start_iso_8601, end, end_iso_8601, middle,
+                middle_iso_8601, date, part_type, part_avg, part_sum
+            FROM part;
+            """)
+
+        # Behold, an unfortunately lengthy indented for block
+        i = 0
+        for (   start,
+                start_iso_8601,
+                end,
+                end_iso_8601,
+                middle,
+                middle_iso_8601,
+                date,
+                part_type,
+                part_avg,
+                part_sum) in cur.fetchall():
+
+            # JS needs epoch in ms; the offset is given by using the middle
+            bar_center = middle * 1000
+            start = start * 1000
+            end = end * 1000
+
+            i_day = bisect_left(
+                [day_obj['lookup'] for day_obj in self.json['day']],
+                bar_center)
+
+            # This list of objects can be passed direclty to Chart.js
+            self.json['part'].append({
+                'x': bar_center,
+                'y': part_avg,
+                
+                'sum': part_sum,
+
+                'type': 'part',
+                'part': part_type,
+                'interval_start': start,
+                'interval_end': end,
+
+                'i_hour_start': bisect_left(hour_list, start),
+                'i_hour_end': bisect_left(hour_list, end),
+
+                'i_day': i_day,
+                'i_week': self.json['day'][i_day]['i_week'],
+                'i_month': self.json['day'][i_day]['i_month'],
+                'i_year': self.json['day'][i_day]['i_year'],
+
+                'lookup'[start]: i
+                })
+            i += 1
+#  /part ----------------------------------------------------------------------
+
+#  TO DO - data table for raw ESPI/other
+
+#  hour -----------------------------------------------------------------------
+        #  Get the hour TABLE.
+        cur.execute("""
+            SELECT watt_hours, start, part_type
+            FROM hour
+            ORDER BY start ASC;
+            """)
+        
+        i = 0
+        for value, start, part_type in cur.fetchall():
+            # JS needs epoch in ms; the offset is to position the bar correctly
+            start = start * 1000
+
+            i_part = bisect_left(
+                    [part_obj['lookup'] for part_obj in self.json['part']],
+                    start)
+
+            i_day = bisect_left(
+                [day_obj['lookup'] for day_obj in self.json['day']],
+                start)
+
+            self.json['hour'].append({
+                'x': start + 1800000,
+                'y': value,
+
+                'sum': value,
+
+                'type': 'hour',
+                'part': part_type,
+                'interval_start': start,
+                'interval_end': start + 3600000,
+
+                'i_data_start': 0,
+                'i_data_end': 0,
+
+                'i_part': i_part,
+                'i_day': i_day,
+                'i_week': self.json['day'][i_day]['i_week'],
+                'i_month': self.json['day'][i_day]['i_month'],
+                'i_year': self.json['day'][i_day]['i_year'],
+
+                'lookup'[start]: i
+            })
+            i += 1
+#  /hour ----------------------------------------------------------------------
+
+
