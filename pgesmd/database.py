@@ -5,7 +5,8 @@ import os
 import logging
 import heapq
 import pytz
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from bisect import bisect_left
 
 from pgesmd.helpers import parse_espi_data, Crosses
@@ -354,6 +355,16 @@ class EnergyHistory():
         """Return the JSON representation of the EnergyHistory DB."""
         cur = self.cursor
 
+        #  Set timedeltas
+        one_day = timedelta(days=1)
+        one_week = timedelta(weeks=1)
+        one_month = relativedelta(months=1)
+        one_year = relativedelta(years=1)
+
+        #  Set time deltas in milliseconds
+        ms_half_hour = 1800000
+        ms_hour = 3600000
+
         #  Get the table index references
         cur.execute("SELECT start FROM hour ORDER BY start ASC;")
         hour_list = list(zip(*cur.fetchall()))
@@ -403,10 +414,12 @@ class EnergyHistory():
         i = 0
         for start, week_avg, week_sum in cur.fetchall():
 
+            start_time = datetime.fromtimestamp(start)
+
             # JS needs epoch in ms, offset is to center bar
             start = start * 1000
-            bar_center = start + 302400000
-            end = start + 604800000  # DST issues?
+            bar_center = int((start_time + one_week / 2).timestamp()) * 1000
+            end = int((start_time + one_week).timestamp()) * 1000
 
             i_month = bisect_left(
                 [month_obj['lookup'] for month_obj in self.json['month']],
@@ -423,8 +436,8 @@ class EnergyHistory():
                 'interval_start': start,
                 'interval_end': end,
 
-                'i_hour_start': bisect_left(hour_list, start),
-                'i_hour_end': bisect_left(hour_list, end),
+                'i_day_start': bisect_left(day_list, start),
+                'i_day_end': bisect_left(day_list, end),
 
                 'i_month': i_month,
                 'i_year': self.json['month'][i_month]['i_year'],
@@ -446,10 +459,12 @@ class EnergyHistory():
         i = 0
         for start, day_avg, day_sum in cur.fetchall():
 
+            start_time = datetime.fromtimestamp(start)
+
             # JS needs epoch in ms, offset is to center bar
             start = start * 1000
-            bar_center = start + 43200000
-            end = start + 86400000  # DST issues?
+            bar_center = int((start_time + one_day / 2).timestamp()) * 1000
+            end = int((start_time + one_day).timestamp()) * 1000
 
             i_week = bisect_left(
                 [week_obj['lookup'] for week_obj in self.json['week']],
@@ -545,8 +560,11 @@ class EnergyHistory():
         
         i = 0
         for value, start, part_type in cur.fetchall():
+
             # JS needs epoch in ms; the offset is to position the bar correctly
             start = start * 1000
+            bar_center = start + ms_half_hour
+            end = start + ms_hour
 
             i_part = bisect_left(
                     [part_obj['lookup'] for part_obj in self.json['part']],
@@ -557,7 +575,7 @@ class EnergyHistory():
                 start)
 
             self.json['hour'].append({
-                'x': start + 1800000,
+                'x': bar_center,
                 'y': value,
 
                 'sum': value,
@@ -565,7 +583,7 @@ class EnergyHistory():
                 'type': 'hour',
                 'part': part_type,
                 'interval_start': start,
-                'interval_end': start + 3600000,
+                'interval_end': end,
 
                 'i_data_start': 0,
                 'i_data_end': 0,
