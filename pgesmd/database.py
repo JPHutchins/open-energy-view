@@ -286,6 +286,7 @@ class EnergyHistory():
             #  Push yearly changes
             if cur_year != prev_year:
                 middle = start - 26 * S_ONE_WEEK
+                year_avg = int(round(year_sum / year_cnt))
                 self.cursor.execute("""
                     INSERT INTO year (
                         start,
@@ -299,7 +300,7 @@ class EnergyHistory():
                         middle,
                         start,
                         prev_date,
-                        year_sum / year_cnt,
+                        year_avg,
                         year_sum))
                 #  Reinitialize year values for next iteration
                 prev_year = cur_year
@@ -308,6 +309,7 @@ class EnergyHistory():
             #  Push monthly changes
             if cur_month != prev_month:
                 middle = int((cur_datetime + ONE_MONTH / 2).timestamp())
+                month_avg = int(round(month_sum / month_cnt))
                 self.cursor.execute("""
                     INSERT INTO month (
                         start,
@@ -321,7 +323,7 @@ class EnergyHistory():
                         middle,
                         start,
                         prev_date,
-                        month_sum / month_cnt,
+                        month_avg,
                         month_sum))
                 #  Reinitialize month values for next iteration
                 prev_month = cur_month
@@ -329,6 +331,7 @@ class EnergyHistory():
             
             #  Push weekly changes
             if cur_week != prev_week:
+                week_avg = int(round(week_sum / week_cnt))
                 self.cursor.execute("""
                     INSERT INTO week (
                         start,
@@ -342,7 +345,7 @@ class EnergyHistory():
                         week_start + S_ONE_WEEK / 2,
                         start,
                         prev_date,
-                        week_sum / week_cnt,
+                        week_avg,
                         week_sum))
                 #  Reinitialize week values for next iteration
                 prev_week = cur_week
@@ -351,6 +354,7 @@ class EnergyHistory():
             #  Push daily changes
             if date != prev_date:
                 daily_min = heapq.nsmallest(1, min_heap)[0]
+                day_avg = int(round(day_sum / day_cnt))
                 self.cursor.execute("""
                     INSERT INTO day (
                         start,
@@ -365,7 +369,7 @@ class EnergyHistory():
                         day_start + S_ONE_DAY / 2,
                         start,
                         prev_date,
-                        day_sum / day_cnt,
+                        day_avg,
                         day_sum,
                         daily_min))
                 #  Reinitialize day values for next iteration
@@ -383,7 +387,7 @@ class EnergyHistory():
                 part_end_iso = timezone.localize(
                     datetime.utcfromtimestamp(part_end))
                 part_interval = part_end - part_start
-                part_avg = part_sum / part_interval * 3600
+                part_avg = int(round(part_sum / part_interval * 3600))
                 part_middle = part_start + (part_interval / 2)
                 part_middle_iso = timezone.localize(
                     datetime.utcfromtimestamp(part_middle))
