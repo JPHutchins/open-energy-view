@@ -291,12 +291,30 @@ class EnergyHistory():
             cur_month = cur_datetime.strftime('%m')
             cur_year = cur_datetime.isocalendar()[0]
             
-            
+            #  Push weekly changes
+            if cur_week != prev_week:
+                self.cursor.execute("""
+                    INSERT INTO week (
+                        start,
+                        middle,
+                        end,
+                        date,
+                        week_avg,
+                        week_sum)
+                    VALUES (?,?,?,?,?,?);""", (
+                        week_start,
+                        week_start + S_ONE_WEEK / 2,
+                        start,
+                        prev_date,
+                        week_sum / week_cnt,
+                        week_sum))
+                #  Reinitialize week values for next iteration
+                prev_week = cur_week
+                week_sum, week_cnt, week_start = 0, 0, start
 
             #  Push daily changes
             if date != prev_date:
                 daily_min = heapq.nsmallest(1, min_heap)[0]
-
                 self.cursor.execute("""
                     INSERT INTO day (
                         start,
@@ -314,7 +332,6 @@ class EnergyHistory():
                         day_sum / day_cnt,
                         day_sum,
                         daily_min))
-
                 #  Reinitialize day values for next iteration
                 min_heap = []
                 prev_date = date
