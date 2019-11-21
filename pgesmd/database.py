@@ -48,7 +48,7 @@ class EnergyHistory():
             last_entry INTEGER DEFAULT 0,
             n_parts INTEGER,
             part_values INTEGER,
-            last_update INTEGER);
+            last_update INTEGER DEFAULT 0);
             """
         self.create_data_table = """
             CREATE TABLE IF NOT EXISTS data (
@@ -62,6 +62,8 @@ class EnergyHistory():
         self.create_hour_table = """
             CREATE TABLE IF NOT EXISTS hour (
             start INTEGER PRIMARY KEY,
+            middle INTEGER,
+            end INTEGER,
             duration INTEGER,
             value INTEGER,
             watt_hours INTEGER,
@@ -84,6 +86,8 @@ class EnergyHistory():
         self.create_day_table = """
             CREATE TABLE IF NOT EXISTS day (
             start INTEGER,
+            middle INTEGER,
+            end INTEGER,
             date TEXT PRIMARY KEY,
             baseline INTEGER,
             min INTEGER,
@@ -93,6 +97,8 @@ class EnergyHistory():
         self.create_week_table = """
             CREATE TABLE IF NOT EXISTS week (
             start INTEGER,
+            middle INTEGER,
+            end INTEGER,
             date TEXT PRIMARY KEY,
             week_avg,
             week_sum);
@@ -100,6 +106,8 @@ class EnergyHistory():
         self.create_month_table = """
             CREATE TABLE IF NOT EXISTS month (
             start INTEGER,
+            middle INTEGER,
+            end INTEGER,
             date TEXT PRIMARY KEY,
             month_avg,
             month_sum);
@@ -107,6 +115,8 @@ class EnergyHistory():
         self.create_year_table = """
             CREATE TABLE IF NOT EXISTS year (
             start INTEGER,
+            middle INTEGER,
+            end INTEGER,
             date TEXT PRIMARY KEY,
             year_avg,
             year_sum);
@@ -115,12 +125,14 @@ class EnergyHistory():
         self.insert_hour = """
             INSERT INTO hour (
             start,
+            middle,
+            end,
             duration,
             value,
             watt_hours,
             date,
             part_type)
-            VALUES (?,?,?,?,?,?);
+            VALUES (?,?,?,?,?,?,?,?);
             """
         self.insert_days = """
             INSERT INTO daily (
@@ -285,18 +297,18 @@ class EnergyHistory():
                     datetime.utcfromtimestamp(part_start))
 
                 #  Insert into the partitions table    
-                self.cursor.execute(f"""
+                self.cursor.execute("""
                     INSERT INTO part (
-                    start,
-                    start_iso_8601,
-                    end,
-                    end_iso_8601,
-                    middle,
-                    middle_iso_8601,
-                    date,
-                    part_type,
-                    part_avg,
-                    part_sum)
+                        start,
+                        start_iso_8601,
+                        end,
+                        end_iso_8601,
+                        middle,
+                        middle_iso_8601,
+                        date,
+                        part_type,
+                        part_avg,
+                        part_sum)
                     VALUES (?,?,?,?,?,?,?,?,?,?);
                     """, (
                         part_start,
@@ -331,9 +343,27 @@ class EnergyHistory():
                 min_heap = []
                 prev_date = date
             
-            #  Insert into the ESPI table
-            espi_insert = entry + (part_type,)
-            self.cursor.execute(self.insert_espi, espi_insert)
+            #  Insert into the hour table
+            self.cursor.execute("""
+                INSERT INTO hour (
+                    start,
+                    middle,
+                    end,
+                    duration,
+                    value,
+                    watt_hours,
+                    date,
+                    part_type)
+                VALUES (?,?,?,?,?,?,?,?);
+                """, (
+                    start,
+                    start + 1800,
+                    start + 3600,
+                    duration,
+                    value,
+                    watt_hours,
+                    date,
+                    part_type))
 
         #  Push the data from the last day
         baseline = calculate_baseline(min_heap)
@@ -346,7 +376,11 @@ class EnergyHistory():
         self.cursor.execute(
             "UPDATE info SET last_entry = ? WHERE id=0;", (self.last_entry,))
         self.cursor.execute(
-            "UPDATE info SET max_watt_hour = ? WHERE id=0;", (self.max_watt_hour,))
+            "UPDATE info SET max_watt_hour = ? WHERE id=0;",
+            (self.max_watt_hour,))
+        self.cursor.execute(
+            "UPDATE info SET last_update = ? WHERE id=0;",
+            (int(datetime.now().timestamp()),))
 
         #  Commit changes to the database
         self.cursor.execute("COMMIT")
@@ -402,6 +436,51 @@ class EnergyHistory():
             'part_values': part_values,
             'last_update': last_update
         }
+
+#  year ----------------------------------------------------------------------
+        #  Get the year TABLE
+        cur.execute("""
+            SELECT start, year_avg, year_sum
+            FROM year
+            ORDER BY start ASC;
+            """)
+
+        i = 0
+        for start, year_avg, year_sum in cur.fetchall():
+
+            start_time = datetime.fromtimestamp(start)
+
+            # JS needs epoch in ms, offset is to center bar
+            start = start * 1000
+            bar_center = int((start_time + ONE_YEAR / 2).timestamp()) * 1000
+            end = int((start_time + ONE_YEAR).timestamp()) * 1000
+
+            # This list of objects can be passed directly to Chart.js
+            self.json['part'].append({
+                'x': bar_center,
+                'y': year_avg,
+                
+                'sum': year_sum,
+
+                'type': 'year',
+                'interval_start': start,
+                'interval_end': end,
+
+                'i_month_start': bisect_left(month_list, start),
+                'i_month_end': bisect_left(month_list, end),
+                'i_week_start': bisect_left(week_list, start),
+                'i_week_end': bisect_left(week_list, end),
+                'i_day_start': bisect_left(day_list, start),
+                'i_day_end': bisect_left(day_list, end),
+                'i_part_start': bisect_left(part_list, start),
+                'i_part_end': bisect_left(part_list, end),
+                'i_hour_start': bisect_left(hour_list, start),
+                'i_hour_end': bisect_left(hour_list, end),
+
+                'lookup'[start]: i
+                })
+            i += 1
+#  /year ---------------------------------------------------------------------
 
 #  month ----------------------------------------------------------------------
         #  Get the month TABLE
@@ -487,6 +566,10 @@ class EnergyHistory():
 
                 'i_day_start': bisect_left(day_list, start),
                 'i_day_end': bisect_left(day_list, end),
+                'i_part_start': bisect_left(part_list, start),
+                'i_part_end': bisect_left(part_list, end),
+                'i_hour_start': bisect_left(hour_list, start),
+                'i_hour_end': bisect_left(hour_list, end),
 
                 'i_month': i_month,
                 'i_year': self.json['month'][i_month]['i_year'],
@@ -612,8 +695,8 @@ class EnergyHistory():
 
             # JS needs epoch in ms; the offset is to position the bar correctly
             start = start * 1000
-            bar_center = start + MS_HALF_HOUR
-            end = start + MS_HOUR
+            bar_center = middle * 1000
+            end = end * 1000
 
             i_part = bisect_left(
                     [part_obj['lookup'] for part_obj in self.json['part']],
