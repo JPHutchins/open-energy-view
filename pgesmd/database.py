@@ -89,10 +89,9 @@ class EnergyHistory():
             middle INTEGER,
             end INTEGER,
             date TEXT PRIMARY KEY,
-            baseline INTEGER,
-            min INTEGER,
             day_avg,
-            day_sum);
+            day_sum,
+            min INTEGER);
             """
         self.create_week_table = """
             CREATE TABLE IF NOT EXISTS week (
@@ -251,6 +250,12 @@ class EnergyHistory():
 
         See pgesmd.helpers.parse_espi_xml() for more information.
         """
+        #  Set timedeltas
+        S_ONE_DAY = int(timedelta(days=1).total_seconds())
+        S_ONE_WEEK = int(timedelta(weeks=1).total_second())
+        ONE_MONTH = relativedelta(months=1)
+        ONE_YEAR = relativedelta(years=1)
+
         def calculate_baseline(min_heap, baseline_points=baseline_points):
             return int(round(sum(heapq.nsmallest(
                 baseline_points, min_heap)) / baseline_points))
@@ -259,27 +264,63 @@ class EnergyHistory():
             t = datetime.fromtimestamp(time)
             return float(t.strftime('%H')) + (float(t.strftime('%M')) / 60)
 
-        prev_date = next(parse_espi_data(xml_file))[4]
+        first_item = next(parse_espi_data(xml_file))
+        prev_date = first_item[4]
+        prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
+        prev_start = first_item[0]
         min_heap = []
         part_type = 0
         part_sum = 0
-        part_start = next(parse_espi_data(xml_file))[0]
+        part_start = first_item[0]
         c = Crosses(self.partitions[1][0])
 
-        day_sum = 0
+        day_sum, day_cnt, day_start = 0, 0, prev_start
+        week_sum, week_cnt, week_start = 0, 0, prev_start
+        month_sum, month_cnt, month_start = 0, 0, prev_start
+        year_sum, year_cnt, year_start = 0, 0, prev_start
+
+        prev_week = prev_datetime.isocalendar()[1]
+        prev_month = prev_datetime.strftime('%m')
+        prev_year = prev_datetime.isocalendar()[0]
 
         for entry in parse_espi_data(xml_file):
             start, duration, value, watt_hours, date = entry
-            
-            #  Update the info about the data
-            if start < self.first_entry:
-                self.first_entry = start
-            if start > self.last_entry:
-                self.last_entry = start
-            if watt_hours > self.max_watt_hour:
-                self.max_watt_hour = watt_hours
 
-            #  Calculate the daily partitions
+            cur_datetime = datetime.strptime(date, '%Y-%m-%d')
+            cur_week = cur_datetime.isocalendar()[1]
+            cur_month = cur_datetime.strftime('%m')
+            cur_year = cur_datetime.isocalendar()[0]
+            
+            
+
+            #  Push daily changes
+            if date != prev_date:
+                daily_min = heapq.nsmallest(1, min_heap)[0]
+
+                self.cursor.execute("""
+                    INSERT INTO day (
+                        start,
+                        middle,
+                        end,
+                        date,
+                        day_avg,
+                        day_sum,
+                        min)
+                    VALUES (?,?,?,?,?,?,?);""", (
+                        day_start,
+                        day_start + S_ONE_DAY / 2,
+                        start,
+                        prev_date,
+                        day_sum / day_cnt,
+                        day_sum,
+                        daily_min))
+
+                #  Reinitialize day values for next iteration
+                min_heap = []
+                prev_date = date
+                day_sum, day_cnt, day_start = 0, 0, start
+
+            #  Calculate the partitions
             espi_time = get_hours_mins(start)
             if not c.test(espi_time):
                 part_sum += watt_hours
@@ -329,19 +370,6 @@ class EnergyHistory():
 
                 part_sum = watt_hours
                 part_start = start
-
-            #  Keep track of daily values
-            min_heap.append(watt_hours)
-            day_sum += watt_hours
-
-            #  Push daily changes
-            if not date == prev_date:
-                baseline = calculate_baseline(min_heap)
-                daily_min = heapq.nsmallest(1, min_heap)[0]
-                self.cursor.execute(
-                    self.insert_days, (prev_date, baseline, daily_min))
-                min_heap = []
-                prev_date = date
             
             #  Insert into the hour table
             self.cursor.execute("""
@@ -364,8 +392,32 @@ class EnergyHistory():
                     watt_hours,
                     date,
                     part_type))
+            
+            #  Update the info table
+            if start < self.first_entry:
+                self.first_entry = start
+            if start > self.last_entry:
+                self.last_entry = start
+            if watt_hours > self.max_watt_hour:
+                self.max_watt_hour = watt_hours
+            
+            #  Update the interval sums
+            day_sum += watt_hours
+            day_cnt += 1
 
-        #  Push the data from the last day
+            week_sum += watt_hours
+            week_cnt += 1
+
+            month_sum += watt_hours
+            month_cnt += 1
+
+            year_sum += watt_hours
+            year_cnt += 1
+
+             #  Keep track of daily minimum
+            min_heap.append(watt_hours)
+
+        #  Push the data from the last entries
         baseline = calculate_baseline(min_heap)
         daily_min = heapq.nsmallest(1, min_heap)[0]
         self.cursor.execute(self.insert_days, (prev_date, baseline, daily_min))
