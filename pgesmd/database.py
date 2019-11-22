@@ -3,13 +3,20 @@
 import sqlite3
 import os
 import logging
-import heapq
 import pytz
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bisect import bisect_left
 
 from pgesmd.helpers import parse_espi_data, Crosses
+from pgesmd.database_helpers import (
+    insert_into_year,
+    insert_into_month,
+    insert_into_week,
+    insert_into_day,
+    insert_into_part,
+    insert_into_hour
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -248,10 +255,6 @@ class EnergyHistory():
         S_ONE_WEEK = int(timedelta(weeks=1).total_seconds())
         ONE_MONTH = relativedelta(months=1)
 
-        def calculate_baseline(min_heap, baseline_points=baseline_points):
-            return int(round(sum(heapq.nsmallest(
-                baseline_points, min_heap)) / baseline_points))
-
         def get_hours_mins(time):
             t = datetime.fromtimestamp(time)
             return float(t.strftime('%H')) + (float(t.strftime('%M')) / 60)
@@ -283,172 +286,49 @@ class EnergyHistory():
             cur_month = cur_datetime.strftime('%m')
             cur_year = cur_datetime.isocalendar()[0]
 
-            #  Push yearly changes
+            #  Push yearly changes & reinitialize
             if cur_year != prev_year:
-                middle = start - 26 * S_ONE_WEEK
-                year_avg = int(round(year_sum / year_cnt))
-                self.cursor.execute("""
-                    INSERT INTO year (
-                        start,
-                        middle,
-                        end,
-                        date,
-                        year_avg,
-                        year_sum)
-                    VALUES (?,?,?,?,?,?);""", (
-                        year_start,
-                        middle,
-                        start,
-                        prev_date,
-                        year_avg,
-                        year_sum))
-                #  Reinitialize year values for next iteration
+                insert_into_year(self, start, year_start, prev_date, year_sum,
+                                 year_cnt, S_ONE_WEEK)
                 prev_year = cur_year
                 year_sum, year_cnt, year_start = 0, 0, start
 
-            #  Push monthly changes
+            #  Push monthly changes & reinitialize
             if cur_month != prev_month:
-                middle = int((cur_datetime + ONE_MONTH / 2).timestamp())
-                month_avg = int(round(month_sum / month_cnt))
-                self.cursor.execute("""
-                    INSERT INTO month (
-                        start,
-                        middle,
-                        end,
-                        date,
-                        month_avg,
-                        month_sum)
-                    VALUES (?,?,?,?,?,?);""", (
-                        month_start,
-                        middle,
-                        start,
-                        prev_date,
-                        month_avg,
-                        month_sum))
-                #  Reinitialize month values for next iteration
+                insert_into_month(self, start, month_start, prev_date,
+                                  month_sum, month_cnt, ONE_MONTH,
+                                  cur_datetime)
                 prev_month = cur_month
                 month_sum, month_cnt, month_start = 0, 0, start
             
-            #  Push weekly changes
+            #  Push weekly changes & reinitialize
             if cur_week != prev_week:
-                week_avg = int(round(week_sum / week_cnt))
-                self.cursor.execute("""
-                    INSERT INTO week (
-                        start,
-                        middle,
-                        end,
-                        date,
-                        week_avg,
-                        week_sum)
-                    VALUES (?,?,?,?,?,?);""", (
-                        week_start,
-                        week_start + S_ONE_WEEK / 2,
-                        start,
-                        prev_date,
-                        week_avg,
-                        week_sum))
-                #  Reinitialize week values for next iteration
+                insert_into_week(self, start, week_start, prev_date, week_sum,
+                                 week_cnt, S_ONE_WEEK)
                 prev_week = cur_week
                 week_sum, week_cnt, week_start = 0, 0, start
 
-            #  Push daily changes
+            #  Push daily changes & reinitialize
             if date != prev_date:
-                daily_min = heapq.nsmallest(1, min_heap)[0]
-                day_avg = int(round(day_sum / day_cnt))
-                self.cursor.execute("""
-                    INSERT INTO day (
-                        start,
-                        middle,
-                        end,
-                        date,
-                        day_avg,
-                        day_sum,
-                        min)
-                    VALUES (?,?,?,?,?,?,?);""", (
-                        day_start,
-                        day_start + S_ONE_DAY / 2,
-                        start,
-                        prev_date,
-                        day_avg,
-                        day_sum,
-                        daily_min))
-                #  Reinitialize day values for next iteration
-                min_heap = []
-                prev_date = date
+                insert_into_day(self, start, day_start, prev_date, day_sum,
+                                day_cnt, S_ONE_DAY, min_heap)
+                prev_date, min_heap = date, []
                 day_sum, day_cnt, day_start = 0, 0, start
 
-            #  Calculate the partitions
+            #  Push partition changes & reinitialize
             espi_time = get_hours_mins(start)
-            if not c.test(espi_time):
-                part_sum += watt_hours
-                part_date = date
-            else:
-                part_end = start
-                part_end_iso = timezone.localize(
-                    datetime.utcfromtimestamp(part_end))
-                part_interval = part_end - part_start
-                part_avg = int(round(part_sum / part_interval * 3600))
-                part_middle = part_start + (part_interval / 2)
-                part_middle_iso = timezone.localize(
-                    datetime.utcfromtimestamp(part_middle))
-                part_start_iso = timezone.localize(
-                    datetime.utcfromtimestamp(part_start))
-
-                #  Insert into the partitions table    
-                self.cursor.execute("""
-                    INSERT INTO part (
-                        start,
-                        start_iso_8601,
-                        end,
-                        end_iso_8601,
-                        middle,
-                        middle_iso_8601,
-                        date,
-                        part_type,
-                        part_avg,
-                        part_sum)
-                    VALUES (?,?,?,?,?,?,?,?,?,?);
-                    """, (
-                        part_start,
-                        part_start_iso,
-                        part_end,
-                        part_end_iso,
-                        part_middle,
-                        part_middle_iso,
-                        part_date,
-                        part_type,
-                        part_avg,
-                        part_sum))
-
+            if c.test(espi_time):
+                insert_into_part(self, start, part_start, prev_date, part_sum,
+                                 timezone, part_type)
                 part_type = (part_type + 1) % len(self.partitions)
                 c = Crosses(self.partitions[
                     (part_type + 1) % len(self.partitions)]
                     [0])
+                part_sum, part_start = 0, start
 
-                part_sum = watt_hours
-                part_start = start
-            
             #  Insert into the hour table
-            self.cursor.execute("""
-                INSERT INTO hour (
-                    start,
-                    middle,
-                    end,
-                    duration,
-                    value,
-                    watt_hours,
-                    date,
-                    part_type)
-                VALUES (?,?,?,?,?,?,?,?);
-                """, (
-                    start,
-                    start + 1800,
-                    start + 3600,
-                    duration,
-                    value,
-                    watt_hours,
-                    date,
-                    part_type))
+            insert_into_hour(self, start, duration, value, watt_hours, date,
+                             part_type)
             
             #  Update the info table
             if start < self.first_entry:
@@ -459,6 +339,8 @@ class EnergyHistory():
                 self.max_watt_hour = watt_hours
             
             #  Update the interval sums
+            part_sum += watt_hours
+
             day_sum += watt_hours
             day_cnt += 1
 
@@ -475,7 +357,17 @@ class EnergyHistory():
             min_heap.append(watt_hours)
 
         #  Push the data from the last entries
-
+        insert_into_year(self, start, year_start, prev_date, year_sum,
+                         year_cnt, S_ONE_WEEK)
+        insert_into_month(self, start, month_start, prev_date, month_sum,
+                          month_cnt, ONE_MONTH, cur_datetime)
+        insert_into_week(self, start, week_start, prev_date, week_sum,
+                         week_cnt, S_ONE_WEEK)
+        insert_into_day(self, start, day_start, prev_date, day_sum,
+                        day_cnt, S_ONE_DAY, min_heap)
+        insert_into_part(self, start, part_start, prev_date, part_sum,
+                         timezone, part_type)
+        
         #  Update the info table
         self.cursor.execute(
             "UPDATE info SET first_entry = ? WHERE id=0;", (self.first_entry,))
