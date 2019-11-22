@@ -175,6 +175,8 @@ class EnergyHistory():
         self.cursor.execute("SELECT max_watt_hour FROM info")
         self.max_watt_hour = self.cursor.fetchone()[0]
 
+        self.is_empty = self.last_entry > 0
+
         self.cursor.execute(
             "UPDATE info SET n_parts = ?;", (len(self.partitions),))
 
@@ -254,20 +256,38 @@ class EnergyHistory():
             t = datetime.fromtimestamp(time)
             return float(t.strftime('%H')) + (float(t.strftime('%M')) / 60)
 
-        first_item = next(parse_espi_data(xml_file))
-        prev_date = first_item[4]
-        prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
-        prev_start = first_item[0]
-        min_heap = []
-        part_type = 0
-        part_sum = 0
-        part_start = first_item[0]
-        c = Crosses(self.partitions[1][0])
+        if self.is_empty: #  first import, initialize starting values
+            first_item = next(parse_espi_data(xml_file))
+            prev_date = first_item[4]
+            prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
+            prev_start = first_item[0]
+            min_heap = []
+            part_type = 0
+            part_sum = 0
+            part_start = first_item[0]
+            c = Crosses(self.partitions[1][0])
 
-        day_sum, day_cnt, day_start = 0, 0, prev_start
-        week_sum, week_cnt, week_start = 0, 0, prev_start
-        month_sum, month_cnt, month_start = 0, 0, prev_start
-        year_sum, year_cnt, year_start = 0, 0, prev_start
+            day_sum, day_cnt, day_start = 0, 0, prev_start
+            week_sum, week_cnt, week_start = 0, 0, prev_start
+            month_sum, month_cnt, month_start = 0, 0, prev_start
+            year_sum, year_cnt, year_start = 0, 0, prev_start
+        
+        else: #  retrieve the incomplete interval values and initialize
+            #  TO DO - SQL query retreives this variables...
+            prev_date = date,
+            prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
+            prev_start = start
+            min_heap = [day_min] # get min before saving to incomplete
+            part_type = part_type
+            part_sum = part_sum
+            part_start = part_start
+            c = Crosses(
+                self.partitions[(part_type + 1) % len(self.partitions)][0])
+            
+            day_sum, day_cnt, day_start = day_sum, day_cnt, day_start
+            week_sum, week_cnt, week_start = week_sum, week_cnt, week_start
+            month_sum, month_cnt, month_start = month_sum, month_cnt, month_start
+            year_sum, year_cnt, year_start = year_sum, year_cnt, year_start
 
         prev_week = prev_datetime.isocalendar()[1]
         prev_month = prev_datetime.strftime('%m')
@@ -458,7 +478,6 @@ class EnergyHistory():
         }
 
 #  year ----------------------------------------------------------------------
-        #  Get the year TABLE
         cur.execute("""
             SELECT start, year_avg, year_sum
             FROM year
@@ -475,7 +494,6 @@ class EnergyHistory():
             bar_center = int((start_time + ONE_YEAR / 2).timestamp()) * 1000
             end = int((start_time + ONE_YEAR).timestamp()) * 1000
 
-            # This list of objects can be passed directly to Chart.js
             self.json['part'].append({
                 'x': bar_center,
                 'y': year_avg,
@@ -503,7 +521,6 @@ class EnergyHistory():
 #  /year ---------------------------------------------------------------------
 
 #  month ----------------------------------------------------------------------
-        #  Get the month TABLE
         cur.execute("""
             SELECT start, month_avg, month_sum
             FROM month
@@ -524,7 +541,6 @@ class EnergyHistory():
                 [year_obj['lookup'] for year_obj in self.json['year']],
                 start)
 
-            # This list of objects can be passed directly to Chart.js
             self.json['part'].append({
                 'x': bar_center,
                 'y': month_avg,
@@ -552,7 +568,6 @@ class EnergyHistory():
 #  /month ---------------------------------------------------------------------
 
 #  week -----------------------------------------------------------------------
-        #  Get the week TABLE
         cur.execute("""
             SELECT start, week_avg, week_sum
             FROM week
@@ -573,7 +588,6 @@ class EnergyHistory():
                 [month_obj['lookup'] for month_obj in self.json['month']],
                 start)
 
-            # This list of objects can be passed directly to Chart.js
             self.json['part'].append({
                 'x': bar_center,
                 'y': week_avg,
@@ -600,7 +614,6 @@ class EnergyHistory():
 #  /week ----------------------------------------------------------------------
 
 #  day  -----------------------------------------------------------------------
-        #  Get the day TABLE
         cur.execute("""
             SELECT start, day_avg, day_sum
             FROM day
@@ -622,7 +635,6 @@ class EnergyHistory():
                 [week_obj['lookup'] for week_obj in self.json['week']],
                 start)
 
-            # This list of objects can be passed directly to Chart.js
             self.json['part'].append({
                 'x': bar_center,
                 'y': day_avg,
@@ -646,7 +658,6 @@ class EnergyHistory():
 #  /day  ----------------------------------------------------------------------
 
 #  part -----------------------------------------------------------------------
-        #  Get the part TABLE
         cur.execute("""
             SELECT start, start_iso_8601, end, end_iso_8601, middle,
                 middle_iso_8601, date, part_type, part_avg, part_sum
@@ -675,7 +686,6 @@ class EnergyHistory():
                 [day_obj['lookup'] for day_obj in self.json['day']],
                 bar_center)
 
-            # This list of objects can be passed direclty to Chart.js
             self.json['part'].append({
                 'x': bar_center,
                 'y': part_avg,
@@ -703,7 +713,6 @@ class EnergyHistory():
 #  TO DO - data table for raw ESPI/other
 
 #  hour -----------------------------------------------------------------------
-        #  Get the hour TABLE.
         cur.execute("""
             SELECT watt_hours, start, part_type
             FROM hour
