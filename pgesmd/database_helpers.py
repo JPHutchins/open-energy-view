@@ -6,7 +6,7 @@ def insert_into_year(self, start, year_start, prev_date, year_sum, year_cnt,
     middle = start - 26 * S_ONE_WEEK
     year_avg = int(round(year_sum / year_cnt))
     self.cursor.execute("""
-        INSERT INTO year (
+        REPLACE INTO year (
             start,
             middle,
             end,
@@ -27,7 +27,7 @@ def insert_into_month(self, start, month_start, prev_date, month_sum,
     middle = int((cur_datetime + ONE_MONTH / 2).timestamp())
     month_avg = int(round(month_sum / month_cnt))
     self.cursor.execute("""
-        INSERT INTO month (
+        REPLACE INTO month (
             start,
             middle,
             end,
@@ -47,7 +47,7 @@ def insert_into_week(self, start, week_start, prev_date, week_sum,
                      week_cnt, S_ONE_WEEK):
     week_avg = int(round(week_sum / week_cnt))
     self.cursor.execute("""
-        INSERT INTO week (
+        REPLACE INTO week (
             start,
             middle,
             end,
@@ -68,7 +68,7 @@ def insert_into_day(self, start, day_start, prev_date, day_sum, day_cnt,
     daily_min = heapq.nsmallest(1, min_heap)[0]
     day_avg = int(round(day_sum / day_cnt))
     self.cursor.execute("""
-        INSERT INTO day (
+        REPLACE INTO day (
             start,
             middle,
             end,
@@ -94,7 +94,7 @@ def insert_into_part(self, start, part_start, prev_date, part_sum, timezone,
     part_middle = part_start + (part_interval / 2)
     #  Insert into the partitions table
     self.cursor.execute("""
-        INSERT INTO part (
+        REPLACE INTO part (
             start,
             end,
             middle,
@@ -116,7 +116,7 @@ def insert_into_part(self, start, part_start, prev_date, part_sum, timezone,
 def insert_into_hour(self, start, duration, value, watt_hours, date,
                      part_type):
     self.cursor.execute("""
-    INSERT INTO hour (
+    REPLACE INTO hour (
         start,
         middle,
         end,
