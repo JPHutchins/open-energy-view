@@ -60,16 +60,16 @@ class EnergyHistory():
         self.create_incomplete_table = """
             CREATE TABLE IF NOT EXISTS incomplete (
                 id INTEGER PRIMARY KEY,
-                part_sum INTEGER,
-                part_type INTEGER,
-                day_sum INTEGER,
-                day_cnt INTEGER,
-                week_sum INTEGER,
-                week_cnt INTEGER,
-                month_sum INTEGER,
-                month_cnt INTEGER,
-                year_sum INTEGER,
-                year_cnt INTEGER);
+                part_sum INTEGER DEFAULT 0,
+                part_type INTEGER DEFAULT 0,
+                day_sum INTEGER DEFAULT 0,
+                day_cnt INTEGER DEFAULT 0,
+                week_sum INTEGER DEFAULT 0,
+                week_cnt INTEGER DEFAULT 0,
+                month_sum INTEGER DEFAULT 0,
+                month_cnt INTEGER DEFAULT 0,
+                year_sum INTEGER DEFAULT 0,
+                year_cnt INTEGER DEFAULT 0);
             """
         self.create_data_table = """
             CREATE TABLE IF NOT EXISTS data (
@@ -151,6 +151,7 @@ class EnergyHistory():
         try:
             self.cursor = self.conn.cursor()
             self.cursor.execute(self.create_info_table)
+            self.cursor.execute(self.create_incomplete_table)
             self.cursor.execute(self.create_data_table)
             self.cursor.execute(self.create_hour_table)
             self.cursor.execute(self.create_part_table)
@@ -370,9 +371,36 @@ class EnergyHistory():
         self.cursor.execute(
             "UPDATE info SET max_watt_hour = ? WHERE id=0;",
             (self.max_watt_hour,))
+        cur_timestamp = int(datetime.now().timestamp())
         self.cursor.execute(
-            "UPDATE info SET last_update = ? WHERE id=0;",
-            (int(datetime.now().timestamp()),))
+            "UPDATE info SET last_update = ? WHERE id=0;", (cur_timestamp,))
+        
+        #  Insert into the incomplete table
+        self.cursor.execute("""
+            INSERT INTO incomplete (
+                id,
+                part_sum,
+                part_type,
+                day_sum,
+                day_cnt,
+                week_sum,
+                week_cnt,
+                month_sum,
+                month_cnt,
+                year_sum,
+                year_cnt)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?);""", (
+                cur_timestamp,
+                part_sum,
+                part_type,
+                day_sum,
+                day_cnt,
+                week_sum,
+                week_cnt,
+                month_sum,
+                month_cnt,
+                year_sum,
+                year_cnt))
 
         #  Commit changes to the database
         self.cursor.execute("COMMIT")
