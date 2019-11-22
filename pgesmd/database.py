@@ -175,7 +175,7 @@ class EnergyHistory():
         self.cursor.execute("SELECT max_watt_hour FROM info")
         self.max_watt_hour = self.cursor.fetchone()[0]
 
-        self.is_empty = self.last_entry > 0
+        self.is_empty = self.last_entry == 0
 
         self.cursor.execute(
             "UPDATE info SET n_parts = ?;", (len(self.partitions),))
@@ -213,7 +213,7 @@ class EnergyHistory():
 
             self.part_desc.append(start + " - " + end)
 
-    def insert_espi_xml(self, xml_file, baseline_points=3):
+    def insert_espi_xml(self, xml_file, baseline_points=3, overwrite=False):
         """Insert an ESPI XML file into the database.
 
         The TABLE "espi" is updated with the raw ESPI data as well as a field,
@@ -256,7 +256,7 @@ class EnergyHistory():
             t = datetime.fromtimestamp(time)
             return float(t.strftime('%H')) + (float(t.strftime('%M')) / 60)
 
-        if self.is_empty: #  first import, initialize starting values
+        if self.is_empty:  # first import, initialize starting values
             first_item = next(parse_espi_data(xml_file))
             prev_date = first_item[4]
             prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
@@ -272,12 +272,12 @@ class EnergyHistory():
             month_sum, month_cnt, month_start = 0, 0, prev_start
             year_sum, year_cnt, year_start = 0, 0, prev_start
         
-        else: #  retrieve the incomplete interval values and initialize
+        else:  # retrieve the incomplete interval values and initialize
             #  TO DO - SQL query retreives this variables...
             prev_date = date,
             prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
             prev_start = start
-            min_heap = [day_min] # get min before saving to incomplete
+            min_heap = [day_min]  # get min before saving to incomplete
             part_type = part_type
             part_sum = part_sum
             part_start = part_start
@@ -294,6 +294,8 @@ class EnergyHistory():
         prev_year = prev_datetime.isocalendar()[0]
 
         for entry in parse_espi_data(xml_file):
+            if entry[0] <= prev_start and overwrite is False:
+                continue  # fast forward to data that has not been entered yet
             start, duration, value, watt_hours, date = entry
 
             cur_datetime = datetime.strptime(date, '%Y-%m-%d')
