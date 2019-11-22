@@ -49,103 +49,97 @@ class EnergyHistory():
 
         self.create_info_table = """
             CREATE TABLE IF NOT EXISTS info (
-            id INTEGER PRIMARY KEY,
-            max_watt_hour INTEGER DEFAULT 0,
-            first_entry INTEGER DEFAULT 4102444799,
-            last_entry INTEGER DEFAULT 0,
-            n_parts INTEGER,
-            part_values INTEGER,
-            last_update INTEGER DEFAULT 0);
+                id INTEGER PRIMARY KEY,
+                max_watt_hour INTEGER DEFAULT 0,
+                first_entry INTEGER DEFAULT 4102444799,
+                last_entry INTEGER DEFAULT 0,
+                n_parts INTEGER,
+                part_values INTEGER,
+                last_update INTEGER DEFAULT 0);
+            """
+        self.create_incomplete_table = """
+            CREATE TABLE IF NOT EXISTS incomplete (
+                id INTEGER PRIMARY KEY,
+                part_sum INTEGER,
+                part_type INTEGER,
+                day_sum INTEGER,
+                day_cnt INTEGER,
+                week_sum INTEGER,
+                week_cnt INTEGER,
+                month_sum INTEGER,
+                month_cnt INTEGER,
+                year_sum INTEGER,
+                year_cnt INTEGER);
             """
         self.create_data_table = """
             CREATE TABLE IF NOT EXISTS data (
-            start INTEGER PRIMARY KEY,
-            duration INTEGER,
-            value INTEGER,
-            watt_hours INTEGER,
-            date TEXT,
-            part_type);
+                start INTEGER PRIMARY KEY,
+                duration INTEGER,
+                value INTEGER,
+                watt_hours INTEGER,
+                date TEXT,
+                part_type);
             """
         self.create_hour_table = """
             CREATE TABLE IF NOT EXISTS hour (
-            start INTEGER PRIMARY KEY,
-            middle INTEGER,
-            end INTEGER,
-            duration INTEGER,
-            value INTEGER,
-            watt_hours INTEGER,
-            date TEXT,
-            part_type);
+                start INTEGER PRIMARY KEY,
+                middle INTEGER,
+                end INTEGER,
+                duration INTEGER,
+                value INTEGER,
+                watt_hours INTEGER,
+                date TEXT,
+                part_type);
             """
         self.create_part_table = """
             CREATE TABLE IF NOT EXISTS part (
-            start INTEGER,
-            start_iso_8601,
-            end INTEGER,
-            end_iso_8601,
-            middle INTEGER,
-            middle_iso_8601,
-            date TEXT,
-            part_type INTEGER,
-            part_avg INTEGER,
-            part_sum INTEGER);
+                start INTEGER,
+                start_iso_8601,
+                end INTEGER,
+                end_iso_8601,
+                middle INTEGER,
+                middle_iso_8601,
+                date TEXT,
+                part_type INTEGER,
+                part_avg INTEGER,
+                part_sum INTEGER);
             """
         self.create_day_table = """
             CREATE TABLE IF NOT EXISTS day (
-            start INTEGER,
-            middle INTEGER,
-            end INTEGER,
-            date TEXT PRIMARY KEY,
-            day_avg,
-            day_sum,
-            min INTEGER);
+                start INTEGER,
+                middle INTEGER,
+                end INTEGER,
+                date TEXT PRIMARY KEY,
+                day_avg,
+                day_sum,
+                min INTEGER);
             """
         self.create_week_table = """
             CREATE TABLE IF NOT EXISTS week (
-            start INTEGER,
-            middle INTEGER,
-            end INTEGER,
-            date TEXT PRIMARY KEY,
-            week_avg,
-            week_sum);
+                start INTEGER,
+                middle INTEGER,
+                end INTEGER,
+                date TEXT PRIMARY KEY,
+                week_avg,
+                week_sum);
             """
         self.create_month_table = """
             CREATE TABLE IF NOT EXISTS month (
-            start INTEGER,
-            middle INTEGER,
-            end INTEGER,
-            date TEXT PRIMARY KEY,
-            month_avg,
-            month_sum);
+                start INTEGER,
+                middle INTEGER,
+                end INTEGER,
+                date TEXT PRIMARY KEY,
+                month_avg,
+                month_sum);
             """
         self.create_year_table = """
             CREATE TABLE IF NOT EXISTS year (
-            start INTEGER,
-            middle INTEGER,
-            end INTEGER,
-            date TEXT PRIMARY KEY,
-            year_avg,
-            year_sum);
-            """
-
-        self.insert_hour = """
-            INSERT INTO hour (
-            start,
-            middle,
-            end,
-            duration,
-            value,
-            watt_hours,
-            date,
-            part_type)
-            VALUES (?,?,?,?,?,?,?,?);
-            """
-        self.insert_days = """
-            INSERT INTO daily (
-            date,
-            baseline,
-            min)
-            VALUES (?,?,?);
+                start INTEGER,
+                middle INTEGER,
+                end INTEGER,
+                date TEXT PRIMARY KEY,
+                year_avg,
+                year_sum);
             """
 
         try:
