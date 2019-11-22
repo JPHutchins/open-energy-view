@@ -93,7 +93,7 @@ class EnergyHistory():
             """
         self.create_part_table = """
             CREATE TABLE IF NOT EXISTS part (
-                start INTEGER,
+                start INTEGER PRIMARY KEY,
                 start_iso_8601,
                 end INTEGER,
                 end_iso_8601,
@@ -106,38 +106,38 @@ class EnergyHistory():
             """
         self.create_day_table = """
             CREATE TABLE IF NOT EXISTS day (
-                start INTEGER,
+                start INTEGER PRIMARY KEY,
                 middle INTEGER,
                 end INTEGER,
-                date TEXT PRIMARY KEY,
+                date TEXT,
                 day_avg,
                 day_sum,
                 min INTEGER);
             """
         self.create_week_table = """
             CREATE TABLE IF NOT EXISTS week (
-                start INTEGER,
+                start INTEGER PRIMARY KEY,
                 middle INTEGER,
                 end INTEGER,
-                date TEXT PRIMARY KEY,
+                date TEXT,
                 week_avg,
                 week_sum);
             """
         self.create_month_table = """
             CREATE TABLE IF NOT EXISTS month (
-                start INTEGER,
+                start INTEGER PRIMARY KEY,
                 middle INTEGER,
                 end INTEGER,
-                date TEXT PRIMARY KEY,
+                date TEXT,
                 month_avg,
                 month_sum);
             """
         self.create_year_table = """
             CREATE TABLE IF NOT EXISTS year (
-                start INTEGER,
+                start INTEGER PRIMARY KEY,
                 middle INTEGER,
                 end INTEGER,
-                date TEXT PRIMARY KEY,
+                date TEXT,
                 year_avg,
                 year_sum);
             """
