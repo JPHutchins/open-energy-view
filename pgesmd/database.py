@@ -286,69 +286,48 @@ class EnergyHistory():
 
         if self.is_empty:  # first import, initialize starting values
             first_item = next(parse_espi_data(xml_file))
-            prev_date = first_item[4]
-            prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
+
             prev_start = first_item[0]
+            prev_date = first_item[4]
+
             min_heap = []
-            part_type = 0
-            part_sum = 0
-            part_start = first_item[0]
-            c = Crosses(self.partitions[1][0])
 
             day_sum, day_cnt, day_start = 0, 0, prev_start
+            part_sum, part_type, part_start = 0, 0, prev_start
             week_sum, week_cnt, week_start = 0, 0, prev_start
             month_sum, month_cnt, month_start = 0, 0, prev_start
             year_sum, year_cnt, year_start = 0, 0, prev_start
 
         else:  # retrieve the incomplete interval values and initialize
-            #  TO DO - SQL query retreives this variables...
             self.cursor.execute("""
                 SELECT * FROM info
                 JOIN incomplete ON info.last_update = incomplete.id;
                 """)
-            (   _id,
-                start,
-                date,
+            (_id, start, date,
+             part_sum, part_type, part_start,
+             day_sum, day_cnt, day_start, day_min,
+             week_sum, week_cnt, week_start,
+             month_sum, month_cnt, month_start,
+             year_sum, year_cnt, year_start) = zip(*self.cursor.fetchall())
 
-                part_sum,
-                part_type,
-                part_start,
-
-                day_sum,
-                day_cnt,
-                day_start,
-                day_min,
-
-                week_sum,
-                week_cnt,
-                week_start,
-
-                month_sum,
-                month_cnt,
-                month_start,
-
-                year_sum,
-                year_cnt,
-                year_start) = zip(*self.cursor.fetchall())
-
-            prev_date = date,
-            prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
             prev_start = start
-            min_heap = [day_min]  # get min before saving to incomplete
-            part_type = part_type
-            part_sum = part_sum
-            part_start = part_start
-            c = Crosses(
-                self.partitions[(part_type + 1) % len(self.partitions)][0])
+            prev_date = date
+
+            min_heap = [day_min]
 
             day_sum, day_cnt, day_start = day_sum, day_cnt, day_start
+            part_sum, part_type, part_start = part_sum, part_type, part_start
             week_sum, week_cnt, week_start = week_sum, week_cnt, week_start
             month_sum, month_cnt, month_start = month_sum, month_cnt, month_start
             year_sum, year_cnt, year_start = year_sum, year_cnt, year_start
 
+        prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
         prev_week = prev_datetime.isocalendar()[1]
         prev_month = prev_datetime.strftime('%m')
         prev_year = prev_datetime.isocalendar()[0]
+
+        c = Crosses(
+                self.partitions[(part_type + 1) % len(self.partitions)][0])
 
         for entry in parse_espi_data(xml_file):
             if entry[0] <= prev_start and overwrite is False:
