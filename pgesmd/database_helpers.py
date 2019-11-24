@@ -1,3 +1,10 @@
+"""
+Helper functions and SQL queries for database.py EnergyHistory class.
+
+These helper functions use external variables - any variable that is passed as
+input to the function will not be mutated.
+"""
+
 import heapq
 
 
