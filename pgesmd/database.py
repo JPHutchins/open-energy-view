@@ -288,9 +288,8 @@ class EnergyHistory():
         else:  # retrieve the incomplete interval values and initialize
             #  TO DO - SQL query retreives this variables...
             self.cursor.execute("""
-                SELECT * FROM incomplete
-                JOIN info ON incomplete.id=info.last_entry
-                WHERE incomplete.id=info.last_entry;
+                SELECT * FROM info
+                JOIN incomplete ON info.last_update = incomplete.id;
                 """)
             (   _id,
                 start,
