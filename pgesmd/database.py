@@ -60,16 +60,29 @@ class EnergyHistory():
         self.create_incomplete_table = """
             CREATE TABLE IF NOT EXISTS incomplete (
                 id INTEGER PRIMARY KEY,
+                start INTEGER DEFAULT 0,
+                date TEXT,
+
                 part_sum INTEGER DEFAULT 0,
                 part_type INTEGER DEFAULT 0,
+                part_start INTEGER DEFAULT 0,
+
                 day_sum INTEGER DEFAULT 0,
                 day_cnt INTEGER DEFAULT 0,
+                day_start INTEGER DEFAULT 0,
+                day_min INTEGER DEFAULT 0,
+
                 week_sum INTEGER DEFAULT 0,
                 week_cnt INTEGER DEFAULT 0,
+                week_start INTEGER DEFAULT 0,
+
                 month_sum INTEGER DEFAULT 0,
                 month_cnt INTEGER DEFAULT 0,
+                month_start INTEGER DEFAULT 0,
+
                 year_sum INTEGER DEFAULT 0,
-                year_cnt INTEGER DEFAULT 0);
+                year_cnt INTEGER DEFAULT 0,
+                year_start INTEGER DEFAULT 0);
             """
         self.create_data_table = """
             CREATE TABLE IF NOT EXISTS data (
@@ -271,9 +284,39 @@ class EnergyHistory():
             week_sum, week_cnt, week_start = 0, 0, prev_start
             month_sum, month_cnt, month_start = 0, 0, prev_start
             year_sum, year_cnt, year_start = 0, 0, prev_start
-        
+
         else:  # retrieve the incomplete interval values and initialize
             #  TO DO - SQL query retreives this variables...
+            self.cursor.execute("""
+                SELECT * FROM incomplete
+                JOIN info ON incomplete.id=info.last_entry
+                WHERE incomplete.id=info.last_entry;
+                """)
+            (   _id,
+                start,
+                date,
+
+                part_sum,
+                part_type,
+                part_start,
+
+                day_sum,
+                day_cnt,
+                day_start,
+                day_min,
+
+                week_sum,
+                week_cnt,
+                week_start,
+
+                month_sum,
+                month_cnt,
+                month_start,
+
+                year_sum,
+                year_cnt,
+                year_start) = zip(*self.cursor.fetchall())
+
             prev_date = date,
             prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
             prev_start = start
@@ -283,7 +326,7 @@ class EnergyHistory():
             part_start = part_start
             c = Crosses(
                 self.partitions[(part_type + 1) % len(self.partitions)][0])
-            
+
             day_sum, day_cnt, day_start = day_sum, day_cnt, day_start
             week_sum, week_cnt, week_start = week_sum, week_cnt, week_start
             month_sum, month_cnt, month_start = month_sum, month_cnt, month_start
@@ -317,7 +360,7 @@ class EnergyHistory():
                                   cur_datetime)
                 prev_month = cur_month
                 month_sum, month_cnt, month_start = 0, 0, start
-            
+
             #  Push weekly changes & reinitialize
             if cur_week != prev_week:
                 insert_into_week(self, start, week_start, prev_date, week_sum,
@@ -346,7 +389,7 @@ class EnergyHistory():
             #  Insert into the hour table
             insert_into_hour(self, start, duration, value, watt_hours, date,
                              part_type)
-            
+
             #  Update the info table
             if start < self.first_entry:
                 self.first_entry = start
@@ -354,7 +397,7 @@ class EnergyHistory():
                 self.last_entry = start
             if watt_hours > self.max_watt_hour:
                 self.max_watt_hour = watt_hours
-            
+
             #  Update the interval sums
             part_sum += watt_hours
 
@@ -373,7 +416,7 @@ class EnergyHistory():
             #  Keep track of daily minimum
             min_heap.append(watt_hours)
 
-        #  Push the data from the last entries
+        #  Iteration complete - push the data from the last entries
         insert_into_year(self, start, year_start, prev_date, year_sum,
                          year_cnt, S_ONE_WEEK)
         insert_into_month(self, start, month_start, prev_date, month_sum,
@@ -384,7 +427,7 @@ class EnergyHistory():
                         day_cnt, S_ONE_DAY, min_heap)
         insert_into_part(self, start, part_start, prev_date, part_sum,
                          timezone, part_type)
-        
+
         #  Update the info table
         self.cursor.execute(
             "UPDATE info SET first_entry = ? WHERE id=0;", (self.first_entry,))
@@ -396,33 +439,60 @@ class EnergyHistory():
         cur_timestamp = int(datetime.now().timestamp())
         self.cursor.execute(
             "UPDATE info SET last_update = ? WHERE id=0;", (cur_timestamp,))
-        
+
         #  Insert into the incomplete table
+        day_min = min(min_heap)
         self.cursor.execute("""
             INSERT INTO incomplete (
                 id,
+                start,
+                date,
+
                 part_sum,
                 part_type,
+                part_start,
+
                 day_sum,
                 day_cnt,
+                day_start,
+                day_min,
+
                 week_sum,
                 week_cnt,
+                week_start,
+
                 month_sum,
                 month_cnt,
+                month_start,
+
                 year_sum,
-                year_cnt)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?);""", (
+                year_cnt,
+                year_start)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);""", (
                 cur_timestamp,
+                start,
+                date,
+
                 part_sum,
                 part_type,
+                part_start,
+
                 day_sum,
                 day_cnt,
+                day_start,
+                day_min,
+
                 week_sum,
                 week_cnt,
+                week_start,
+
                 month_sum,
                 month_cnt,
+                month_start,
+
                 year_sum,
-                year_cnt))
+                year_cnt,
+                year_start))
 
         #  Commit changes to the database
         self.cursor.execute("COMMIT")
