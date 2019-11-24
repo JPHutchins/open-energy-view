@@ -225,6 +225,20 @@ class EnergyHistory():
                 end = str(end - 12) + "PM"
 
             self.part_desc.append(start + " - " + end)
+    
+
+    def is_sequential(self, xml_file):
+        """Check if the xml_file is the next sequence of data."""
+        self.cursor.execute("SELECT last_entry FROM info WHERE id=0")
+        last_entry = self.cursor.fetchone()[0]
+
+        start = next(parse_espi_data(xml_file))[0]
+
+        if start <= last_entry + 3600:
+            return True
+        return False
+        
+
 
     def insert_espi_xml(self, xml_file, baseline_points=3, overwrite=False):
         """Insert an ESPI XML file into the database.
