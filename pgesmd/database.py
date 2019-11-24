@@ -287,7 +287,7 @@ class EnergyHistory():
         if self.is_empty:  # first import, initialize starting values
             first_item = next(parse_espi_data(xml_file))
 
-            prev_start = first_item[0]
+            prev_start = 0
             prev_date = first_item[4]
 
             min_heap = []
@@ -300,15 +300,21 @@ class EnergyHistory():
 
         else:  # retrieve the incomplete interval values and initialize
             self.cursor.execute("""
-                SELECT * FROM info
+                SELECT 
+                    start, date,
+                    part_sum, part_type, part_start,
+                    day_sum, day_cnt, day_start, day_min,
+                    week_sum, week_cnt, week_start,
+                    month_sum, month_cnt, month_start,
+                    year_sum, year_cnt, year_start FROM info
                 JOIN incomplete ON info.last_update = incomplete.id;
                 """)
-            (_id, start, date,
+            (start, date,
              part_sum, part_type, part_start,
              day_sum, day_cnt, day_start, day_min,
              week_sum, week_cnt, week_start,
              month_sum, month_cnt, month_start,
-             year_sum, year_cnt, year_start) = zip(*self.cursor.fetchall())
+             year_sum, year_cnt, year_start) = self.cursor.fetchone()
 
             prev_start = start
             prev_date = date
@@ -325,6 +331,7 @@ class EnergyHistory():
         prev_week = prev_datetime.isocalendar()[1]
         prev_month = prev_datetime.strftime('%m')
         prev_year = prev_datetime.isocalendar()[0]
+        cur_datetime = prev_datetime
 
         c = Crosses(
                 self.partitions[(part_type + 1) % len(self.partitions)][0])
