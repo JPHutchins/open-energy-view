@@ -240,6 +240,10 @@ class EnergyHistory():
     def get_next_start(self):
         """Return the value needed for API 'published-min'."""
         return self.last_entry + 3600
+    
+    def get_json(self):
+        """Return the JSON representation of the database."""
+        return self.json
 
     def insert_espi_xml(self, xml_file, baseline_points=3, overwrite=False):
         """Insert an ESPI XML file into the database.
@@ -497,7 +501,7 @@ class EnergyHistory():
         #  Commit changes to the database
         self.cursor.execute("COMMIT")
 
-    def get_json(self, type='json'):
+    def write_json(self, type='json'):
         """Return the JSON representation of the EnergyHistory DB."""
         cur = self.cursor
 
