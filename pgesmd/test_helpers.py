@@ -114,6 +114,14 @@ class TestHelpers(unittest.TestCase):
         cur.execute("SELECT max_watt_hour FROM info WHERE id=0")
         self.assertEqual(7948, db.max_watt_hour)
         self.assertEqual(7948, cur.fetchone()[0])
+    
+    def test_database_json_export(self):
+        db = EnergyHistory(path='/test/data/energy_history_test.db')
+
+        db.save_json()
+        #print(db.get_json())
+
+
 
 
 if __name__ == '__main__':
