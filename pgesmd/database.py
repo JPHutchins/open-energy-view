@@ -291,7 +291,7 @@ class EnergyHistory():
         if self.is_empty:  # first import, initialize starting values
             first_item = next(parse_espi_data(xml_file))
 
-            prev_start = 0
+            prev_start = first_item[0]
             prev_date = first_item[4]
 
             min_heap = []
@@ -517,17 +517,17 @@ class EnergyHistory():
 
         #  Get the table index references
         cur.execute("SELECT start FROM hour ORDER BY start ASC;")
-        hour_list = list(zip(*cur.fetchall()))
+        hour_list = [x[0] * 1000 for x in cur.fetchall()]
         cur.execute("SELECT start FROM part ORDER BY start ASC;")
-        part_list = list(zip(*cur.fetchall()))
+        part_list = [x[0] * 1000 for x in cur.fetchall()]
         cur.execute("SELECT start FROM day ORDER BY start ASC;")
-        day_list = list(zip(*cur.fetchall()))
+        day_list = [x[0] * 1000 for x in cur.fetchall()]
         cur.execute("SELECT start FROM week ORDER BY start ASC;")
-        week_list = list(zip(*cur.fetchall()))
+        week_list = [x[0] * 1000 for x in cur.fetchall()]
         cur.execute("SELECT start FROM month ORDER BY start ASC;")
-        month_list = list(zip(*cur.fetchall()))
+        month_list = [x[0] * 1000 for x in cur.fetchall()]
         cur.execute("SELECT start FROM year ORDER BY start ASC;")
-        year_list = list(zip(*cur.fetchall()))
+        year_list = [x[0] * 1000 for x in cur.fetchall()]
         
         #  Get the info TABLE.
         cur.execute("""
@@ -570,7 +570,7 @@ class EnergyHistory():
             bar_center = int((start_time + ONE_YEAR / 2).timestamp()) * 1000
             end = int((start_time + ONE_YEAR).timestamp()) * 1000
 
-            self.json['part'].append({
+            self.json['year'].append({
                 'x': bar_center,
                 'y': year_avg,
                 
@@ -591,11 +591,11 @@ class EnergyHistory():
                 'i_hour_start': bisect_left(hour_list, start),
                 'i_hour_end': bisect_left(hour_list, end),
 
-                'lookup'[start]: i
+                'lookup': {start: i}
                 })
             i += 1
 #  /year ---------------------------------------------------------------------
-
+        #print(self.json['year'])
 #  month ----------------------------------------------------------------------
         cur.execute("""
             SELECT start, month_avg, month_sum
@@ -612,12 +612,12 @@ class EnergyHistory():
             start = start * 1000
             bar_center = int((start_time + ONE_MONTH / 2).timestamp()) * 1000
             end = int((start_time + ONE_MONTH).timestamp()) * 1000
-
+    
             i_year = bisect_left(
-                [year_obj['lookup'] for year_obj in self.json['year']],
-                start)
+                [year_obj['interval_start'] for year_obj in self.json['year']],
+                start) - 1
 
-            self.json['part'].append({
+            self.json['month'].append({
                 'x': bar_center,
                 'y': month_avg,
                 
@@ -638,7 +638,7 @@ class EnergyHistory():
 
                 'i_year': i_year,
 
-                'lookup'[start]: i
+                'lookup': {start: i}
                 })
             i += 1
 #  /month ---------------------------------------------------------------------
@@ -661,10 +661,13 @@ class EnergyHistory():
             end = int((start_time + ONE_WEEK).timestamp()) * 1000
 
             i_month = bisect_left(
-                [month_obj['lookup'] for month_obj in self.json['month']],
-                start)
+                [month_obj['interval_start'] for month_obj in self.json['month']],
+                start) - 1
+            #print(self.json['month'])
+            #print(i_month)
+            #print(start)
 
-            self.json['part'].append({
+            self.json['week'].append({
                 'x': bar_center,
                 'y': week_avg,
                 
@@ -684,7 +687,7 @@ class EnergyHistory():
                 'i_month': i_month,
                 'i_year': self.json['month'][i_month]['i_year'],
 
-                'lookup'[start]: i
+                'lookup': {start: i}
                 })
             i += 1
 #  /week ----------------------------------------------------------------------
@@ -708,10 +711,10 @@ class EnergyHistory():
             end = int((start_time + ONE_DAY).timestamp()) * 1000
 
             i_week = bisect_left(
-                [week_obj['lookup'] for week_obj in self.json['week']],
-                start)
+                [week_obj['interval_start'] for week_obj in self.json['week']],
+                start) - 1
 
-            self.json['part'].append({
+            self.json['day'].append({
                 'x': bar_center,
                 'y': day_avg,
                 
@@ -728,7 +731,7 @@ class EnergyHistory():
                 'i_month': self.json['week'][i_week]['i_month'],
                 'i_year': self.json['week'][i_week]['i_year'],
 
-                'lookup'[start]: i
+                'lookup': {start: i}
                 })
             i += 1
 #  /day  ----------------------------------------------------------------------
@@ -759,8 +762,8 @@ class EnergyHistory():
             end = end * 1000
 
             i_day = bisect_left(
-                [day_obj['lookup'] for day_obj in self.json['day']],
-                bar_center)
+                [day_obj['interval_start'] for day_obj in self.json['day']],
+                bar_center) - 1
 
             self.json['part'].append({
                 'x': bar_center,
@@ -781,7 +784,7 @@ class EnergyHistory():
                 'i_month': self.json['day'][i_day]['i_month'],
                 'i_year': self.json['day'][i_day]['i_year'],
 
-                'lookup'[start]: i
+                'lookup': {start: i}
                 })
             i += 1
 #  /part ----------------------------------------------------------------------
@@ -801,15 +804,15 @@ class EnergyHistory():
             # JS needs epoch in ms; the offset is to position the bar correctly
             start = start * 1000
             bar_center = middle * 1000
-            end = end * 1000
+            end = start + 3600000
 
             i_part = bisect_left(
-                    [part_obj['lookup'] for part_obj in self.json['part']],
-                    start)
+                    [part_obj['interval_start'] for part_obj in self.json['part']],
+                    start) - 1
 
             i_day = bisect_left(
-                [day_obj['lookup'] for day_obj in self.json['day']],
-                start)
+                [day_obj['interval_start'] for day_obj in self.json['day']],
+                start) - 1
 
             self.json['hour'].append({
                 'x': bar_center,
@@ -831,7 +834,7 @@ class EnergyHistory():
                 'i_month': self.json['day'][i_day]['i_month'],
                 'i_year': self.json['day'][i_day]['i_year'],
 
-                'lookup'[start]: i
+                'lookup': {start: i}
             })
             i += 1
 #  /hour ----------------------------------------------------------------------
