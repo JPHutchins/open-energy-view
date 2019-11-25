@@ -501,8 +501,8 @@ class EnergyHistory():
         #  Commit changes to the database
         self.cursor.execute("COMMIT")
 
-    def write_json(self, type='json'):
-        """Return the JSON representation of the EnergyHistory DB."""
+    def save_json(self, type='json'):
+        """Make the JSON representation of the EnergyHistory DB."""
         cur = self.cursor
 
         #  Set timedeltas
