@@ -6,7 +6,7 @@ import logging
 import pytz
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from bisect import bisect_left
+from bisect import bisect_left, bisect_right
 
 from pgesmd.helpers import parse_espi_data, Crosses
 from pgesmd.database_helpers import (
@@ -290,17 +290,18 @@ class EnergyHistory():
 
         if self.is_empty:  # first import, initialize starting values
             first_item = next(parse_espi_data(xml_file))
+            first_start = first_item[0]
 
-            prev_start = first_item[0]
+            prev_start = first_start - 3600
             prev_date = first_item[4]
 
             min_heap = []
 
-            day_sum, day_cnt, day_start = 0, 0, prev_start
-            part_sum, part_type, part_start = 0, 0, prev_start
-            week_sum, week_cnt, week_start = 0, 0, prev_start
-            month_sum, month_cnt, month_start = 0, 0, prev_start
-            year_sum, year_cnt, year_start = 0, 0, prev_start
+            day_sum, day_cnt, day_start = 0, 0, first_start
+            part_sum, part_type, part_start = 0, 0, first_start
+            week_sum, week_cnt, week_start = 0, 0, first_start
+            month_sum, month_cnt, month_start = 0, 0, first_start
+            year_sum, year_cnt, year_start = 0, 0, first_start
 
         else:  # retrieve the incomplete interval values and initialize
             self.cursor.execute("""
@@ -320,7 +321,7 @@ class EnergyHistory():
              month_sum, month_cnt, month_start,
              year_sum, year_cnt, year_start) = self.cursor.fetchone()
 
-            prev_start = start
+            prev_start = start - 3600
             prev_date = date
 
             min_heap = [day_min]
@@ -341,10 +342,11 @@ class EnergyHistory():
                 self.partitions[(part_type + 1) % len(self.partitions)][0])
 
         for entry in parse_espi_data(xml_file):
-            if entry[0] <= prev_start and overwrite is False:
-                continue  # fast forward to data that has not been entered yet
             start, duration, value, watt_hours, date = entry
 
+            if start <= prev_start and overwrite is False:
+                continue  # fast forward to data that has not been entered yet
+            
             cur_datetime = datetime.strptime(date, '%Y-%m-%d')
             cur_week = cur_datetime.isocalendar()[1]
             cur_month = cur_datetime.strftime('%m')
@@ -555,20 +557,19 @@ class EnergyHistory():
 
 #  year ----------------------------------------------------------------------
         cur.execute("""
-            SELECT start, year_avg, year_sum
+            SELECT start, year_avg, year_sum, middle, end
             FROM year
             ORDER BY start ASC;
             """)
 
         i = 0
-        for start, year_avg, year_sum in cur.fetchall():
+        for start, year_avg, year_sum, middle, end in cur.fetchall():
 
             start_time = datetime.fromtimestamp(start)
 
-            # JS needs epoch in ms, offset is to center bar
             start = start * 1000
-            bar_center = int((start_time + ONE_YEAR / 2).timestamp()) * 1000
-            end = int((start_time + ONE_YEAR).timestamp()) * 1000
+            bar_center = middle * 1000
+            end = end * 1000
 
             self.json['year'].append({
                 'x': bar_center,
@@ -595,7 +596,7 @@ class EnergyHistory():
                 })
             i += 1
 #  /year ---------------------------------------------------------------------
-        #print(self.json['year'])
+
 #  month ----------------------------------------------------------------------
         cur.execute("""
             SELECT start, month_avg, month_sum
@@ -608,14 +609,13 @@ class EnergyHistory():
 
             start_time = datetime.fromtimestamp(start)
 
-            # JS needs epoch in ms, offset is to center bar
             start = start * 1000
             bar_center = int((start_time + ONE_MONTH / 2).timestamp()) * 1000
             end = int((start_time + ONE_MONTH).timestamp()) * 1000
     
             i_year = bisect_left(
                 [year_obj['interval_start'] for year_obj in self.json['year']],
-                start) - 1
+                start)
 
             self.json['month'].append({
                 'x': bar_center,
@@ -649,23 +649,21 @@ class EnergyHistory():
             FROM week
             ORDER BY start ASC;
             """)
-
+        #print([month_obj['interval_start'] for month_obj in self.json['month']])
         i = 0
         for start, week_avg, week_sum in cur.fetchall():
 
             start_time = datetime.fromtimestamp(start)
 
-            # JS needs epoch in ms, offset is to center bar
             start = start * 1000
             bar_center = int((start_time + ONE_WEEK / 2).timestamp()) * 1000
             end = int((start_time + ONE_WEEK).timestamp()) * 1000
 
-            i_month = bisect_left(
+            i_month = bisect_right(
                 [month_obj['interval_start'] for month_obj in self.json['month']],
                 start) - 1
-            #print(self.json['month'])
+            #print(f'{start} is < {self.json["month"][i_month]["interval_start"]}')
             #print(i_month)
-            #print(start)
 
             self.json['week'].append({
                 'x': bar_center,
@@ -705,12 +703,11 @@ class EnergyHistory():
 
             start_time = datetime.fromtimestamp(start)
 
-            # JS needs epoch in ms, offset is to center bar
             start = start * 1000
             bar_center = int((start_time + ONE_DAY / 2).timestamp()) * 1000
             end = int((start_time + ONE_DAY).timestamp()) * 1000
 
-            i_week = bisect_left(
+            i_week = bisect_right(
                 [week_obj['interval_start'] for week_obj in self.json['week']],
                 start) - 1
 
@@ -756,12 +753,11 @@ class EnergyHistory():
                 part_avg,
                 part_sum) in cur.fetchall():
 
-            # JS needs epoch in ms; the offset is given by using the middle
             bar_center = middle * 1000
             start = start * 1000
             end = end * 1000
 
-            i_day = bisect_left(
+            i_day = bisect_right(
                 [day_obj['interval_start'] for day_obj in self.json['day']],
                 bar_center) - 1
 
@@ -793,32 +789,31 @@ class EnergyHistory():
 
 #  hour -----------------------------------------------------------------------
         cur.execute("""
-            SELECT watt_hours, start, part_type
+            SELECT start, middle, end, watt_hours, part_type
             FROM hour
             ORDER BY start ASC;
             """)
         
         i = 0
-        for value, start, part_type in cur.fetchall():
+        for start, middle, end, watt_hours, part_type in cur.fetchall():
 
-            # JS needs epoch in ms; the offset is to position the bar correctly
             start = start * 1000
             bar_center = middle * 1000
-            end = start + 3600000
+            end = end * 1000
 
-            i_part = bisect_left(
+            i_part = bisect_right(
                     [part_obj['interval_start'] for part_obj in self.json['part']],
                     start) - 1
 
-            i_day = bisect_left(
+            i_day = bisect_right(
                 [day_obj['interval_start'] for day_obj in self.json['day']],
                 start) - 1
 
             self.json['hour'].append({
                 'x': bar_center,
-                'y': value,
+                'y': watt_hours,
 
-                'sum': value,
+                'sum': watt_hours,
 
                 'type': 'hour',
                 'part': part_type,
