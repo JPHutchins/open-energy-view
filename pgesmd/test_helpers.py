@@ -4,6 +4,7 @@ import unittest
 import os
 import time
 import sqlite3
+import json
 
 from pgesmd.helpers import (
     get_auth_file,
@@ -119,7 +120,10 @@ class TestHelpers(unittest.TestCase):
         db = EnergyHistory(path='/test/data/energy_history_test.db')
 
         db.save_json()
-        #print(db.get_json())
+        filename = f'{PROJECT_PATH}/test/data/energy_history_test.json'
+        with open(filename, 'w') as json_file:
+            json.dump(db.get_json(), json_file)
+
 
 
 
