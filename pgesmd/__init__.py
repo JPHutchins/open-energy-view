@@ -325,7 +325,7 @@ def create_app(test_config=None):
         conn.row_factory = sqlite3.Row
 
         cur = conn.cursor()
-        cur.execute("select * from espi")
+        cur.execute("select * from hour")
 
         rows = cur.fetchall()
         return render_template("list.html", rows=rows)
