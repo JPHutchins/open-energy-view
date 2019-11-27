@@ -624,9 +624,9 @@ class EnergyHistory():
             bar_center = int((start_time + ONE_MONTH / 2).timestamp()) * 1000
             end = int((start_time + ONE_MONTH).timestamp()) * 1000
     
-            i_year = bisect_left(
+            i_year = bisect_right(
                 [year_obj['interval_start'] for year_obj in self.json['year']],
-                start)
+                start) - 1
 
             self.json['month'].append({
                 'x': bar_center,
