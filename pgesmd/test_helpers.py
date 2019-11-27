@@ -118,11 +118,54 @@ class TestHelpers(unittest.TestCase):
     
     def test_database_json_export(self):
         db = EnergyHistory(path='/test/data/energy_history_test.db')
+        xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
+        db.insert_espi_xml(xml)
 
         db.save_json()
+        db_json = db.get_json()
         filename = f'{PROJECT_PATH}/test/data/energy_history_test.json'
         with open(filename, 'w') as json_file:
-            json.dump(db.get_json(), json_file)
+            json.dump(db_json, json_file)
+        
+        #  Check first and last entries
+        self.assertEqual(447, db_json['hour'][0]['y'])
+        self.assertEqual(1643, db_json['hour'][17495]['y'])
+
+        self.assertEqual(408, db_json['part'][0]['y'])
+        self.assertEqual(2440, db_json['part'][2187]['y'])
+
+        first_day_avg = sum([i['y'] for i in db_json['hour'][0:24]]) / 24
+        last_day_avg = sum([i['y'] for i in db_json['hour'][17472:17496]]) / 24
+        self.assertEqual(int(round(first_day_avg)), db_json['day'][0]['y'])
+        self.assertEqual(int(round(last_day_avg)), db_json['day'][728]['y'])
+
+        cur = db.cursor
+
+        test_intvls = [
+            (('week', 0), (1508396400, 1508738400)),    # Week ending 2017-10-22
+            (('week', 1), (1508742000, 1509343200)),    # Week, M-M, 2017-10-23
+            (('week', -1), (1571036400, 1571378400)),   # Week starting 2019-10-14
+
+            (('month', 0), (1508396400, 1509516000)),   # October 2017, partial
+            (('month', 1), (1509519600, 1512111600)),   # November 2017, complete
+            (('month', -1), (1569913200, 1571378400)),  # October 2019, partial
+
+            (('year', 1), (1514793600, 1546326000))
+            ]
+
+        for rng, intvl in test_intvls:
+            cur.execute("""
+                        SELECT watt_hours FROM hour 
+                        WHERE start BETWEEN ? AND ?;
+                        """, intvl)
+            intvl_list = [x[0] for x in cur.fetchall()]
+            intvl_sum = sum(intvl_list)
+            intvl_avg = int(round(intvl_sum / len(intvl_list)))
+            period, i = rng
+            self.assertEqual(intvl_sum, db_json[period][i]['sum'])
+            self.assertEqual(intvl_avg, db_json[period][i]['y'])
+
+
 
 
 
