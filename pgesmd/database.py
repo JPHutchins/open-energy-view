@@ -284,6 +284,8 @@ class EnergyHistory():
         S_ONE_WEEK = int(timedelta(weeks=1).total_seconds())
         ONE_MONTH = relativedelta(months=1)
 
+        data_added = False
+
         def get_hours_mins(time):
             t = datetime.fromtimestamp(time)
             return float(t.strftime('%H')) + (float(t.strftime('%M')) / 60)
@@ -321,7 +323,7 @@ class EnergyHistory():
              month_sum, month_cnt, month_start,
              year_sum, year_cnt, year_start) = self.cursor.fetchone()
 
-            prev_start = start - 3600
+            prev_start = start
             prev_date = date
 
             min_heap = [day_min]
@@ -335,7 +337,7 @@ class EnergyHistory():
         prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
         prev_week = prev_datetime.isocalendar()[1]
         prev_month = prev_datetime.strftime('%m')
-        prev_year = prev_datetime.isocalendar()[0]
+        prev_year = prev_datetime.strftime('%Y')
         cur_datetime = prev_datetime
 
         c = Crosses(
@@ -346,14 +348,17 @@ class EnergyHistory():
 
             if start <= prev_start and overwrite is False:
                 continue  # fast forward to data that has not been entered yet
+
+            data_added = True
             
             cur_datetime = datetime.strptime(date, '%Y-%m-%d')
             cur_week = cur_datetime.isocalendar()[1]
             cur_month = cur_datetime.strftime('%m')
-            cur_year = cur_datetime.isocalendar()[0]
+            cur_year = cur_datetime.strftime('%Y')
 
             #  Push yearly changes & reinitialize
             if cur_year != prev_year:
+                print(cur_datetime)
                 insert_into_year(self, start, year_start, prev_date, year_sum,
                                  year_cnt, S_ONE_WEEK)
                 prev_year = cur_year
@@ -421,6 +426,10 @@ class EnergyHistory():
 
             #  Keep track of daily minimum
             min_heap.append(watt_hours)
+        
+        if not data_added:
+            print("NO DATA ADDED!")
+            return
 
         #  Iteration complete - push the data from the last entries
         insert_into_year(self, start, year_start, prev_date, year_sum,
@@ -431,8 +440,10 @@ class EnergyHistory():
                          week_cnt, S_ONE_WEEK)
         insert_into_day(self, start, day_start, prev_date, day_sum,
                         day_cnt, S_ONE_DAY, min_heap)
-        insert_into_part(self, start, part_start, prev_date, part_sum,
+        insert_into_part(self, start + 3600, part_start, prev_date, part_sum,
                          timezone, part_type)
+        insert_into_hour(self, start, duration, value, watt_hours, date,
+                             part_type)
 
         #  Update the info table
         self.cursor.execute(
