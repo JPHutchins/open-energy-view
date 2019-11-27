@@ -807,6 +807,7 @@ class EnergyHistory():
         
         i = 0
         for start, middle, end, watt_hours, part_type in cur.fetchall():
+            #  TO DO : memoize to reduce search size on the bisect
 
             start = start * 1000
             bar_center = middle * 1000
