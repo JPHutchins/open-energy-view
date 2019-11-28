@@ -431,16 +431,17 @@ class EnergyHistory():
             print("NO DATA ADDED!")
             return
 
+        interval_end = start + 3600
         #  Iteration complete - push the data from the last entries
-        insert_into_year(self, start, year_start, prev_date, year_sum,
+        insert_into_year(self, interval_end, year_start, prev_date, year_sum,
                          year_cnt, S_ONE_WEEK)
-        insert_into_month(self, start, month_start, prev_date, month_sum,
+        insert_into_month(self, interval_end, month_start, prev_date, month_sum,
                           month_cnt, ONE_MONTH, cur_datetime)
-        insert_into_week(self, start, week_start, prev_date, week_sum,
+        insert_into_week(self, interval_end, week_start, prev_date, week_sum,
                          week_cnt, S_ONE_WEEK)
-        insert_into_day(self, start, day_start, prev_date, day_sum,
+        insert_into_day(self, interval_end, day_start, prev_date, day_sum,
                         day_cnt, S_ONE_DAY, min_heap)
-        insert_into_part(self, start + 3600, part_start, prev_date, part_sum,
+        insert_into_part(self, interval_end, part_start, prev_date, part_sum,
                          timezone, part_type)
         insert_into_hour(self, start, duration, value, watt_hours, date,
                              part_type)
@@ -610,19 +611,19 @@ class EnergyHistory():
 
 #  month ----------------------------------------------------------------------
         cur.execute("""
-            SELECT start, month_avg, month_sum
+            SELECT start, middle, end, month_avg, month_sum
             FROM month
             ORDER BY start ASC;
             """)
 
         i = 0
-        for start, month_avg, month_sum in cur.fetchall():
+        for start, middle, end, month_avg, month_sum in cur.fetchall():
 
             start_time = datetime.fromtimestamp(start)
 
             start = start * 1000
-            bar_center = int((start_time + ONE_MONTH / 2).timestamp()) * 1000
-            end = int((start_time + ONE_MONTH).timestamp()) * 1000
+            bar_center = middle * 1000
+            end = end * 1000
     
             i_year = bisect_right(
                 [year_obj['interval_start'] for year_obj in self.json['year']],
@@ -656,19 +657,19 @@ class EnergyHistory():
 
 #  week -----------------------------------------------------------------------
         cur.execute("""
-            SELECT start, week_avg, week_sum
+            SELECT start, middle, end, week_avg, week_sum
             FROM week
             ORDER BY start ASC;
             """)
         #print([month_obj['interval_start'] for month_obj in self.json['month']])
         i = 0
-        for start, week_avg, week_sum in cur.fetchall():
+        for start, middle, end, week_avg, week_sum in cur.fetchall():
 
             start_time = datetime.fromtimestamp(start)
 
             start = start * 1000
-            bar_center = int((start_time + ONE_WEEK / 2).timestamp()) * 1000
-            end = int((start_time + ONE_WEEK).timestamp()) * 1000
+            bar_center = middle * 1000
+            end = end * 1000
 
             i_month = bisect_right(
                 [month_obj['interval_start'] for month_obj in self.json['month']],
@@ -703,20 +704,20 @@ class EnergyHistory():
 
 #  day  -----------------------------------------------------------------------
         cur.execute("""
-            SELECT start, day_avg, day_sum
+            SELECT start, middle, end, day_avg, day_sum
             FROM day
             ORDER BY start ASC;
             """)
 
         # Behold, an unfortunately lengthy indented for block
         i = 0
-        for start, day_avg, day_sum in cur.fetchall():
+        for start, middle, end, day_avg, day_sum in cur.fetchall():
 
             start_time = datetime.fromtimestamp(start)
 
             start = start * 1000
-            bar_center = int((start_time + ONE_DAY / 2).timestamp()) * 1000
-            end = int((start_time + ONE_DAY).timestamp()) * 1000
+            bar_center = middle * 1000
+            end = end * 1000
 
             i_week = bisect_right(
                 [week_obj['interval_start'] for week_obj in self.json['week']],

@@ -165,6 +165,69 @@ class TestHelpers(unittest.TestCase):
             self.assertEqual(intvl_sum, db_json[period][i]['sum'])
             self.assertEqual(intvl_avg, db_json[period][i]['y'])
 
+    def test_json_indexing(self):
+        """Test the indexing of the JSON file.
+
+        Each object in the JSON stores indexes that correspond to the
+        boundaries of the associated hourly data.  For example, a "day" will
+        contain the keys "i_hour_start" and "i_hour_end".  These indexes
+        can be used to slice the hour list like:
+
+        lo = json['day'][0]['i_hour_start']
+        hi = json['day'][0]['i_hour_end']
+
+        json['hour'][lo:hi]
+        or
+        json['hour'].slice(lo, hi)
+
+        This will yield a subarray containing the higher resolution data
+        corresponding to the original data.
+
+        Furthermore, each object stores keys like "i_month" or "i_day".  These
+        indexes will point to the larger time interval of which the current
+        object is a slice.
+        """
+        db = EnergyHistory(path='/test/data/energy_history_test.db')
+        xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
+        db.insert_espi_xml(xml)
+
+        db.save_json()
+        db_json = db.get_json()
+        
+        test_intvls = [
+            ('day', 0),
+            ('day', -1),
+            ('part', 0),
+            ('part', 1),
+            ('part', -1),
+            ('week', 0),
+            ('week', 1),
+            ('week', -1),
+            ('month', 0),
+            ('month', 1),
+            ('month', -1),
+        ]
+
+        for period, i in test_intvls:
+            per_sum = db_json[period][i]['sum']
+            per_start = db_json[period][i]['interval_start']
+            per_end = db_json[period][i]['interval_end']
+
+            l = db_json[period][i]['i_hour_start']
+            r = db_json[period][i]['i_hour_end']
+
+            hour_sum = sum([x['y'] for x in db_json['hour'][l:r]])
+
+            try:
+                self.assertEqual(per_sum, hour_sum)
+                self.assertEqual(per_start, db_json['hour'][l]['interval_start'])
+                self.assertEqual(per_end, db_json['hour'][r-1]['interval_end'])
+            except AssertionError as e:
+                print(f'ERROR: {e}')
+                print(f'period: {period}, i: {i}\n'
+                      f'per_start: {per_start}, per_end: {per_end}\n'
+                      f'l: {l}, r: {r}\n')
+                raise AssertionError
 
 
 
