@@ -4,6 +4,7 @@ import sqlite3
 import os
 import logging
 import pytz
+import json
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bisect import bisect_left, bisect_right
@@ -29,6 +30,7 @@ class EnergyHistory():
 
     def __init__(self,
                  path='/data/energy_history.db',
+                 json_path='/data/energy_history_test.json',
                  partitions=[
                      (22, "Night"),
                      (6, "Day"),
@@ -36,16 +38,24 @@ class EnergyHistory():
         """Open the connection to database and create tables."""
         self.path = path
         self.partitions = partitions
-        self.json = {
-            "info": {},
-            "data": [],
-            "hour": [],
-            "part": [],
-            "day": [],
-            "week": [],
-            "month": [],
-            "year": []
-        }
+
+        try:
+            with open(f'{PROJECT_PATH}{json_path}') as json_file: 
+                self.json = json.load(json_file)
+        except FileNotFoundError:
+            print(f'{PROJECT_PATH}{json_path}')
+            self.json = {
+                "info": {
+                    "last_update": 0
+                },
+                "data": [],
+                "hour": [],
+                "part": [],
+                "day": [],
+                "week": [],
+                "month": [],
+                "year": []
+            }
 
         self.create_info_table = """
             CREATE TABLE IF NOT EXISTS info (
@@ -187,6 +197,9 @@ class EnergyHistory():
 
         self.cursor.execute("SELECT max_watt_hour FROM info")
         self.max_watt_hour = self.cursor.fetchone()[0]
+
+        self.cursor.execute("SELECT last_update FROM info")
+        self.last_update = self.cursor.fetchone()[0]
 
         self.is_empty = self.last_entry == 0
 
@@ -457,6 +470,7 @@ class EnergyHistory():
         cur_timestamp = int(datetime.now().timestamp())
         self.cursor.execute(
             "UPDATE info SET last_update = ? WHERE id=0;", (cur_timestamp,))
+        self.last_update = cur_timestamp
 
         #  Insert into the incomplete table
         day_min = min(min_heap)
@@ -517,7 +531,16 @@ class EnergyHistory():
 
     def save_json(self, type='json'):
         """Make the JSON representation of the EnergyHistory DB."""
+
         cur = self.cursor
+
+        #  Check for any changes in the DB
+        cur.execute("SELECT last_update FROM info")
+        print(self.json['info'])
+        if self.json['info']['last_update'] == self.last_update:
+            _LOGGER.info(f"DB last_update {self.json['info']['last_update']} "
+                         f"matches JSON last_update {self.last_update}")
+            return True
 
         #  Set timedeltas
         ONE_DAY = timedelta(days=1)
@@ -754,6 +777,7 @@ class EnergyHistory():
 
         # Behold, an unfortunately lengthy indented for block
         i = 0
+        next_start = 0
         for (   start,
                 start_iso_8601,
                 end,
@@ -773,6 +797,20 @@ class EnergyHistory():
                 [day_obj['interval_start'] for day_obj in self.json['day']],
                 bar_center) - 1
 
+            interval = self.part_intervals[part_type]
+            
+            if start == hour_list[next_start]:
+                i_hour_start = next_start
+            else:
+                i_hour_start = bisect_left(hour_list, start)
+            
+            end_index = min(i_hour_start + interval, 17495)
+
+            if end == hour_list[end_index]:
+                i_hour_end = end_index
+            else:
+                i_hour_end = bisect_left(hour_list, end)
+
             self.json['part'].append({
                 'x': bar_center,
                 'y': part_avg,
@@ -784,8 +822,8 @@ class EnergyHistory():
                 'interval_start': start,
                 'interval_end': end,
 
-                'i_hour_start': bisect_left(hour_list, start),
-                'i_hour_end': bisect_left(hour_list, end),
+                'i_hour_start': i_hour_start,
+                'i_hour_end': i_hour_end,
 
                 'i_day': i_day,
                 'i_week': self.json['day'][i_day]['i_week'],
@@ -794,7 +832,9 @@ class EnergyHistory():
 
                 'lookup': {start: i}
                 })
+
             i += 1
+            next_start = i_hour_start + interval
 #  /part ----------------------------------------------------------------------
 
 #  TO DO - data table for raw ESPI/other
@@ -847,4 +887,4 @@ class EnergyHistory():
             i += 1
 #  /hour ----------------------------------------------------------------------
 
-
+        return True
