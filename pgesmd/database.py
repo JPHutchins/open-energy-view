@@ -565,6 +565,8 @@ class EnergyHistory():
         month_list = [x[0] * 1000 for x in cur.fetchall()]
         cur.execute("SELECT start FROM year ORDER BY start ASC;")
         year_list = [x[0] * 1000 for x in cur.fetchall()]
+
+        hour_count = len(hour_list)
         
         #  Get the info TABLE.
         cur.execute("""
@@ -804,7 +806,7 @@ class EnergyHistory():
             else:
                 i_hour_start = bisect_left(hour_list, start)
             
-            end_index = min(i_hour_start + interval, 17495)
+            end_index = min(i_hour_start + interval, hour_count - 1)
 
             if end == hour_list[end_index]:
                 i_hour_end = end_index
