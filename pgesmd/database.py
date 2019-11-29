@@ -103,6 +103,12 @@ class EnergyHistory():
                 date TEXT,
                 part_type);
             """
+        self.create_update_table = """
+            CREATE TABLE IF NOT EXISTS update (
+                update INTEGER PRIMARY KEY,
+                update_start INTEGER,
+                update_end INTEGER);
+            """
         self.create_hour_table = """
             CREATE TABLE IF NOT EXISTS hour (
                 start INTEGER PRIMARY KEY,
@@ -174,6 +180,7 @@ class EnergyHistory():
         try:
             self.cursor = self.conn.cursor()
             self.cursor.execute(self.create_info_table)
+            self.cursor.execute(self.create_update_table)
             self.cursor.execute(self.create_incomplete_table)
             self.cursor.execute(self.create_data_table)
             self.cursor.execute(self.create_hour_table)
@@ -360,6 +367,7 @@ class EnergyHistory():
             start, duration, value, watt_hours, date = entry
 
             if start <= prev_start and overwrite is False:
+                new_data_start = start + duration
                 continue  # fast forward to data that has not been entered yet
 
             data_added = True
@@ -536,7 +544,6 @@ class EnergyHistory():
 
         #  Check for any changes in the DB
         cur.execute("SELECT last_update FROM info")
-        print(self.json['info'])
         if self.json['info']['last_update'] == self.last_update:
             _LOGGER.info(f"DB last_update {self.json['info']['last_update']} "
                          f"matches JSON last_update {self.last_update}")
