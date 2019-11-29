@@ -206,6 +206,9 @@ class TestHelpers(unittest.TestCase):
             ('month', 0),
             ('month', 1),
             ('month', -1),
+            ('year', 0),
+            ('year', 1),
+            ('year', -1)
         ]
 
         for period, i in test_intvls:
@@ -213,21 +216,38 @@ class TestHelpers(unittest.TestCase):
             per_start = db_json[period][i]['interval_start']
             per_end = db_json[period][i]['interval_end']
 
-            l = db_json[period][i]['i_hour_start']
-            r = db_json[period][i]['i_hour_end']
+            index_res = [
+                ('i_hour_start', 'i_hour_end', 'hour'),
+                ('i_day_start', 'i_day_end', 'day'),
+                ('i_month_start', 'i_month_end', 'month')
+            ]
 
-            hour_sum = sum([x['y'] for x in db_json['hour'][l:r]])
+            test_res = []
 
-            try:
-                self.assertEqual(per_sum, hour_sum)
-                self.assertEqual(per_start, db_json['hour'][l]['interval_start'])
-                self.assertEqual(per_end, db_json['hour'][r-1]['interval_end'])
-            except AssertionError as e:
-                print(f'ERROR: {e}')
-                print(f'period: {period}, i: {i}\n'
-                      f'per_start: {per_start}, per_end: {per_end}\n'
-                      f'l: {l}, r: {r}\n')
-                raise AssertionError
+            if period == ('day' or 'part'):
+                test_res = index_res[:1]
+            elif period == ('week' or 'month'):
+                test_res = index_res[:2]
+            elif period == 'year':
+                test_res = index_res[:3]
+            
+            for test in test_res:
+                start, end, res = test
+                lo = db_json[period][i][start]
+                hi = db_json[period][i][end]
+
+                try:
+                    if res == 'hour':
+                        hour_sum = sum([x['y'] for x in db_json[res][lo:hi]])
+                        self.assertEqual(per_sum, hour_sum)
+                    self.assertEqual(per_start, db_json[res][lo]['interval_start'])
+                    self.assertEqual(per_end, db_json[res][hi-1]['interval_end'])
+                except AssertionError as e:
+                    print(f'ERROR: {e}')
+                    print(f'period: {period}, i: {i}\n'
+                        f'per_start: {per_start}, per_end: {per_end}\n'
+                        f'l: {lo}, r: {hi}\n')
+                    raise AssertionError
 
 
 
