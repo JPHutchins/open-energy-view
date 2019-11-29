@@ -3,7 +3,8 @@
 import unittest
 import os
 import time
-import sqlite3
+from pstats import Stats
+import cProfile
 import json
 
 from pgesmd.helpers import (
@@ -14,8 +15,6 @@ from pgesmd.database import EnergyHistory
 
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-print(f'Testing in: {PROJECT_PATH}')
-
 
 answers = [
            (1570086000, 3600, 1067300, 1067, '2019-10-03'),
@@ -47,6 +46,18 @@ answers = [
 
 class TestHelpers(unittest.TestCase):
     """Test pgesmd.helpers."""
+
+    def setUp(self):
+        self.pr = cProfile.Profile()
+        self.pr.enable()
+        print("\n<<<---")
+    
+    def tearDown(self):
+        p = Stats(self.pr)
+        p.strip_dirs()
+        p.sort_stats('cumtime')
+        p.print_stats()
+        print("\n--->>>")
 
     def test_get_auth_file(self):
         """Test get_auth_file()."""
@@ -85,13 +96,13 @@ class TestHelpers(unittest.TestCase):
         end = time.strftime(
             '%Y-%m-%d %H:%M:%S',
             time.localtime(int(dump[17495][0]) + int(dump[17495][1])))
-        print(f"\nParsed two year data feed from {start} through {end}")
 
     def test_database_write(self):
         """Verify integrity of data after SQL INSERT."""
         query = "SELECT value FROM hour WHERE start=?"
 
-        db = EnergyHistory(path='/test/data/energy_history_test.db')
+        db = EnergyHistory(path='/test/data/energy_history_test.db',
+                           json_path='/test/data/energy_history_test.json')
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
         db.insert_espi_xml(xml)
 
@@ -117,7 +128,8 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(7948, cur.fetchone()[0])
     
     def test_database_json_export(self):
-        db = EnergyHistory(path='/test/data/energy_history_test.db')
+        db = EnergyHistory(path='/test/data/energy_history_test.db',
+                           json_path='/test/data/energy_history_test.json')
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
         db.insert_espi_xml(xml)
 
@@ -187,7 +199,8 @@ class TestHelpers(unittest.TestCase):
         indexes will point to the larger time interval of which the current
         object is a slice.
         """
-        db = EnergyHistory(path='/test/data/energy_history_test.db')
+        db = EnergyHistory(path='/test/data/energy_history_test.db',
+                           json_path='/test/data/energy_history_test.json')
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
         db.insert_espi_xml(xml)
 
