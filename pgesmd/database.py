@@ -103,9 +103,9 @@ class EnergyHistory():
                 date TEXT,
                 part_type);
             """
-        self.create_update_table = """
-            CREATE TABLE IF NOT EXISTS update (
-                update INTEGER PRIMARY KEY,
+        self.create_updater_table = """
+            CREATE TABLE IF NOT EXISTS updater (
+                update_id INTEGER PRIMARY KEY,
                 update_start INTEGER,
                 update_end INTEGER);
             """
@@ -180,7 +180,7 @@ class EnergyHistory():
         try:
             self.cursor = self.conn.cursor()
             self.cursor.execute(self.create_info_table)
-            self.cursor.execute(self.create_update_table)
+            self.cursor.execute(self.create_updater_table)
             self.cursor.execute(self.create_incomplete_table)
             self.cursor.execute(self.create_data_table)
             self.cursor.execute(self.create_hour_table)
@@ -600,11 +600,16 @@ class EnergyHistory():
         }
 
 #  year ----------------------------------------------------------------------
+        update_end = 0
+        if len(self.json['year']) > 0:
+            update_end = self.json['year'][-1]['interval_end']
+
         cur.execute("""
             SELECT start, year_avg, year_sum, middle, end
             FROM year
+            WHERE end > ?
             ORDER BY start ASC;
-            """)
+            """, (update_end,))
 
         i = 0
         for start, year_avg, year_sum, middle, end in cur.fetchall():

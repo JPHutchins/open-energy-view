@@ -47,17 +47,17 @@ answers = [
 class TestHelpers(unittest.TestCase):
     """Test pgesmd.helpers."""
 
-    def setUp(self):
-        self.pr = cProfile.Profile()
-        self.pr.enable()
-        print("\n<<<---")
+    # def setUp(self):
+    #     self.pr = cProfile.Profile()
+    #     self.pr.enable()
+    #     print("\n<<<---")
     
-    def tearDown(self):
-        p = Stats(self.pr)
-        p.strip_dirs()
-        p.sort_stats('cumtime')
-        p.print_stats()
-        print("\n--->>>")
+    # def tearDown(self):
+    #     p = Stats(self.pr)
+    #     p.strip_dirs()
+    #     p.sort_stats('cumtime')
+    #     p.print_stats()
+    #     print("\n--->>>")
 
     def test_get_auth_file(self):
         """Test get_auth_file()."""
@@ -174,8 +174,12 @@ class TestHelpers(unittest.TestCase):
             intvl_sum = sum(intvl_list)
             intvl_avg = int(round(intvl_sum / len(intvl_list)))
             period, i = rng
-            self.assertEqual(intvl_sum, db_json[period][i]['sum'])
-            self.assertEqual(intvl_avg, db_json[period][i]['y'])
+            try:
+                self.assertEqual(intvl_sum, db_json[period][i]['sum'])
+                self.assertEqual(intvl_avg, db_json[period][i]['y'])
+            except IndexError as e:
+                print(f"Index out of range: {i}, on list: {period}")
+                raise e
 
     def test_json_indexing(self):
         """Test the indexing of the JSON file.
