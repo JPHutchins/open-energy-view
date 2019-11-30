@@ -14,7 +14,10 @@ PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def create_app(test_config=None):
     # create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__,
+                instance_relative_config=True,
+                static_folder=f"./static/dist",
+                template_folder=f"./static")
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=f'{PROJECT_PATH}/data/energy_history.db',
@@ -41,6 +44,10 @@ def create_app(test_config=None):
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
+    
+    @app.route('/')
+    def index():
+        return render_template('index.html')
 
     @app.route('/data/json', methods=['GET'])
     def get_json():
