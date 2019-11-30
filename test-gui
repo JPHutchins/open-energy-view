@@ -1,8 +1,4 @@
 #!/bin/bash
-python3 -m pgesmd.test_gui
 export FLASK_APP=pgesmd
 export FLASK_ENV=development
-echo "/test-espi_chart to test GET data ranges"
-echo "/test-espi_list to view the ESPI as present in the SQLite3 database TABLE: espi"
-echo "/test-baseline_chart to view the calculated baseline usage"
 flask run
