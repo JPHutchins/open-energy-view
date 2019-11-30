@@ -4,8 +4,10 @@ from flask import Flask, render_template, request
 from itertools import cycle
 import pandas as pd
 import sqlite3
+import json
 
 from pgesmd.helpers import Crosses
+from pgesmd.database import EnergyHistory
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -31,10 +33,19 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # initialize the database for json requests
+    db = EnergyHistory(path='/test/data/energy_history_test.db')
+    db.save_json()
+
     # a simple page that says hello
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
+
+    @app.route('/data/json', methods=['GET'])
+    def get_json():
+        json_string = json.dumps(db.json)
+        return json_string
 
     @app.route("/test-gui")
     def test_gui():
