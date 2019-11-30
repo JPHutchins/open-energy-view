@@ -620,6 +620,9 @@ class EnergyHistory():
             bar_center = middle * 1000
             end = end * 1000
 
+            #  Let's have this write to a variable instead of directly to json
+            #  The variable can be passed to json with .extend and sent to
+            #  JS as "the new data"
             self.json['year'].append({
                 'x': bar_center,
                 'y': year_avg,
