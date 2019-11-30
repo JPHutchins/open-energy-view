@@ -47,17 +47,17 @@ answers = [
 class TestHelpers(unittest.TestCase):
     """Test pgesmd.helpers."""
 
-    # def setUp(self):
-    #     self.pr = cProfile.Profile()
-    #     self.pr.enable()
-    #     print("\n<<<---")
+    def setUp(self):
+        self.pr = cProfile.Profile()
+        self.pr.enable()
+        print("\n<<<---")
     
-    # def tearDown(self):
-    #     p = Stats(self.pr)
-    #     p.strip_dirs()
-    #     p.sort_stats('cumtime')
-    #     p.print_stats()
-    #     print("\n--->>>")
+    def tearDown(self):
+        p = Stats(self.pr)
+        p.strip_dirs()
+        p.sort_stats('cumtime')
+        p.print_stats()
+        print("\n--->>>")
 
     def test_get_auth_file(self):
         """Test get_auth_file()."""
@@ -135,9 +135,6 @@ class TestHelpers(unittest.TestCase):
 
         db.save_json()
         db_json = db.get_json()
-        filename = f'{PROJECT_PATH}/test/data/energy_history_test.json'
-        with open(filename, 'w') as json_file:
-            json.dump(db_json, json_file)
         
         #  Check first and last entries
         self.assertEqual(447, db_json['hour'][0]['y'])

@@ -39,23 +39,22 @@ class EnergyHistory():
         self.path = path
         self.partitions = partitions
 
-        try:
-            with open(f'{PROJECT_PATH}{json_path}') as json_file: 
-                self.json = json.load(json_file)
-        except FileNotFoundError:
-            print(f'{PROJECT_PATH}{json_path}')
-            self.json = {
-                "info": {
-                    "last_update": 0
-                },
-                "data": [],
-                "hour": [],
-                "part": [],
-                "day": [],
-                "week": [],
-                "month": [],
-                "year": []
-            }
+        # try:
+        #     with open(f'{PROJECT_PATH}{json_path}') as json_file:
+        #         self.json = json.load(json_file)
+        # except FileNotFoundError:
+        self.json = {
+            "info": {
+                "last_update": 0
+            },
+            "data": [],
+            "hour": [],
+            "part": [],
+            "day": [],
+            "week": [],
+            "month": [],
+            "year": []
+        }
 
         self.create_info_table = """
             CREATE TABLE IF NOT EXISTS info (
