@@ -449,7 +449,7 @@ class EnergyHistory():
             min_heap.append(watt_hours)
         
         if not data_added:
-            print("NO DATA ADDED!")
+            _LOGGER.info("No new data added.")
             return
 
         interval_end = start + 3600
