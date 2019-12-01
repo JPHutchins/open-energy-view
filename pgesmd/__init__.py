@@ -48,6 +48,17 @@ def create_app(test_config=None):
     @app.route('/')
     def index():
         return render_template('index.html')
+    
+    @app.route('/data/json/now', methods=['GET'])
+    def get_json_now():
+        json_now = {
+            'info': db.json['info'],
+            'hour': db.json['hour'][-168:],
+            'part': db.json['part'][db.json['hour'][-168]['i_part']:db.json['hour'][-1]['i_part']]
+        }
+        json_string = json.dumps(json_now)
+        return json_string
+
 
     @app.route('/data/json', methods=['GET'])
     def get_json():
