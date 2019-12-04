@@ -2,7 +2,7 @@
   "name": "pgesmd",
   "version": "0.0.1",
   "description": "Frontend for PG&E Share My Data API",
-  "main": "index.js",
+  "main": "index.jsx",
   "scripts": {
     "build": "webpack -p --progress --config webpack.config.js",
     "dev-build": "webpack --progress -d --config webpack.config.js",
@@ -26,12 +26,35 @@
   },
   "homepage": "https://github.com/JPHutchins/pgesmd#readme",
   "devDependencies": {
+    "@babel/cli": "^7.7.4",
+    "@babel/core": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "@babel/preset-react": "^7.7.4",
+    "babel-loader": "^8.0.6",
+    "babel-polyfill": "^6.0.16",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
+    "@babel/core": "^7.1.6",
+    "@babel/plugin-proposal-class-properties": "^7.7.4",
+    "@babel/preset-env": "^7.1.6",
+    "@babel/preset-react": "^7.0.0",
+    "babel-polyfill": "^6.26.0",
     "chart.js": "^2.9.3",
     "immutable": "^4.0.0-rc.12",
-    "moment": "^2.24.0"
+    "moment": "^2.24.0",
+    "react-chartjs-2": "^2.8.0"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react"
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-class-properties"
+    ]
   }
 }
