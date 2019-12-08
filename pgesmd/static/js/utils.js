@@ -15,6 +15,35 @@ export function getPromise() {
     })
 }
 
+export function makeOptions(type) {
+    const unit = {
+        hour: 'hour',
+        part: 'day',
+        day: 'day',
+        week: 'day',
+        month: 'month'
+    }
+    const options = {
+        scales: {
+            xAxes: [{
+                type: 'time',
+                bounds: 'ticks',
+                time: {
+                unit: unit[type],
+                displayFormats: {
+                    minute: 'hA',
+                    hour: 'hA',
+                    day: 'ddd'
+                    },
+                },
+            offset: false
+            }]
+        }
+        
+    }
+    return options;
+}
+
 export function getDataNow() {
     const request = new XMLHttpRequest();
     request.open("GET", '/data/json/now', false);
