@@ -7,8 +7,6 @@ export default class EnergyChart extends React.Component {
     this.state = {};
   }
 
-  
-
   render() {
     return (
       <div>
