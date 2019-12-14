@@ -7,6 +7,8 @@ import xml.etree.ElementTree as ET
 import logging
 import time
 from base64 import b64encode
+from datetime import datetime
+from pytz import timezone
 
 from pgesmd.helpers import (
     get_auth_file,
@@ -148,7 +150,7 @@ class SelfAccessApi:
         _LOGGER.error(f'async_request to Bulk Resource URI failed.  |  '
                       f'{response.status_code}: {response.text}')
         return False
-    
+
     def async_request_sequential_data(self, start, end_date=None):
         """Return True upon successful asynchronous request."""
         if self.need_token():
@@ -157,6 +159,42 @@ class SelfAccessApi:
         if not end_date:
             end_date = int(time.time())
         start_date = start
+
+        header_params = {'Authorization': f'Bearer {self.access_token}'}
+
+        params = {'published-min': start_date,
+                  'published-max': end_date}
+
+        _LOGGER.debug(f'Sending request to {self.bulk_resource_uri} using'
+                      f'access_token {self.access_token}')
+
+        response = requests.get(
+            self.bulk_resource_uri,
+            data={},
+            headers=header_params,
+            params=params,
+            cert=self.cert
+        )
+        if str(response.status_code) == "202":
+            _LOGGER.info('async_request successful,'
+                         ' awaiting POST from server.')
+            return True
+        _LOGGER.error(f'async_request to Bulk Resource URI failed.  |  '
+                      f'{response.status_code}: {response.text}')
+        return False
+
+    def async_request_date_data(self, date):
+        """Return True upon successful asynchronous request."""
+        if self.need_token():
+            self.get_access_token()
+
+        tz = timezone('US/Pacific')
+        dt = datetime.strptime(date, '%Y-%m-%d')
+        offset = tz.utcoffset(dt).total_seconds()
+        epoch = (dt - datetime(1970, 1, 1)).total_seconds()
+
+        start_date = int(epoch - offset)
+        end_date = start_date + 86400
 
         header_params = {'Authorization': f'Bearer {self.access_token}'}
 
