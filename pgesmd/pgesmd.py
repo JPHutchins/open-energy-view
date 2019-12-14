@@ -35,6 +35,15 @@ BULK_RESOURCE_URI =\
     f'{UTILITY_URI}{API_URI}/1_1/resource/Batch/Bulk/{THIRD_PARTY_ID}'
 
 
+def download_day_data(date):
+    """Use to pull particular XML for testing purposes."""
+    auth = get_auth_file()
+    api = SelfAccessApi(*auth)
+
+    if api.async_request_date_data(date):
+        server = SelfAccessServer(api)
+
+
 if __name__ == '__main__':
 
     auth_path = f'{PROJECT_PATH}/auth/auth.json'
