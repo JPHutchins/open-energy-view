@@ -761,6 +761,10 @@ class EnergyHistory():
             i_week = bisect_right(
                 [week_obj['interval_start'] for week_obj in self.json['week']],
                 start) - 1
+            
+            i_month = bisect_right(
+                [month_obj['interval_start'] for month_obj in self.json['month']],
+                start) - 1
 
             self.json['day'].append({
                 'x': bar_center,
@@ -776,7 +780,7 @@ class EnergyHistory():
                 'i_hour_end': bisect_left(hour_list, end),
 
                 'i_week': i_week,
-                'i_month': self.json['week'][i_week]['i_month'],
+                'i_month': i_month,
                 'i_year': self.json['week'][i_week]['i_year'],
 
                 'lookup': {start: i}
