@@ -23,8 +23,25 @@ export function makeOptions(type) {
     hour: "hour",
     part: "day",
     day: "day",
-    week: "day",
+    week: "month",
     month: "month"
+  };
+  const displayFormats = {
+    hour: {
+      hour: "hA"
+    },
+    part: {
+      day: "dddd"
+    },
+    day: {
+      day: "M/D"
+    },
+    week: {
+      month: "MMMM"
+    },
+    month: {
+      month: "MMMM YYYY"
+    }
   };
   const options = {
     scales: {
@@ -34,11 +51,7 @@ export function makeOptions(type) {
           bounds: "ticks",
           time: {
             unit: unit[type],
-            displayFormats: {
-              minute: "hA",
-              hour: "hA",
-              day: "ddd"
-            }
+            displayFormats: displayFormats[type]
           },
           offset: false
         }
