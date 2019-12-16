@@ -1,0 +1,25 @@
+.container {
+  display: flex;
+  padding: 10px;
+  max-width: none;
+}
+.box {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.box:first-child > span {
+  margin-right: auto;
+}
+
+.box:last-child > span {
+  margin-left: auto;
+}
+
+.box {
+  align-items: center;
+  border: 5px solid #ccc;
+  background-color: lightblue;
+  height: 40px;
+}
