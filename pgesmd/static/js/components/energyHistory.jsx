@@ -3,6 +3,7 @@ import moment from "moment";
 import EnergyChart from "./energyChart";
 import { getCompleteData, makeOptions } from "../utils.js";
 import "../../css/App.css";
+import LowerBar from "./LowerBar";
 
 const { fromJS } = require("immutable");
 
@@ -104,14 +105,6 @@ export default class EnergyHistory extends React.Component {
     });
   };
 
-  handlePrevious = () => {
-    this.handleScroll("previous");
-  };
-
-  handleNext = () => {
-    this.handleScroll("next");
-  };
-
   handleZoomOut = () => {
     const currentData = this.state.data.datasets[0].data;
     const currentType = currentData[0].type;
@@ -197,22 +190,11 @@ export default class EnergyHistory extends React.Component {
           colors={this.colors}
           database={this.database}
         />
-        <div className="container">
-          <b className="box">
-            <span>{this.state.description.startDate}</span>
-          </b>
-          <div className="box">
-            <button onClick={this.handlePrevious} className="btn">
-              Previous
-            </button>
-            <button onClick={this.handleNext} className="btn">
-              Next
-            </button>
-          </div>
-          <b className="box">
-            <span>{this.state.description.endDate}</span>
-          </b>
-        </div>
+        <LowerBar
+          startDate={this.state.description.startDate}
+          endDate={this.state.description.endDate}
+          onClick={this.handleScroll}
+        />
         <button onClick={this.handleZoomOut} className="btn">
           Zoom Out
         </button>
