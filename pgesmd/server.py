@@ -22,7 +22,10 @@ class PgePostHandler(BaseHTTPRequestHandler):
     """Handle POST from PGE."""
 
     api = None
-
+    save_file = None
+    filename = None
+    to_db = None
+    
     def do_POST(self):
         """Download the ESPI XML and save to database."""
         if not self.path == '/pgesmd':
@@ -48,20 +51,35 @@ class PgePostHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         xml_data = self.api.get_espi_data(resource_uri)
-        filename = save_espi_xml(xml_data)
 
-        db = EnergyHistory()
-        db.cursor.executemany(db.insert_espi, parse_espi_data(filename))
-        db.cursor.execute("COMMIT")
-        return
+        if self.save_file:
+            save_name = self.save_file(xml_data, filename=self.filename)
+            if save_name:
+                _LOGGER.info(f"XML saved at {save_name}")
+            else:
+                _LOGGER.error("File not saved.")
+
+            if self.to_db and save_name:
+                db = EnergyHistory()
+                db.cursor.executemany(db.insert_espi,
+                                      parse_espi_data(save_name))
+                db.cursor.execute("COMMIT")
 
 
 class SelfAccessServer:
     """Server class for PGE SMD Self Access API."""
 
-    def __init__(self, api_instance):
+    def __init__(self,
+                 api_instance,
+                 save_file=None,
+                 filename=None,
+                 to_db=True,
+                 close_after=False):
         """Initialize and start the server on construction."""
         PgePostHandler.api = api_instance
+        PgePostHandler.save_file = save_file
+        PgePostHandler.filename = filename
+        PgePostHandler.to_db = to_db
         server = HTTPServer(('', 7999), PgePostHandler)
 
         server.socket = ssl.wrap_socket(
@@ -70,4 +88,7 @@ class SelfAccessServer:
             keyfile=api_instance.cert[1],
             server_side=True)
 
-        server.serve_forever()
+        if close_after:
+            server.handle_request()
+        else:
+            server.serve_forever()

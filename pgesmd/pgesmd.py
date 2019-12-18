@@ -6,7 +6,11 @@ import logging
 
 from pgesmd.api import SelfAccessApi
 from pgesmd.server import SelfAccessServer
-from pgesmd.helpers import get_auth_file
+from pgesmd.helpers import (
+    get_auth_file,
+    save_espi_xml,
+    parse_espi_data
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +45,11 @@ def download_day_data(date):
     api = SelfAccessApi(*auth)
 
     if api.async_request_date_data(date):
-        server = SelfAccessServer(api)
+        server = SelfAccessServer(api,
+                                  save_file=save_espi_xml,
+                                  filename=date,
+                                  to_db=False,
+                                  close_after=True)
 
 
 if __name__ == '__main__':
