@@ -194,6 +194,7 @@ export default class EnergyHistory extends React.Component {
           startDate={this.state.description.startDate}
           endDate={this.state.description.endDate}
           onClick={this.handleScroll}
+          disabled=
         />
         <button onClick={this.handleZoomOut} className="btn">
           Zoom Out
