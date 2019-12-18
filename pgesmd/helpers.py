@@ -122,17 +122,17 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
             data.clear()
 
 
-def save_espi_xml(xml_data, filename=None):
+def save_espi_xml(self, xml_data, filename=None):
     """Save ESPI XML to a file named by timestamp or filename key."""
     if filename:
-        filename = f'{PROJECT_PATH}/data/espi_xml/{filename}.xml'
+        save_name = f'{PROJECT_PATH}/data/espi_xml/{filename}.xml'
     else:
         timestamp = time.strftime('%y.%m.%d %H:%M:%S', time.localtime())
-        filename = f'{PROJECT_PATH}/data/espi_xml/{timestamp}.xml'
+        save_name = f'{PROJECT_PATH}/data/espi_xml/{timestamp}.xml'
 
-    with open(filename, 'w') as file:
+    with open(save_name, 'w') as file:
         file.write(xml_data)
-    return filename
+    return save_name
 
 
 def get_emoncms_from_espi(xml_data,
