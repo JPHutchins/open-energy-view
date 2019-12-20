@@ -31,6 +31,9 @@ export default class EnergyHistory extends React.Component {
       barPercentage: 1.0,
       barThickness: "flex"
     };
+    this.database = {};
+    this.disableNext = false;
+    this.disablePrev = false;
   }
 
   componentDidMount = () => {
@@ -40,69 +43,103 @@ export default class EnergyHistory extends React.Component {
         console.log(this.database.toJS());
       })
       .then(() => {
-        this.setInit();
+        this.setMostRecent("hour");
       });
   };
 
-  setInit = () => {
-    const parts = this.database.get("part");
-    const weeks = this.database.get("week");
+  setMostRecent = type => {
+    const superType = this.database.get(this.indexReference[type]);
 
-    const lo = weeks.get(weeks.size - 1).get("i_part_start");
-    const hi = weeks.get(weeks.size - 1).get("i_part_end");
+    const lo = superType.get(superType.size - 1).get("i_" + type + "_start");
+    const hi = superType.get(superType.size - 1).get("i_" + type + "_end");
 
-    const newData = parts.slice(lo - 1, hi); // this OFF BY ONE is an error and should be corrected in database.py
+    const data = this.getChartData(lo, hi, type, this.database);
+    const color = this.getChartColors(data, type, this.colors);
 
-    const partColors = newData.map(item => this.colors[item.get("part")]);
+    this.setChartData(data, type, color);
+  };
 
-    this.setState({
-      data: {
-        datasets: [
-          {
-            data: newData.toJS(),
-            backgroundColor: partColors.toJS(),
-            barPercentage: this.chartSettings.barPercentage,
-            barThickness: this.chartSettings.barThickness
-          }
-        ]
-      },
-      options: makeOptions(newData.toJS()[0]["type"]),
-      description: this.createDescription(newData.toJS())
-    });
+  checkDisableScroll = (data, type) => {
+    const lastEntry = this.database
+      .get("lookup")
+      .get(type)
+      .get(data[data.length - 1].interval_start.toString());
+    this.disableNext = lastEntry >= this.database.get(type).size - 1;
+
+    const firstEntry = this.database
+      .get("lookup")
+      .get(type)
+      .get(data[0].interval_start.toString());
+    this.disablePrev = firstEntry <= 0;
   };
 
   handleScroll = direction => {
-    const modifyRange = direction === "previous" ? -1 : 1;
+    this.scroll(direction, this.state.data.datasets[0].data, this.database);
+  };
 
-    const currentData = this.state.data.datasets[0].data;
+  scroll = (direction, currentData, database) => {
     const type = currentData[0].type;
     const superType = this.indexReference[type];
 
-    const dataPoints = this.database.get(type);
-    const dataRange = this.database.get(superType);
+    const superInterval = database
+      .get(superType)
+      .get(currentData[0]["i_" + superType] + direction);
 
-    const newSuperIndex = currentData[0]["i_" + superType] + modifyRange;
+    const data = this.getChartData(
+      superInterval.get("i_" + type + "_start"),
+      superInterval.get("i_" + type + "_end"),
+      type,
+      database
+    );
 
-    const lo = dataRange.get(newSuperIndex).get("i_" + type + "_start");
-    const hi = dataRange.get(newSuperIndex).get("i_" + type + "_end");
-    const newData = dataPoints.slice(lo, hi); // this OFF BY ONE is an error and should be corrected in database.py
+    const colors = this.getChartColors(data, type, this.colors);
 
-    const partColors = newData.map(item => this.colors[item.get(type)]);
+    this.setChartData(data, type, colors);
+  };
 
+  getSlicePoints = (startDate, endDate, type, database) => {
+    return {
+      lo: database
+        .get("lookup")
+        .get(type)
+        .get(startDate.toString()),
+      hi: database
+        .get("lookup")
+        .get(type)
+        .get(endDate.toString())
+    };
+  };
+
+  getChartData = (lo, hi, type, database) => {
+    return database
+      .get(type)
+      .slice(lo, hi)
+      .toJS();
+  };
+
+  getChartColors = (data, type, color) => {
+    if (type === "part" || type === "hour") {
+      return data.map(item => color[item["part"]]);
+    }
+    return "#0000A0";
+  };
+
+  setChartData = (data, type, color) => {
     this.setState({
       data: {
         datasets: [
           {
-            data: newData.toJS(),
-            backgroundColor: partColors.toJS(),
+            data: data,
+            backgroundColor: color,
             barPercentage: this.chartSettings.barPercentage,
             barThickness: this.chartSettings.barThickness
           }
         ]
       },
       options: makeOptions(type),
-      description: this.createDescription(newData.toJS())
+      description: this.createDescription(data)
     });
+    this.checkDisableScroll(data, type);
   };
 
   handleZoomOut = () => {
@@ -194,7 +231,8 @@ export default class EnergyHistory extends React.Component {
           startDate={this.state.description.startDate}
           endDate={this.state.description.endDate}
           onClick={this.handleScroll}
-          disabled=
+          disableNext={this.disableNext}
+          disablePrev={this.disablePrev}
         />
         <button onClick={this.handleZoomOut} className="btn">
           Zoom Out

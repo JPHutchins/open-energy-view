@@ -11,7 +11,8 @@ export default class LowerBar extends React.PureComponent {
         <LeftDate startDate={this.props.startDate} />
         <PageTurner
           onClick={this.props.onClick}
-          disabled={this.props.disabled}
+          disableNext={this.props.disableNext}
+          disablePrev={this.props.disablePrev}
         />
         <RightDate endDate={this.props.endDate} />
       </div>
