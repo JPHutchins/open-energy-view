@@ -47,6 +47,15 @@ class EnergyHistory():
             "info": {
                 "last_update": 0
             },
+            "lookup": {
+                "data": {},
+                "hour": {},
+                "part": {},
+                "day": {},
+                "week": {},
+                "month": {},
+                "year": {}
+            },
             "data": [],
             "hour": [],
             "part": [],
@@ -643,8 +652,8 @@ class EnergyHistory():
                 'i_hour_start': bisect_left(hour_list, start),
                 'i_hour_end': bisect_left(hour_list, end),
 
-                'lookup': {start: i}
                 })
+            self.json['lookup']['year'][start] = i
             i += 1
 #  /year ---------------------------------------------------------------------
 
@@ -688,9 +697,8 @@ class EnergyHistory():
                 'i_hour_end': bisect_left(hour_list, end),
 
                 'i_year': i_year,
-
-                'lookup': {start: i}
                 })
+            self.json['lookup']['month'][start] = i
             i += 1
 #  /month ---------------------------------------------------------------------
 
@@ -735,9 +743,8 @@ class EnergyHistory():
 
                 'i_month': i_month,
                 'i_year': self.json['month'][i_month]['i_year'],
-
-                'lookup': {start: i}
                 })
+            self.json['lookup']['week'][start] = i
             i += 1
 #  /week ----------------------------------------------------------------------
 
@@ -782,9 +789,8 @@ class EnergyHistory():
                 'i_week': i_week,
                 'i_month': i_month,
                 'i_year': self.json['week'][i_week]['i_year'],
-
-                'lookup': {start: i}
                 })
+            self.json['lookup']['day'][start] = i
             i += 1
 #  /day  ----------------------------------------------------------------------
 
@@ -849,10 +855,8 @@ class EnergyHistory():
                 'i_week': self.json['day'][i_day]['i_week'],
                 'i_month': self.json['day'][i_day]['i_month'],
                 'i_year': self.json['day'][i_day]['i_year'],
-
-                'lookup': {start: i}
                 })
-
+            self.json['lookup']['part'][start] = i
             i += 1
             next_start = i_hour_start + interval
 #  /part ----------------------------------------------------------------------
@@ -901,9 +905,8 @@ class EnergyHistory():
                 'i_week': self.json['day'][i_day]['i_week'],
                 'i_month': self.json['day'][i_day]['i_month'],
                 'i_year': self.json['day'][i_day]['i_year'],
-
-                'lookup': {start: i}
             })
+            self.json['lookup']['hour'][start] = i
             i += 1
 #  /hour ----------------------------------------------------------------------
 
