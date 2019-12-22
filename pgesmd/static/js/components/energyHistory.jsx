@@ -45,7 +45,7 @@ export default class EnergyHistory extends React.Component {
         console.log(this.database.toJS());
       })
       .then(() => {
-        this.setMostRecent("part");
+        this.setMostRecent("hour");
       });
   };
 
@@ -163,8 +163,8 @@ export default class EnergyHistory extends React.Component {
           }
         ]
       },
-      options: makeOptions(type, this.barClickEvent),
-      description: this.createDescription(data),
+      options: makeOptions(type, this.barClickEvent, this.database),
+      description: this.createDescription(data, type),
       disableScroll: this.checkDisableScroll(data, type, this.database)
     });
   };
@@ -207,8 +207,11 @@ export default class EnergyHistory extends React.Component {
           }
         ]
       },
-      options: makeOptions(type, this.barClickEvent),
-      description: this.createDescription(newData.toJS())
+      options: makeOptions(type, this.barClickEvent, this.database),
+      description: this.createDescription(
+        newData.toJS(),
+        newData.toJS()[0]["type"]
+      )
     });
   };
 
@@ -232,22 +235,44 @@ export default class EnergyHistory extends React.Component {
     });
   };
 
-  createDescription = currentData => {
+  createDescription = (currentData, type) => {
+    const superType = this.indexReference[type];
+
     const startDate = moment(currentData[0].interval_start).format(
       "MMMM Do, YYYY"
     );
     const endDate = moment(
       currentData[currentData.length - 1].interval_end
     ).format("MMMM Do, YYYY");
+
+    const intervalSum = this.database
+      .get(superType)
+      .get(currentData[0]["i_" + superType])
+      .get("sum");
+
+    const now = moment();
+    let interval;
+    switch (type) {
+      case "hour":
+        interval = moment(currentData[0]["interval_start"]).format("dddd");
+        break;
+    }
     return {
       startDate: startDate,
-      endDate: endDate
+      endDate: endDate,
+      interval: interval,
+      intervalSum: intervalSum / 1000
     };
   };
 
   render() {
     return (
       <div>
+        <h>
+          {" "}
+          {this.state.description.interval}:{" "}
+          {this.state.description.intervalSum} kW hours consumed
+        </h>
         <EnergyChart
           data={this.state.data}
           options={this.state.options}
