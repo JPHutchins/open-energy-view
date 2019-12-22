@@ -207,7 +207,7 @@ export default class EnergyHistory extends React.Component {
           }
         ]
       },
-      options: makeOptions(type),
+      options: makeOptions(type, this.barClickEvent),
       description: this.createDescription(newData.toJS())
     });
   };
