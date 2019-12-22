@@ -18,7 +18,7 @@ export function getPromise() {
   });
 }
 
-export function makeOptions(type, callback) {
+export function makeOptions(type, callback, database) {
   const unit = {
     hour: "hour",
     part: "day",
@@ -55,6 +55,15 @@ export function makeOptions(type, callback) {
             displayFormats: displayFormats[type]
           },
           offset: false
+        }
+      ],
+      yAxes: [
+        {
+          ticks: {
+            min: 0,
+            // suggestedMax: database.get("info").get("max_watt_hour")
+            suggestedMax: 5000
+          }
         }
       ]
     }
