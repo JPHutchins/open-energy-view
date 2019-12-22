@@ -45,7 +45,7 @@ export default class EnergyHistory extends React.Component {
         console.log(this.database.toJS());
       })
       .then(() => {
-        this.setMostRecent("hour");
+        this.setMostRecent("part");
       });
   };
 
@@ -131,7 +131,27 @@ export default class EnergyHistory extends React.Component {
     return "#0000A0";
   };
 
+  barClickEvent = index => {
+    console.log(index);
+    const zoom = {
+      part: "hour"
+    };
+
+    // const currentData = this.state.data.datasets[0].data;
+    // const database = this.database;
+    // const currentType = currentData.type;
+
+    // this.getSlicePoints();
+  };
+
   setChartData = (data, type, color) => {
+    if (type === "part" && data.length < 21) {
+      data.push(data[data.length - 1]);
+      data[data.length - 1].x = moment(data[0].x)
+        .add(1, "week")
+        .valueOf();
+      data[data.length - 1].y = 0;
+    }
     this.setState({
       data: {
         datasets: [
@@ -143,7 +163,7 @@ export default class EnergyHistory extends React.Component {
           }
         ]
       },
-      options: makeOptions(type),
+      options: makeOptions(type, this.barClickEvent),
       description: this.createDescription(data),
       disableScroll: this.checkDisableScroll(data, type, this.database)
     });

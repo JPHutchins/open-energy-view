@@ -18,7 +18,7 @@ export function getPromise() {
   });
 }
 
-export function makeOptions(type) {
+export function makeOptions(type, callback) {
   const unit = {
     hour: "hour",
     part: "day",
@@ -44,6 +44,7 @@ export function makeOptions(type) {
     }
   };
   const options = {
+    onClick: (event, array) => callback(array[0]._index),
     scales: {
       xAxes: [
         {
