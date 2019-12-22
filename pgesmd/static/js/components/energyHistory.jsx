@@ -256,6 +256,19 @@ export default class EnergyHistory extends React.Component {
       case "hour":
         interval = moment(currentData[0]["interval_start"]).format("dddd");
         break;
+      case "part":
+        interval =
+          "Week of " +
+          moment(currentData[0]["interval_start"]).format("MMMM Do YYYY");
+        break;
+      case "day":
+        interval = moment(currentData[0]["interval_start"]).format("MMMM YYYY");
+        break;
+      case "week":
+        interval = moment(currentData[0]["interval_start"]).format("YYYY");
+        break;
+      case "month":
+        interval = "Complete Energy History";
     }
     return {
       startDate: startDate,
