@@ -134,14 +134,39 @@ export default class EnergyHistory extends React.Component {
   barClickEvent = index => {
     console.log(index);
     const zoom = {
-      part: "hour"
+      part: "hour",
+      day: "hour",
+      week: "part",
+      month: "day"
     };
 
-    // const currentData = this.state.data.datasets[0].data;
-    // const database = this.database;
-    // const currentType = currentData.type;
+    const currentData = this.state.data.datasets[0].data;
+    const type = currentData[0].type;
+    const superType = this.indexReference[zoom[type]];
 
-    // this.getSlicePoints();
+    let lo;
+    let hi;
+
+    if (type === "part") {
+      lo = this.database
+        .get(superType)
+        .get(currentData[index]["i_" + superType])
+        .get("i_" + zoom[type] + "_start");
+
+      hi = this.database
+        .get(superType)
+        .get(currentData[index]["i_" + superType])
+        .get("i_" + zoom[type] + "_end");
+    } else {
+      lo = currentData[index]["i_" + zoom[type] + "_start"];
+      hi = currentData[index]["i_" + zoom[type] + "_end"];
+    }
+
+    const data = this.getChartData(lo, hi, zoom[type], this.database);
+
+    const color = this.getChartColors(data, zoom[type], this.colors);
+
+    this.setChartData(data, zoom[type], color);
   };
 
   setChartData = (data, type, color) => {
