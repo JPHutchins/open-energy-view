@@ -16,6 +16,10 @@ export default class EnergyHistory extends React.Component {
       description: {
         startDate: "",
         endDate: ""
+      },
+      disableScroll: {
+        disableNext: false,
+        disablePrev: false
       }
     };
     this.indexReference = {
@@ -32,8 +36,6 @@ export default class EnergyHistory extends React.Component {
       barThickness: "flex"
     };
     this.database = {};
-    this.disableNext = false;
-    this.disablePrev = false;
   }
 
   componentDidMount = () => {
@@ -59,18 +61,23 @@ export default class EnergyHistory extends React.Component {
     this.setChartData(data, type, color);
   };
 
-  checkDisableScroll = (data, type) => {
-    const lastEntry = this.database
+  checkDisableScroll = (data, type, database) => {
+    const lastEntry = database
       .get("lookup")
       .get(type)
       .get(data[data.length - 1].interval_start.toString());
-    this.disableNext = lastEntry >= this.database.get(type).size - 1;
+    const disableNext = lastEntry >= database.get(type).size - 1;
 
-    const firstEntry = this.database
+    const firstEntry = database
       .get("lookup")
       .get(type)
       .get(data[0].interval_start.toString());
-    this.disablePrev = firstEntry <= 0;
+    const disablePrev = firstEntry <= 0;
+
+    return {
+      disableNext: disableNext,
+      disablePrev: disablePrev
+    };
   };
 
   handleScroll = direction => {
@@ -137,9 +144,9 @@ export default class EnergyHistory extends React.Component {
         ]
       },
       options: makeOptions(type),
-      description: this.createDescription(data)
+      description: this.createDescription(data),
+      disableScroll: this.checkDisableScroll(data, type, this.database)
     });
-    this.checkDisableScroll(data, type);
   };
 
   handleZoomOut = () => {
@@ -231,8 +238,8 @@ export default class EnergyHistory extends React.Component {
           startDate={this.state.description.startDate}
           endDate={this.state.description.endDate}
           onClick={this.handleScroll}
-          disableNext={this.disableNext}
-          disablePrev={this.disablePrev}
+          disableNext={this.state.disableScroll.disableNext}
+          disablePrev={this.state.disableScroll.disablePrev}
         />
         <button onClick={this.handleZoomOut} className="btn">
           Zoom Out
