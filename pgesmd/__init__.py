@@ -389,18 +389,18 @@ def create_app(test_config=None):
             f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         cur = conn.cursor()
-        cur.execute("SELECT baseline, date FROM daily")
+        cur.execute("SELECT min, date FROM day")
 
         values, labels = zip(*cur.fetchall())
         labels = [datetime.strptime(l, '%Y-%m-%d').strftime('%b %d %Y') for l in labels]
 
         cur = conn.cursor()
-        cur.execute("SELECT min, date FROM daily")
+        cur.execute("SELECT min, date FROM day")
 
         values_min, labels_min = zip(*cur.fetchall())
 
         cur = conn.cursor()
-        cur.execute("SELECT date, min FROM daily")
+        cur.execute("SELECT date, min FROM day")
 
         data = cur.fetchall()
 

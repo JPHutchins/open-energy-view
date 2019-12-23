@@ -177,11 +177,26 @@ class TestHelpers(unittest.TestCase):
 
         next_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-18.xml'
         self.assertTrue(db.is_sequential(next_day_xml))
+        db.insert_espi_xml(next_day_xml)
+        starts = [(1508396400, 446800), (1571382000, 1089700)]
+        for start, answer in starts:
+            cur.execute(query, (start,))
+            result = cur.fetchall()
+            self.assertEqual(result[0][0], answer)
+        cur.execute("SELECT day_avg FROM day WHERE start=1571295600")
+        self.assertEqual(1243, *cur.fetchone())
+        cur.execute("SELECT day_avg FROM day WHERE start=1571382000")
+        self.assertEqual(1569, *cur.fetchone())
+
+        #  Cut that out, let's insert the rest of October!
+        for day in range(19, 32):
+            db.insert_espi_xml(
+                f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-{day}.xml')
 
 
     
     def test_database_json_export(self):
-        os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        # os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         db = EnergyHistory(path='/test/data/energy_history_test.db',
                            json_path='/test/data/energy_history_test.json')
