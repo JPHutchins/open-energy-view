@@ -30,9 +30,17 @@ export default class EnergyHistory extends React.Component {
       month: "year",
       year: "all"
     };
+    this.detailLookup = {
+      hour: false,
+      part: "hour",
+      day: "part",
+      week: "day",
+      month: "week",
+      year: "week"
+    };
     this.zoom = ["hour", "part", "day", "week", "month", "year"];
     this.chartSettings = {
-      barPercentage: 1.0,
+      barPercentage: 0.7,
       barThickness: "flex"
     };
     this.database = {};
@@ -184,7 +192,22 @@ export default class EnergyHistory extends React.Component {
             data: data,
             backgroundColor: color,
             barPercentage: this.chartSettings.barPercentage,
-            barThickness: this.chartSettings.barThickness
+            barThickness: this.chartSettings.barThickness,
+            order: 1
+          },
+          {
+            data: this.setDetailData(data),
+            backgroundColor: "#DFFFFA",
+            fill: false,
+            type: "line",
+            label: "Details",
+            lineTension: 0.4,
+            pointRadius: 0,
+            borderWidth: 5,
+            hoverBackgroundColor: "#DFFFFA",
+            hoverBorderColor: "#DFFFFA",
+            hoverBorderWidth: 5,
+            order: 0
           }
         ]
       },
@@ -192,6 +215,31 @@ export default class EnergyHistory extends React.Component {
       description: this.createDescription(data, type),
       disableScroll: this.checkDisableScroll(data, type, this.database)
     });
+    this.setDetailData(this.state.data.datasets[0].data);
+  };
+
+  setDetailData = barData => {
+    const type = barData[0].type;
+    if (type === "hour") return null;
+    const superType = this.indexReference[type];
+    const subType = this.detailLookup[type];
+
+    const lo = this.database
+      .get(superType)
+      .get(barData[0]["i_" + superType])
+      .get("i_" + subType + "_start");
+
+    const hi = this.database
+      .get(superType)
+      .get(barData[0]["i_" + superType])
+      .get("i_" + subType + "_end");
+
+    const data = this.database
+      .get(subType)
+      .slice(lo, hi)
+      .toJS();
+    console.log(data);
+    return data;
   };
 
   handleZoomOut = () => {
