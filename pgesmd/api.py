@@ -194,7 +194,7 @@ class SelfAccessApi:
         epoch = (dt - datetime(1970, 1, 1)).total_seconds()
 
         start_date = int(epoch - offset)
-        end_date = start_date + 86400
+        end_date = start_date + 82800
 
         header_params = {'Authorization': f'Bearer {self.access_token}'}
 
