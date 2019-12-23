@@ -319,7 +319,8 @@ class EnergyHistory():
             t = datetime.fromtimestamp(time)
             return float(t.strftime('%H')) + (float(t.strftime('%M')) / 60)
 
-        if self.is_empty:  # first import, initialize starting values
+        if self.last_entry == 0:  # first import, initialize starting values
+            # print("OVERWRITING")
             first_item = next(parse_espi_data(xml_file))
             first_start = first_item[0]
 
@@ -335,6 +336,7 @@ class EnergyHistory():
             year_sum, year_cnt, year_start = 0, 0, first_start
 
         else:  # retrieve the incomplete interval values and initialize
+            # print("Querying the incomplete table")
             self.cursor.execute("""
                 SELECT 
                     start, date,
@@ -345,6 +347,7 @@ class EnergyHistory():
                     year_sum, year_cnt, year_start FROM info
                 JOIN incomplete ON info.last_update = incomplete.id;
                 """)
+            # print(*self.cursor.fetchone())
             (start, date,
              part_sum, part_type, part_start,
              day_sum, day_cnt, day_start, day_min,
