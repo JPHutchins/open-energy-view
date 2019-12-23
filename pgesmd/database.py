@@ -273,7 +273,7 @@ class EnergyHistory():
         """Return the JSON representation of the database."""
         return self.json
 
-    def insert_espi_xml(self, xml_file, baseline_points=3, overwrite=False):
+    def insert_espi_xml(self, xml_file, overwrite=False):
         """Insert an ESPI XML file into the database.
 
         The TABLE "espi" is updated with the raw ESPI data as well as a field,
@@ -281,8 +281,8 @@ class EnergyHistory():
         field, date, that is the date corresponding to the reading in YY/MM/DD.
 
         The TABLE "daily" is updated with a date for each day on which data was
-        pulled as well as the field, basline, which is the average of the
-        <baseline_points> lowest values read that day.
+        pulled as well as the field, min, which is the lowest value read that
+        day.
 
         The TABLE "info" is updated with information about the ESPI data that
         is in the "espi" table: the oldest date that has data in UTC, the
