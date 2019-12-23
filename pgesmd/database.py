@@ -5,6 +5,7 @@ import os
 import logging
 import pytz
 import json
+import time
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from bisect import bisect_left, bisect_right
@@ -261,7 +262,7 @@ class EnergyHistory():
 
         start = next(parse_espi_data(xml_file))[0]
 
-        if start <= last_entry + 3600:
+        if start == last_entry + 3600:
             return True
         return False
 
@@ -483,7 +484,7 @@ class EnergyHistory():
         self.cursor.execute(
             "UPDATE info SET max_watt_hour = ? WHERE id=0;",
             (self.max_watt_hour,))
-        cur_timestamp = int(datetime.now().timestamp())
+        cur_timestamp = int(time.time()*1000)
         self.cursor.execute(
             "UPDATE info SET last_update = ? WHERE id=0;", (cur_timestamp,))
         self.last_update = cur_timestamp

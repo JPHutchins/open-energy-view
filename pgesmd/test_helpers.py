@@ -47,17 +47,17 @@ answers = [
 class TestHelpers(unittest.TestCase):
     """Test pgesmd.helpers."""
 
-    def setUp(self):
-        self.pr = cProfile.Profile()
-        self.pr.enable()
-        print("\n<<<---")
+    # def setUp(self):
+    #     self.pr = cProfile.Profile()
+    #     self.pr.enable()
+    #     print("\n<<<---")
     
-    def tearDown(self):
-        p = Stats(self.pr)
-        p.strip_dirs()
-        p.sort_stats('cumtime')
-        p.print_stats()
-        print("\n--->>>")
+    # def tearDown(self):
+    #     p = Stats(self.pr)
+    #     p.strip_dirs()
+    #     p.sort_stats('cumtime')
+    #     p.print_stats()
+    #     print("\n--->>>")
 
     def test_get_auth_file(self):
         """Test get_auth_file()."""
@@ -127,7 +127,62 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(7948, db.max_watt_hour)
         self.assertEqual(7948, cur.fetchone()[0])
     
+    def test_database_add(self):
+        """Test adding new data to the DB."""
+        query = "SELECT value FROM hour WHERE start=?"
+
+        db = EnergyHistory(path='/test/data/energy_history_test.db',
+                           json_path='/test/data/energy_history_test.json')
+
+        xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
+        db.insert_espi_xml(xml)
+
+        last_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-17.xml'
+        db.insert_espi_xml(last_day_xml)
+
+        cur = db.cursor
+
+        starts = [(1508396400, 446800), (1571378400, 1643400)]
+
+        for start, answer in starts:
+            cur.execute(query, (start,))
+            result = cur.fetchall()
+            self.assertEqual(result[0][0], answer)
+
+        cur.execute("SELECT first_entry FROM info WHERE id=0")
+        self.assertEqual(starts[0][0], db.first_entry)
+        self.assertEqual(starts[0][0], cur.fetchone()[0])
+
+        cur.execute("SELECT last_entry FROM info WHERE id=0")
+        self.assertEqual(starts[1][0], db.last_entry)
+        self.assertEqual(starts[1][0], cur.fetchone()[0])
+
+        cur.execute("SELECT max_watt_hour FROM info WHERE id=0")
+        self.assertEqual(7948, db.max_watt_hour)
+        self.assertEqual(7948, cur.fetchone()[0])
+
+        next_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-16.xml'
+        db.insert_espi_xml(next_day_xml)
+        starts = [(1508396400, 446800), (1571378400, 1643400)]
+        for start, answer in starts:
+            cur.execute(query, (start,))
+            result = cur.fetchall()
+            self.assertEqual(result[0][0], answer)
+        
+        next_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-16.xml'
+        self.assertFalse(db.is_sequential(next_day_xml))
+
+        next_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-17.xml'
+        self.assertFalse(db.is_sequential(next_day_xml))
+
+        next_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-18.xml'
+        self.assertTrue(db.is_sequential(next_day_xml))
+
+
+    
     def test_database_json_export(self):
+        os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+
         db = EnergyHistory(path='/test/data/energy_history_test.db',
                            json_path='/test/data/energy_history_test.json')
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
