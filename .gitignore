@@ -9,3 +9,4 @@ energy_history_test.db-journal
 energy_history_test.json
 *dist/
 venv/
+pgesmd/static/dist/
