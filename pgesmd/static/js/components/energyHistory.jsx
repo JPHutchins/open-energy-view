@@ -207,7 +207,8 @@ export default class EnergyHistory extends React.Component {
             hoverBackgroundColor: "#DFFFFA",
             hoverBorderColor: "#DFFFFA",
             hoverBorderWidth: 5,
-            order: 0
+            order: 0,
+            hidden: true
           }
         ]
       },
