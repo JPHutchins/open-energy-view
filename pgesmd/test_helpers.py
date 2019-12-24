@@ -129,6 +129,8 @@ class TestHelpers(unittest.TestCase):
     
     def test_database_add(self):
         """Test adding new data to the DB."""
+        os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        
         query = "SELECT value FROM hour WHERE start=?"
 
         db = EnergyHistory(path='/test/data/energy_history_test.db',
@@ -199,7 +201,6 @@ class TestHelpers(unittest.TestCase):
         week_avg = cur.fetchone()[0]
         cur.execute("SELECT watt_hours FROM hour WHERE start BETWEEN ? AND ?", (week_start, week_end))  
         hour_list = [x[0] for x in cur.fetchall()]
-        print(hour_list)
         week_summed_avg = int(round(sum(hour_list) / len(hour_list)))
         self.assertAlmostEqual(week_summed_avg, week_avg)
         
@@ -207,7 +208,7 @@ class TestHelpers(unittest.TestCase):
 
     
     def test_database_json_export(self):
-        # os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         db = EnergyHistory(path='/test/data/energy_history_test.db',
                            json_path='/test/data/energy_history_test.json')
