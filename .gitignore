@@ -7,5 +7,5 @@ node_modules/
 energy_history_test.db
 energy_history_test.db-journal
 energy_history_test.json
-bundle.js
+dist/
 venv/
