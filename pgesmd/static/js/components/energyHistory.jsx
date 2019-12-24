@@ -20,7 +20,8 @@ export default class EnergyHistory extends React.Component {
       disableScroll: {
         disableNext: false,
         disablePrev: false
-      }
+      },
+      hideChart: false
     };
     this.indexReference = {
       hour: "day",
@@ -177,6 +178,18 @@ export default class EnergyHistory extends React.Component {
     this.setChartData(data, zoom[type], color);
   };
 
+  getChartDataset = (data, color) => {
+    return {
+      data: data,
+      label: "Bar Chart",
+      backgroundColor: color,
+      barPercentage: this.chartSettings.barPercentage,
+      barThickness: this.chartSettings.barThickness,
+      order: 1,
+      hidden: this.state.hideChart
+    };
+  };
+
   setChartData = (data, type, color) => {
     if (type === "part" && data.length < 21) {
       data.push(data[data.length - 1]);
@@ -188,40 +201,19 @@ export default class EnergyHistory extends React.Component {
     this.setState({
       data: {
         datasets: [
-          {
-            data: data,
-            backgroundColor: color,
-            barPercentage: this.chartSettings.barPercentage,
-            barThickness: this.chartSettings.barThickness,
-            order: 1
-          },
-          {
-            data: this.setDetailData(data),
-            backgroundColor: "#DFFFFA",
-            fill: false,
-            type: "line",
-            label: "Details",
-            lineTension: 0.4,
-            pointRadius: 0,
-            borderWidth: 5,
-            hoverBackgroundColor: "#DFFFFA",
-            hoverBorderColor: "#DFFFFA",
-            hoverBorderWidth: 5,
-            order: 0,
-            hidden: true
-          }
+          this.getChartDataset(data, color),
+          this.getDetailDataset(data)
         ]
       },
       options: makeOptions(type, this.barClickEvent, this.database),
       description: this.createDescription(data, type),
       disableScroll: this.checkDisableScroll(data, type, this.database)
     });
-    this.setDetailData(this.state.data.datasets[0].data);
   };
 
-  setDetailData = barData => {
+  getDetailData = barData => {
     const type = barData[0].type;
-    if (type === "hour") return null;
+    if (type === "hour") return barData;
     const superType = this.indexReference[type];
     const subType = this.detailLookup[type];
 
@@ -237,10 +229,27 @@ export default class EnergyHistory extends React.Component {
 
     const data = this.database
       .get(subType)
-      .slice(lo, hi)
+      .slice(lo, hi - 1)
       .toJS();
-    console.log(data);
     return data;
+  };
+
+  getDetailDataset = data => {
+    return {
+      data: this.getDetailData(data),
+      backgroundColor: "#DFFFFA",
+      fill: false,
+      type: "line",
+      label: "Details",
+      lineTension: 0.4,
+      pointRadius: 0,
+      borderWidth: 5,
+      hoverBackgroundColor: "#DFFFFA",
+      hoverBorderColor: "#DFFFFA",
+      hoverBorderWidth: 5,
+      order: 0,
+      hidden: !this.state.hideChart
+    };
   };
 
   handleZoomOut = () => {
@@ -352,6 +361,26 @@ export default class EnergyHistory extends React.Component {
     };
   };
 
+  handleDetailsClick = () => {
+    const data = this.state.data.datasets[0].data;
+    const type = data.type;
+    if (this.state.hideChart) {
+      this.state.hideChart = false;
+      this.setChartData(
+        data,
+        type,
+        this.getChartColors(fromJS(data), type, this.colors)
+      );
+      return;
+    }
+    this.state.hideChart = true;
+    this.setChartData(
+      fromJS(data),
+      type,
+      this.getChartColors(data, type, this.colors)
+    );
+  };
+
   render() {
     return (
       <div>
@@ -375,6 +404,9 @@ export default class EnergyHistory extends React.Component {
         />
         <button onClick={this.handleZoomOut} className="btn">
           Zoom Out
+        </button>
+        <button onClick={this.handleDetailsClick} className="btn">
+          Details
         </button>
       </div>
     );
