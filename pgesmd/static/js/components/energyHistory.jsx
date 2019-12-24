@@ -200,10 +200,7 @@ export default class EnergyHistory extends React.Component {
     }
     this.setState({
       data: {
-        datasets: [
-          this.getChartDataset(data, color),
-          this.getDetailDataset(data)
-        ]
+        datasets: [this.getChartDataset(data, color)]
       },
       options: makeOptions(type, this.barClickEvent, this.database),
       description: this.createDescription(data, type),
@@ -266,7 +263,7 @@ export default class EnergyHistory extends React.Component {
 
     if (type === "month") {
       dataRange = this.database.get("month");
-      newData = dataPoints;
+      newData = dataPoints.toJS();
     } else {
       dataRange = this.database.get(superType);
       const lo = dataRange
@@ -276,26 +273,16 @@ export default class EnergyHistory extends React.Component {
         .get(currentData[0]["i_" + superType])
         .get("i_" + type + "_end");
 
-      newData = dataPoints.slice(lo, hi);
+      newData = dataPoints.slice(lo, hi).toJS();
     }
 
-    this.setState({
-      data: {
-        datasets: [
-          {
-            data: newData.toJS(),
-            backgroundColor: "#0000A0",
-            barPercentage: this.chartSettings.barPercentage,
-            barThickness: this.chartSettings.barThickness
-          }
-        ]
-      },
-      options: makeOptions(type, this.barClickEvent, this.database),
-      description: this.createDescription(
-        newData.toJS(),
-        newData.toJS()[0]["type"]
-      )
-    });
+    console.log(newData, type);
+
+    this.setChartData(
+      newData,
+      type,
+      this.getChartColors(newData, type, this.colors)
+    );
   };
 
   handleEvening = () => {
@@ -361,26 +348,6 @@ export default class EnergyHistory extends React.Component {
     };
   };
 
-  handleDetailsClick = () => {
-    const data = this.state.data.datasets[0].data;
-    const type = data.type;
-    if (this.state.hideChart) {
-      this.state.hideChart = false;
-      this.setChartData(
-        data,
-        type,
-        this.getChartColors(fromJS(data), type, this.colors)
-      );
-      return;
-    }
-    this.state.hideChart = true;
-    this.setChartData(
-      fromJS(data),
-      type,
-      this.getChartColors(data, type, this.colors)
-    );
-  };
-
   render() {
     return (
       <div>
@@ -404,9 +371,6 @@ export default class EnergyHistory extends React.Component {
         />
         <button onClick={this.handleZoomOut} className="btn">
           Zoom Out
-        </button>
-        <button onClick={this.handleDetailsClick} className="btn">
-          Details
         </button>
       </div>
     );
