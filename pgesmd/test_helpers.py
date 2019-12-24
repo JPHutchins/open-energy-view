@@ -193,6 +193,17 @@ class TestHelpers(unittest.TestCase):
             db.insert_espi_xml(
                 f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-{day}.xml')
 
+        week_start = 1571036400
+        week_end = week_start + 604800 - 3600
+        cur.execute("SELECT week_avg FROM week WHERE start=?", (week_start,))
+        week_avg = cur.fetchone()[0]
+        cur.execute("SELECT watt_hours FROM hour WHERE start BETWEEN ? AND ?", (week_start, week_end))  
+        hour_list = [x[0] for x in cur.fetchall()]
+        print(hour_list)
+        week_summed_avg = int(round(sum(hour_list) / len(hour_list)))
+        self.assertAlmostEqual(week_summed_avg, week_avg)
+        
+
 
     
     def test_database_json_export(self):
