@@ -45,6 +45,9 @@ export function makeOptions(type, callback, database) {
   };
   const options = {
     onClick: (event, array) => callback(array[0]._index),
+    legend: {
+      display: false
+    },
     scales: {
       xAxes: [
         {
