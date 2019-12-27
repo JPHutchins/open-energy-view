@@ -137,7 +137,7 @@ export default class EnergyHistory extends React.Component {
     if (type === "part" || type === "hour") {
       return data.map(item => color[item["part"]]);
     }
-    return "#0000A0";
+    return "#32b345";
   };
 
   barClickEvent = index => {
@@ -190,6 +190,104 @@ export default class EnergyHistory extends React.Component {
     };
   };
 
+  getBaselineDataset = data => {
+    let newData;
+    console.log(data);
+    console.log(this.database.get("day").get(data[0].i_day));
+    if (data[0].type === "day") {
+      newData = [];
+      let j;
+      for (let i = 0; i < data.length; i++) {
+        newData.push({
+          x: data[i].interval_start,
+          y: data[i].baseline
+        });
+        j = i;
+      }
+      newData.push({
+        x: data[j].interval_end,
+        y: data[j].baseline
+      });
+    } else if (data[0].type === "hour") {
+      newData = [
+        {
+          x: this.database
+            .get("day")
+            .get(data[0].i_day)
+            .get("interval_start"),
+          y: this.database
+            .get("day")
+            .get(data[0].i_day)
+            .get("baseline")
+        },
+        {
+          x: this.database
+            .get("day")
+            .get(data[0].i_day)
+            .get("interval_end"),
+          y: this.database
+            .get("day")
+            .get(data[0].i_day)
+            .get("baseline")
+        }
+      ];
+    } else if (data[0].type === "month") {
+      const dailyData = this.database.get("day").toJS();
+      newData = [];
+      let j;
+      for (let i = 0; i < dailyData.length; i++) {
+        newData.push({
+          x: dailyData[i].interval_start,
+          y: dailyData[i].baseline
+        });
+        j = i;
+      }
+      newData.push({
+        x: dailyData[j].interval_end,
+        y: dailyData[j].baseline
+      });
+    } else {
+      const superType = this.indexReference[data[0].type];
+      const i_superType = data[0]["i_" + superType];
+      const dailyData = this.database
+        .get("day")
+        .slice(
+          this.database
+            .get(superType)
+            .get(i_superType)
+            .get("i_day_start"),
+          this.database
+            .get(superType)
+            .get(i_superType)
+            .get("i_day_end")
+        )
+        .toJS();
+      console.log(dailyData);
+      newData = [];
+      let j;
+      for (let i = 0; i < dailyData.length; i++) {
+        newData.push({
+          x: dailyData[i].interval_start,
+          y: dailyData[i].baseline
+        });
+        j = i;
+      }
+      newData.push({
+        x: dailyData[j].interval_end,
+        y: dailyData[j].baseline
+      });
+    }
+    return {
+      data: newData,
+      label: "Baseline",
+      order: 0,
+      hidden: this.state.hideChart,
+      type: "line",
+      backgroundColor: "#d1ddd2",
+      pointRadius: 0
+    };
+  };
+
   setChartData = (data, type, color) => {
     if (type === "part" && data.length < 21) {
       data.push(data[data.length - 1]);
@@ -198,9 +296,13 @@ export default class EnergyHistory extends React.Component {
         .valueOf();
       data[data.length - 1].y = 0;
     }
+    console.log(this.getBaselineDataset(data));
     this.setState({
       data: {
-        datasets: [this.getChartDataset(data, color)]
+        datasets: [
+          this.getChartDataset(data, color),
+          this.getBaselineDataset(data)
+        ]
       },
       options: makeOptions(type, this.barClickEvent, this.database),
       description: this.createDescription(data, type),
