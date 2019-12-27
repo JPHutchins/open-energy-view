@@ -764,14 +764,14 @@ class EnergyHistory():
 
 #  day  -----------------------------------------------------------------------
         cur.execute("""
-            SELECT start, middle, end, day_avg, day_sum
+            SELECT start, middle, end, day_avg, day_sum, baseline
             FROM day
             ORDER BY start ASC;
             """)
 
         # Behold, an unfortunately lengthy indented for block
         i = 0
-        for start, middle, end, day_avg, day_sum in cur.fetchall():
+        for start, middle, end, day_avg, day_sum, baseline in cur.fetchall():
 
             start_time = datetime.fromtimestamp(start)
 
@@ -794,6 +794,7 @@ class EnergyHistory():
                 'sum': day_sum,
 
                 'type': 'day',
+                'baseline': baseline,
                 'interval_start': start,
                 'interval_end': end,
 
