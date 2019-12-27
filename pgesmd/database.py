@@ -12,6 +12,7 @@ from bisect import bisect_left, bisect_right
 
 from pgesmd.helpers import parse_espi_data, Crosses
 from pgesmd.database_helpers import (
+    calculate_baseline,
     insert_into_year,
     insert_into_month,
     insert_into_week,
@@ -150,7 +151,8 @@ class EnergyHistory():
                 date TEXT,
                 day_avg,
                 day_sum,
-                min INTEGER);
+                min INTEGER,
+                baseline INTEGER);
             """
         self.create_week_table = """
             CREATE TABLE IF NOT EXISTS week (
@@ -548,6 +550,14 @@ class EnergyHistory():
 
         #  Commit changes to the database
         self.cursor.execute("COMMIT")
+
+        #  Calculate the baseline
+
+        calculate_baseline(self)
+
+        self.cursor.execute("COMMIT")
+        
+        
 
     def save_json(self, type='json'):
         """Make the JSON representation of the EnergyHistory DB."""

@@ -6,6 +6,55 @@ input to the function will not be mutated.
 """
 
 import heapq
+import pandas as pd
+import math
+
+
+def calculate_baseline(self):
+    cur = self.cursor
+    cur.execute("SELECT date, min FROM day ORDER BY start")
+
+    data = cur.fetchall()
+
+    window = 14
+
+    df = pd.DataFrame(data, columns=['Date', 'Daily Minimum'])
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.set_index('Date')
+    
+    ra = df.rolling(window=window).mean()
+    rs = df.rolling(window=window).std()
+
+    rsra = zip(df['Daily Minimum'], ra['Daily Minimum'], rs['Daily Minimum'], list(df.index))
+    
+    smooth = []
+    for d_min, d_avg, d_std, date in rsra:
+        hi = d_avg + (d_std)
+        lo = d_avg - (d_std)
+        if d_min < lo or d_min > hi:
+            smooth.append((date, d_avg))
+        else:
+            smooth.append((date, d_min))
+
+    df_smooth = pd.DataFrame(smooth, columns=['Date', 'Daily Minimum'])
+    df_smooth['Date'] = pd.to_datetime(df_smooth['Date'])
+    df_smooth = df_smooth.set_index('Date')
+
+    ra_smooth = df_smooth.rolling(window=window).mean()
+
+    result = ra_smooth['Daily Minimum']
+
+    mean = [int(x) if not math.isnan(x) else x for x in result]
+    mean = mean[window-1:]
+
+    for remaining in range(window - 1, 0, -1):
+        mean.append(int(mean[-1] - data[-window - remaining][1] / window + data[-remaining][1] / window))
+
+    dates = [x[0] for x in data]
+    baseline = list(zip(mean, dates))
+
+    for val, date in baseline:
+        cur.execute("UPDATE day SET baseline=? WHERE date=?;", (val, date))
 
 
 def insert_into_year(self, start, year_start, prev_date, year_sum, year_cnt,
