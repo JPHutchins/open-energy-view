@@ -41,7 +41,7 @@ export default class EnergyHistory extends React.Component {
     };
     this.zoom = ["hour", "part", "day", "week", "month", "year"];
     this.chartSettings = {
-      barPercentage: 0.7,
+      barPercentage: 1,
       barThickness: "flex"
     };
     this.database = {};
