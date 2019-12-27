@@ -80,7 +80,7 @@ def insert_into_year(self, start, year_start, prev_date, year_sum, year_cnt,
 
 def insert_into_month(self, start, month_start, prev_date, month_sum,
                       month_cnt, ONE_MONTH, cur_datetime):
-    middle = int((cur_datetime + ONE_MONTH / 2).timestamp())
+    middle = start - 86400 * 15
     month_avg = int(round(month_sum / month_cnt))
     self.cursor.execute("""
         REPLACE INTO month (
