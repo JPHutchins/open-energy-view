@@ -404,7 +404,7 @@ def create_app(test_config=None):
 
         data = cur.fetchall()
 
-        window = 30
+        window = 14
 
         df = pd.DataFrame(data, columns=['Date', 'Daily Minimum'])
         df['Date'] = pd.to_datetime(df['Date'])
@@ -434,8 +434,11 @@ def create_app(test_config=None):
 
         mean = [x for x in result]
         mean = mean[window-1:]
+    
+        for remaining in range(window - 1, 0, -1):
+            mean.append(mean[-1] - data[-window - remaining][1] / window + data[-remaining][1] / window)
         
-        return render_template('line.html',
+        return render_template('../templates/line.html',
                                values=values,
                                labels=labels,
                                value_min=values_min,
