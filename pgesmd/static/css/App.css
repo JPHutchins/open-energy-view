@@ -25,7 +25,7 @@
 
 .right-bar {
   display: flex;
-  padding: 20px;
+  padding-left: 20px;
   flex-direction: column;
   align-content: space-between;
   justify-content: space-between;
