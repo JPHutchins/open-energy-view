@@ -3,6 +3,7 @@
   padding: 10px;
   max-width: none;
 }
+
 .box {
   flex: 1;
   display: flex;
@@ -19,7 +20,33 @@
 
 .box {
   align-items: center;
-  border: 5px solid #ccc;
-  background-color: lightblue;
   height: 40px;
+}
+
+.right-bar {
+  display: flex;
+  padding: 20px;
+  flex-direction: column;
+  align-content: space-between;
+  justify-content: space-between;
+}
+
+.right-bar > div {
+  height: 145px;
+  width: 100%;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.energy-chart {
+  flex: 1;
+  padding: 10px;
+  max-width: none;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.energy-history {
+  display: flex;
+  padding: 10px;
+  max-width: 1200px;
+  max-height: 800px;
 }
