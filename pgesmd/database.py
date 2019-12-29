@@ -34,9 +34,9 @@ class EnergyHistory():
                  path='/data/energy_history.db',
                  json_path='/data/energy_history_test.json',
                  partitions=[
-                     (22, "Night"),
-                     (6, "Day"),
-                     (17, "Evening")]):
+                     (1, "Night"),
+                     (7, "Day"),
+                     (18, "Evening")]):
         """Open the connection to database and create tables."""
         self.path = path
         self.partitions = partitions

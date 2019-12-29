@@ -210,7 +210,11 @@ class TestHelpers(unittest.TestCase):
             os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         db = EnergyHistory(path='/test/data/energy_history_test.db',
-                           json_path='/test/data/energy_history_test.json')
+                           json_path='/test/data/energy_history_test.json',
+                           partitions=[
+                               (22, "Night"),
+                               (6, "Day"),
+                               (17, "Evening")])
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
         db.insert_espi_xml(xml)
 
