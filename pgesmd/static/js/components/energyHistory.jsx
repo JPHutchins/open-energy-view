@@ -4,6 +4,7 @@ import EnergyChart from "./energyChart";
 import { getCompleteData, makeOptions } from "../utils.js";
 import "../../css/App.css";
 import LowerBar from "./LowerBar";
+import RightBar from "./RightBar";
 
 const { fromJS } = require("immutable");
 
@@ -141,7 +142,6 @@ export default class EnergyHistory extends React.Component {
   };
 
   barClickEvent = index => {
-    console.log(index);
     const zoom = {
       part: "hour",
       day: "hour",
@@ -192,8 +192,6 @@ export default class EnergyHistory extends React.Component {
 
   getBaselineDataset = data => {
     let newData;
-    console.log(data);
-    console.log(this.database.get("day").get(data[0].i_day));
     if (data[0].type === "day") {
       newData = [];
       let j;
@@ -262,7 +260,6 @@ export default class EnergyHistory extends React.Component {
             .get("i_day_end")
         )
         .toJS();
-      console.log(dailyData);
       newData = [];
       let j;
       for (let i = 0; i < dailyData.length; i++) {
@@ -296,7 +293,6 @@ export default class EnergyHistory extends React.Component {
         .valueOf();
       data[data.length - 1].y = 0;
     }
-    console.log(this.getBaselineDataset(data));
     this.setState({
       data: {
         datasets: [
@@ -378,8 +374,6 @@ export default class EnergyHistory extends React.Component {
       newData = dataPoints.slice(lo, hi).toJS();
     }
 
-    console.log(newData, type);
-
     this.setChartData(
       newData,
       type,
@@ -452,28 +446,32 @@ export default class EnergyHistory extends React.Component {
 
   render() {
     return (
-      <div>
-        <h>
+      <div className="energy-history">
+        {/* <h>
           {" "}
           {this.state.description.interval}:{" "}
           {this.state.description.intervalSum} kW hours consumed
-        </h>
-        <EnergyChart
-          data={this.state.data}
-          options={this.state.options}
-          colors={this.colors}
-          database={this.database}
-        />
-        <LowerBar
-          startDate={this.state.description.startDate}
-          endDate={this.state.description.endDate}
-          onClick={this.handleScroll}
-          disableNext={this.state.disableScroll.disableNext}
-          disablePrev={this.state.disableScroll.disablePrev}
-        />
-        <button onClick={this.handleZoomOut} className="btn">
-          Zoom Out
-        </button>
+        </h> */}
+        <div className="energy-chart">
+          <EnergyChart
+            data={this.state.data}
+            options={this.state.options}
+            colors={this.colors}
+            database={this.database}
+          />
+          <LowerBar
+            startDate={this.state.description.startDate}
+            endDate={this.state.description.endDate}
+            onClick={this.handleScroll}
+            disableNext={this.state.disableScroll.disableNext}
+            disablePrev={this.state.disableScroll.disablePrev}
+          />
+          <button onClick={this.handleZoomOut} className="btn">
+            Zoom Out
+          </button>
+        </div>
+
+        <RightBar data={this.state.data.datasets} />
       </div>
     );
   }
