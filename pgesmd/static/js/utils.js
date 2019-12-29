@@ -44,6 +44,7 @@ export function makeOptions(type, callback, database) {
     }
   };
   const options = {
+    maintainAspectRatio: false,
     onClick: (event, array) => callback(array[0]._index),
     legend: {
       display: false
