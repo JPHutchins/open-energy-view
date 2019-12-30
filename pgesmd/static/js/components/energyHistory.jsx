@@ -22,7 +22,8 @@ export default class EnergyHistory extends React.Component {
         disableNext: false,
         disablePrev: false
       },
-      hideChart: false
+      hideChart: false,
+      range: "day"
     };
     this.indexReference = {
       hour: "day",
@@ -40,6 +41,23 @@ export default class EnergyHistory extends React.Component {
       month: "week",
       year: "week"
     };
+    this.superTypeToType = {
+      day: "hour",
+      week: "part",
+      month: "day",
+      year: "week",
+      complete: "month"
+    };
+    this.typeOrder = {
+      data: 0,
+      hour: 1,
+      part: 2,
+      day: 3,
+      week: 4,
+      month: 5,
+      year: 6,
+      complete: 7
+    };
     this.zoom = ["hour", "part", "day", "week", "month", "year"];
     this.chartSettings = {
       barPercentage: 1,
@@ -55,7 +73,7 @@ export default class EnergyHistory extends React.Component {
         console.log(this.database.toJS());
       })
       .then(() => {
-        this.setMostRecent("hour");
+        this.setMostRecent(this.superTypeToType[this.state.range]);
       });
   };
 
@@ -381,6 +399,76 @@ export default class EnergyHistory extends React.Component {
     );
   };
 
+  getRangeIndex = (targetRange, currentRange) => {
+    const getZoom = (targetRange, currentRange) => {
+      return this.typeOrder[targetRange] > this.typeOrder[currentRange]
+        ? "zoomOut"
+        : "zoomIn";
+    };
+    const zoom = getZoom(targetRange, currentRange);
+  };
+
+  handleRangeSelect = event => {
+    const targetSuperType = event.target.value.toLowerCase();
+    const targetType = this.superTypeToType[targetSuperType];
+
+    if (targetSuperType === "complete") {
+      const targetData = this.database.get("month").toJS();
+
+      this.setChartData(
+        targetData,
+        targetType,
+        this.getChartColors(targetData, targetType, this.colors)
+      );
+
+      this.setState({
+        range: targetSuperType
+      });
+      return;
+    }
+
+    const currentData = this.state.data.datasets[0].data;
+
+    const currentType = currentData[0].type;
+    const currentSuperType = this.indexReference[currentType];
+
+    let targetRangeIndex = currentData[0]["i_" + targetSuperType];
+    if (typeof targetRangeIndex === "undefined") {
+      targetRangeIndex = currentData[0]["i_" + targetSuperType + "_start"];
+    }
+    if (
+      typeof targetRangeIndex === "undefined" &&
+      currentType === targetSuperType
+    ) {
+      targetRangeIndex = this.database
+        .get("lookup")
+        .get(targetSuperType)
+        .get([currentData[0].interval_start].toString());
+    }
+
+    const targetRange = this.database
+      .get(targetSuperType)
+      .get(targetRangeIndex);
+
+    const lo = targetRange.get("i_" + targetType + "_start");
+    const hi = targetRange.get("i_" + targetType + "_end");
+
+    const targetData = this.database
+      .get(targetType)
+      .slice(lo, hi)
+      .toJS();
+
+    this.setChartData(
+      targetData,
+      targetType,
+      this.getChartColors(targetData, targetType, this.colors)
+    );
+
+    this.setState({
+      range: targetSuperType
+    });
+  };
+
   handleEvening = () => {
     const userColors = ["#0000A0", "#add8e6", "#800080"];
     const newData = this.state.data.datasets[0].data.filter(
@@ -460,11 +548,13 @@ export default class EnergyHistory extends React.Component {
             database={this.database}
           />
           <LowerBar
+            range={this.state.range}
             startDate={this.state.description.startDate}
             endDate={this.state.description.endDate}
             onClick={this.handleScroll}
             disableNext={this.state.disableScroll.disableNext}
             disablePrev={this.state.disableScroll.disablePrev}
+            onChange={this.handleRangeSelect}
           />
           <button onClick={this.handleZoomOut} className="btn">
             Zoom Out
