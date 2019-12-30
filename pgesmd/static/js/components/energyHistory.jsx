@@ -556,9 +556,6 @@ export default class EnergyHistory extends React.Component {
             disablePrev={this.state.disableScroll.disablePrev}
             onChange={this.handleRangeSelect}
           />
-          <button onClick={this.handleZoomOut} className="btn">
-            Zoom Out
-          </button>
         </div>
 
         <RightBar data={this.state.data.datasets} />
