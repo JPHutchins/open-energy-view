@@ -36,6 +36,8 @@
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "style-loader": "^1.0.1",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.4",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
   },
@@ -44,12 +46,14 @@
     "@babel/plugin-proposal-class-properties": "^7.7.4",
     "@babel/preset-env": "^7.1.6",
     "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.7.7",
     "babel-polyfill": "^6.26.0",
     "chart.js": "^2.9.3",
     "immutable": "^4.0.0-rc.12",
     "moment": "^2.24.0",
     "react-chartjs-2": "^2.8.0",
-    "regression": "^2.0.1"
+    "regression": "^2.0.1",
+    "source-map-loader": "^0.2.4"
   },
   "babel": {
     "presets": [

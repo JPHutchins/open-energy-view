@@ -6,7 +6,7 @@ const config = {
     filename: "bundle.js"
   },
   resolve: {
-    extensions: [".js", ".jsx", ".css"]
+    extensions: [".js", ".jsx", ".css", ".ts", ".tsx"]
   },
   module: {
     rules: [
@@ -22,6 +22,20 @@ const config = {
             loader: "babel-loader"
           }
         ]
+      },
+      {
+        test: /\.tsx?$/,
+        loader: "babel-loader",
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: [
+              "@babel/react",
+              "@babel/typescript",
+              ["@babel/env", { modules: false }]
+            ]
+          }
+        }
       }
     ]
   }
