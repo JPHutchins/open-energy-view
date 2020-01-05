@@ -358,40 +358,6 @@ export default class EnergyHistory extends React.Component {
     };
   };
 
-  handleZoomOut = () => {
-    const currentData = this.state.data.datasets[0].data;
-    const currentType = currentData[0].type;
-    const type = this.zoom[this.zoom.indexOf(currentType) + 1];
-
-    const superType = this.indexReference[type];
-
-    const dataPoints = this.database.get(type);
-
-    let dataRange;
-    let newData;
-
-    if (type === "month") {
-      dataRange = this.database.get("month");
-      newData = dataPoints.toJS();
-    } else {
-      dataRange = this.database.get(superType);
-      const lo = dataRange
-        .get(currentData[0]["i_" + superType])
-        .get("i_" + type + "_start");
-      const hi = dataRange
-        .get(currentData[0]["i_" + superType])
-        .get("i_" + type + "_end");
-
-      newData = dataPoints.slice(lo, hi).toJS();
-    }
-
-    this.setChartData(
-      newData,
-      type,
-      this.getChartColors(newData, type, this.colors)
-    );
-  };
-
   getRangeIndex = (targetRange, currentRange) => {
     const getZoom = (targetRange, currentRange) => {
       return this.typeOrder[targetRange] > this.typeOrder[currentRange]
