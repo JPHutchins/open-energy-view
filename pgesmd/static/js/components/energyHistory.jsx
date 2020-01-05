@@ -482,37 +482,60 @@ export default class EnergyHistory extends React.Component {
     });
   };
 
-  createDescription = (currentData, type) => {
+  createDescription = data => {
+    const type = data[0].type;
     const superType = this.indexReference[type];
 
-    const startDate = moment(currentData[0].interval_start).format(
-      "MMMM Do, YYYY"
-    );
-    const endDate = moment(
-      currentData[currentData.length - 1].interval_end
-    ).format("MMMM Do, YYYY");
+    let startDate;
+    let endDate;
+
+    switch (type) {
+      case "hour":
+        startDate = moment(data[0].interval_start).format(
+          "dddd, MMMM Do, YYYY"
+        );
+        endDate = null;
+        break;
+      case "part":
+        startDate = moment(data[0].interval_start).format("M/D/YYYY");
+        startDate = "Week of " + startDate;
+        endDate = null;
+        break;
+      case "day":
+        startDate = moment(data[0].interval_start).format("MMMM YYYY");
+        endDate = null;
+        break;
+      case "week":
+        startDate = moment(data[0].interval_start).format("YYYY");
+        endDate = null;
+        break;
+      default:
+        startDate = moment(data[0].interval_start).format("MMMM Do, YYYY");
+        endDate = moment(data[data.length - 1].interval_end).format(
+          "MMMM Do, YYYY"
+        );
+    }
 
     const intervalSum = this.database
       .get(superType)
-      .get(currentData[0]["i_" + superType])
+      .get(data[0]["i_" + superType])
       .get("sum");
 
     const now = moment();
     let interval;
     switch (type) {
       case "hour":
-        interval = moment(currentData[0]["interval_start"]).format("dddd");
+        interval = moment(data[0]["interval_start"]).format("dddd");
         break;
       case "part":
         interval =
-          "Week of " +
-          moment(currentData[0]["interval_start"]).format("MMMM Do YYYY");
+          "Week of " + moment(data[0]["interval_start"]).format("MMMM Do YYYY");
         break;
       case "day":
-        interval = moment(currentData[0]["interval_start"]).format("MMMM YYYY");
+        interval = moment(data[0]["interval_start"]).format("MMMM YYYY");
         break;
       case "week":
-        interval = moment(currentData[0]["interval_start"]).format("YYYY");
+        interval = moment(data[0]["interval_start"]).format("YYYY");
         break;
       case "month":
         interval = "Complete Energy History";
