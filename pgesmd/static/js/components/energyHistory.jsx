@@ -304,13 +304,6 @@ export default class EnergyHistory extends React.Component {
   };
 
   setChartData = (data, type, color) => {
-    if (type === "part" && data.length < 21) {
-      data.push(data[data.length - 1]);
-      data[data.length - 1].x = moment(data[0].x)
-        .add(1, "week")
-        .valueOf();
-      data[data.length - 1].y = 0;
-    }
     this.setState({
       data: {
         datasets: [
