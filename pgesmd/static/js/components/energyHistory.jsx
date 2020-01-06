@@ -304,17 +304,25 @@ export default class EnergyHistory extends React.Component {
   };
 
   setChartData = (data, type, color) => {
-    this.setState({
-      data: {
-        datasets: [
-          this.getChartDataset(data, color),
-          this.getBaselineDataset(data)
-        ]
+    this.setState(
+      {
+        data: {
+          datasets: [
+            this.getChartDataset(data, color),
+            this.getBaselineDataset(data)
+          ]
+        },
+        options: makeOptions(data, this.barClickEvent, this.database),
+        description: this.createDescription(data, type),
+        disableScroll: this.checkDisableScroll(data, type, this.database)
       },
-      options: makeOptions(type, this.barClickEvent, this.database),
-      description: this.createDescription(data, type),
-      disableScroll: this.checkDisableScroll(data, type, this.database)
-    });
+      () => {
+        const chart = this.refs.bargraph.refs.bargraph.chartInstance;
+        this.setState({
+          options: makeOptions(data, this.barClickEvent, this.database, chart)
+        });
+      }
+    );
   };
 
   getDetailData = barData => {
@@ -524,6 +532,7 @@ export default class EnergyHistory extends React.Component {
         </h> */}
         <div className="energy-chart">
           <EnergyChart
+            ref="bargraph"
             data={this.state.data}
             options={this.state.options}
             colors={this.colors}

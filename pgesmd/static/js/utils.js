@@ -18,7 +18,21 @@ export function getPromise() {
   });
 }
 
-export function makeOptions(type, callback, database) {
+export function makeOptions(data, callback, database, chart) {
+  const type = data[0].type;
+
+  let xLabelOffset = 0;
+  if (chart) {
+    switch (type) {
+      case "hour" || "month":
+        break;
+      default:
+        const xScale = chart.scales["x-axis-0"];
+        xLabelOffset =
+          (xScale.getPixelForTick(1) - xScale.getPixelForTick(0)) / 2;
+        console.log(xLabelOffset);
+    }
+  }
   const unit = {
     hour: "hour",
     part: "day",
@@ -45,6 +59,7 @@ export function makeOptions(type, callback, database) {
   };
   const options = {
     maintainAspectRatio: false,
+    responsiveness: true,
     onClick: (event, array) => callback(array[0]._index),
     legend: {
       display: false
@@ -54,16 +69,26 @@ export function makeOptions(type, callback, database) {
         {
           type: "time",
           bounds: "ticks",
+          ticks: {
+            beginAtZero: true,
+            labelOffset: xLabelOffset,
+            min: data[0].interval_start,
+            max: data[data.length - 1].interval_end - 1000
+          },
           time: {
             unit: unit[type],
             displayFormats: displayFormats[type]
           },
-          offset: false
+          offset: false,
+          gridLines: {
+            offsetGridLines: false
+          }
         }
       ],
       yAxes: [
         {
           ticks: {
+            beginAtZero: true,
             min: 0,
             // suggestedMax: database.get("info").get("max_watt_hour")
             suggestedMax: 5000

@@ -10,7 +10,11 @@ export default class EnergyChart extends React.Component {
   render() {
     return (
       <div>
-        <Bar data={this.props.data} options={this.props.options} />
+        <Bar
+          ref="bargraph"
+          data={this.props.data}
+          options={this.props.options}
+        />
       </div>
     );
   }
