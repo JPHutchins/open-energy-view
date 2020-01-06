@@ -30,7 +30,6 @@ export function makeOptions(data, callback, database, chart) {
         const xScale = chart.scales["x-axis-0"];
         xLabelOffset =
           (xScale.getPixelForTick(1) - xScale.getPixelForTick(0)) / 2;
-        console.log(xLabelOffset);
     }
   }
   const unit = {
