@@ -50,3 +50,13 @@
   max-width: 1200px;
   max-height: 800px;
 }
+
+.btn {
+  min-width: 130px;
+  max-width: 130px;
+}
+
+.form-control {
+  min-width: 130px;
+  max-width: 130px;
+}

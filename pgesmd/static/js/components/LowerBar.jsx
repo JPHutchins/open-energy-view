@@ -9,22 +9,33 @@ export default class LowerBar extends React.PureComponent {
     return (
       <div className="container">
         <LeftDate startDate={this.props.startDate} />
-        <select
-          style={{ width: "auto" }}
-          className="form-control"
-          onChange={this.props.onChange}
-        >
-          <option>Day</option>
-          <option>Week</option>
-          <option>Month</option>
-          <option>Year</option>
-          <option>Complete</option>
-        </select>
-        <PageTurner
-          onClick={this.props.onClick}
-          disableNext={this.props.disableNext}
-          disablePrev={this.props.disablePrev}
-        />
+
+        <div className="box">
+          <button
+            onClick={() => this.props.onClick(-1)}
+            className="btn"
+            disabled={this.props.disablePrev}
+          >
+            Previous
+          </button>
+          <select
+            className="form-control"
+            onChange={this.props.onChange}
+          >
+            <option>Day</option>
+            <option>Week</option>
+            <option>Month</option>
+            <option>Year</option>
+            <option>Complete</option>
+          </select>
+          <button
+            onClick={() => this.props.onClick(1)}
+            className="btn"
+            disabled={this.props.disableNext}
+          >
+            Next
+          </button>
+        </div>
         <RightDate endDate={this.props.endDate} />
       </div>
     );
