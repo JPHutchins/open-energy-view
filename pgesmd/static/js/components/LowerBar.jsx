@@ -1,7 +1,6 @@
 import React from "react";
 import LeftDate from "./LeftDate";
 import RightDate from "./RightDate";
-import PageTurner from "./PageTurner";
 import "../../css/App.css";
 
 export default class LowerBar extends React.PureComponent {
@@ -18,10 +17,7 @@ export default class LowerBar extends React.PureComponent {
           >
             Previous
           </button>
-          <select
-            className="form-control"
-            onChange={this.props.onChange}
-          >
+          <select className="form-control" onChange={this.props.onChange}>
             <option>Day</option>
             <option>Week</option>
             <option>Month</option>
