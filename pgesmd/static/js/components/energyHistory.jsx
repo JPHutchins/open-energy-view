@@ -522,6 +522,137 @@ export default class EnergyHistory extends React.Component {
     };
   };
 
+  getSum = () => {
+    if (!this.state.data.datasets) {
+      return;
+    }
+    const data = this.state.data.datasets[0].data;
+    const type = data[0].type;
+    const superType = this.indexReference[type];
+
+    return this.database
+      .get(superType)
+      .get(data[0]["i_" + superType])
+      .get("sum");
+  };
+
+  getAllTimeAvg = () => {
+    if (!this.state.data.datasets) {
+      return;
+    }
+
+    const data = this.state.data.datasets[0].data;
+    const type = data[0].type;
+    const superType = this.indexReference[type];
+
+    const sum = this.database
+      .get(superType)
+      .reduce((acc, x) => acc + x.get("sum"), 0);
+    const n = this.database.get(superType).size;
+
+    return sum / n / 1000;
+  };
+
+  getYoyChange = () => {
+    if (!this.state.data.datasets) {
+      return;
+    }
+
+    const data = this.state.data.datasets[0].data;
+    const type = data[0].type;
+    const superType = this.indexReference[type];
+
+    let width;
+    switch (superType) {
+      case "day":
+        width = 14;
+        break;
+      case "week":
+        width = 2;
+        break;
+      default:
+        width = 0;
+        break;
+    }
+
+    const superData = this.database
+      .get(superType)
+      .get(data[0]["i_" + superType]);
+
+    const i_superType = data[0]["i_" + superType];
+
+    const season = this.database
+      .get(superType)
+      .slice(i_superType - width, i_superType + width + 1);
+
+    const curStart = season.get(0).get("interval_start");
+    const curEnd = season.get(season.size - 1).get("interval_end");
+
+    const curStartMoment = moment(curStart);
+    const curEndMoment = moment(curEnd);
+
+    const yoyStartMoment = moment(curStartMoment).subtract(1, "year");
+    const yoyEndMoment = moment(curEndMoment).subtract(1, "year");
+
+    const yoyStart = yoyStartMoment.valueOf();
+    const yoyEnd = yoyEndMoment.valueOf();
+
+    const i_yoyStart = this.database
+      .get("lookup")
+      .get(superType)
+      .get(yoyStart.toString());
+
+    if (i_yoyStart === undefined) return "No YoY Data";
+
+    const i_yoyEnd = this.database
+      .get("lookup")
+      .get(superType)
+      .get(yoyEnd.toString());
+
+    const prevSeason = this.database.get(superType).slice(i_yoyStart, i_yoyEnd);
+
+    const prevSeasonAvg =
+      prevSeason.reduce((acc, x) => acc + x.get("sum"), 0) / prevSeason.size;
+
+    const curSeasonAvg =
+      season.reduce((acc, x) => acc + x.get("sum"), 0) / season.size;
+
+    return (
+      Math.round((curSeasonAvg / prevSeasonAvg - 1) * 100).toString() + "%"
+    );
+  };
+
+  getSeasonalAvg = () => {
+    if (!this.state.data.datasets) {
+      return;
+    }
+
+    const data = this.state.data.datasets[0].data;
+    const type = data[0].type;
+    const superType = this.indexReference[type];
+
+    let width;
+    switch (superType) {
+      case "day":
+        width = 14;
+        break;
+      case "week":
+        width = 2;
+        break;
+      default:
+        width = 0;
+        break;
+    }
+
+    const i_superType = this.database
+      .get(superType)
+      .get(data[0]["i_" + superType]);
+
+    const season = this.database
+      .get(superType)
+      .slice(i_superType - width, i_superType + width);
+  };
+
   render() {
     return (
       <div className="energy-history">
@@ -549,7 +680,12 @@ export default class EnergyHistory extends React.Component {
           />
         </div>
 
-        <RightBar data={this.state.data.datasets} />
+        <RightBar
+          data={this.state.data.datasets}
+          sum={this.getSum()}
+          avg={this.getAllTimeAvg()}
+          yoy={this.getYoyChange()}
+        />
       </div>
     );
   }

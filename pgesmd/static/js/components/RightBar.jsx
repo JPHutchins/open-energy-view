@@ -30,12 +30,23 @@ export default class RightBar extends React.PureComponent {
   render() {
     return (
       <div className="right-bar">
+        <div>
+          Total: {Math.round(this.props.sum / 1000)}kWh{"\n"}
+          {Math.round((this.props.sum / 1000 / this.props.avg - 1) * 100)}%
+        </div>
+        <div>Seasonal YoY: {this.props.yoy}</div>
         <div></div>
         <div>
-          <Trendline data={this.getData(this.props.data, 0)} name="" />
+          <Trendline
+            data={this.getData(this.props.data, 0)}
+            name="Overall Trend "
+          />
         </div>
         <div>
-          <Trendline data={this.getData(this.props.data, 1)} name="" />
+          <Trendline
+            data={this.getData(this.props.data, 1)}
+            name="Baseline Trend "
+          />
         </div>
       </div>
     );
