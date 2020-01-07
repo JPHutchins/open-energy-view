@@ -1,5 +1,6 @@
 import React from "react";
 import Trendline from "./Trendline";
+import MiniPie from "./MiniPie";
 import "../../css/App.css";
 
 export default class RightBar extends React.PureComponent {
@@ -35,7 +36,9 @@ export default class RightBar extends React.PureComponent {
           {Math.round((this.props.sum / 1000 / this.props.avg - 1) * 100)}%
         </div>
         <div>Seasonal YoY: {this.props.yoy}</div>
-        <div></div>
+        <div>
+          <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
+        </div>
         <div>
           <Trendline
             data={this.getData(this.props.data, 0)}
