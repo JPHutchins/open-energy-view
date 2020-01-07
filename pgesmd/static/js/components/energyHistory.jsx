@@ -653,6 +653,85 @@ export default class EnergyHistory extends React.Component {
       .slice(i_superType - width, i_superType + width);
   };
 
+  getPieData = () => {
+    if (!this.state.data.datasets) {
+      return;
+    }
+
+    const data = this.state.data.datasets[0].data;
+    const type = data[0].type;
+    const superType = this.indexReference[type];
+
+    let hi;
+    let lo;
+
+    if (type === "month") {
+      lo = 0;
+      hi = this.database.get("hour").length;
+    } else {
+      const superData = this.database
+        .get(superType)
+        .get(data[0]["i_" + superType]);
+      lo = superData.get("i_hour_start");
+      hi = superData.get("i_hour_end");
+    }
+    const hourlyData = this.database.get("hour").slice(lo, hi);
+
+    const baselinesGraph = this.state.data.datasets[1].data;
+    const baselines = baselinesGraph.slice(0, baselinesGraph.length - 1);
+
+    const partSums = hourlyData.reduce(
+      (acc, hour) => {
+        acc.splice(
+          hour.get("part"),
+          1,
+          acc[hour.get("part")] + hour.get("sum")
+        );
+        return acc;
+      },
+      [0, 0, 0]
+    );
+
+    console.log(partSums, baselines);
+
+    const baselinesTotals = baselines.map(baseline => baseline.y * 24);
+
+    const baselineTotal = baselinesTotals.reduce((acc, x) => x + acc, 0);
+
+    const tempPartLengthArray = [6, 11, 7]; // Backend knows this but it isn't in the database because derp.
+
+    console.log(partSums[0], baselines[0]["y"], baselineTotal);
+
+    const partSumsAdjusted = partSums.map((partSum, index) =>
+      Math.max(partSum - (baselineTotal / 24) * tempPartLengthArray[index], 0)
+    );
+
+    const bbb = "t";
+
+    const totalSums = partSumsAdjusted.concat(baselineTotal);
+
+    console.log(baselineTotal, bbb, totalSums);
+
+    return {
+      datasets: [
+        {
+          data: totalSums,
+          backgroundColor: this.colors,
+          label: "Use"
+        }
+      ],
+      labels: ["Night", "Day", "Evening", "Baseline"]
+    };
+  };
+
+  getPieOptions = () => {
+    return {
+      legend: {
+        display: false
+      }
+    };
+  };
+
   render() {
     return (
       <div className="energy-history">
@@ -685,6 +764,8 @@ export default class EnergyHistory extends React.Component {
           sum={this.getSum()}
           avg={this.getAllTimeAvg()}
           yoy={this.getYoyChange()}
+          pieData={this.getPieData()}
+          pieOptions={this.getPieOptions()}
         />
       </div>
     );
