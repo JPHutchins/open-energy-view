@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, ToggleButtonGroup, ToggleButton } from "react-bootstrap";
+import { ToggleButtonGroup, ToggleButton } from "react-bootstrap";
 
 const PartRadio = props => {
   return (
