@@ -711,7 +711,7 @@ export default class EnergyHistory extends React.Component {
 
     const totalSums = partSumsAdjusted.concat(baselineTotal);
 
-    const averages = totalSums.map((x, index) => x / tempPartLengthArray[index])
+    const averages = totalSums.slice(0, totalSums.length - 1).map((x, index) => x / tempPartLengthArray[index])
 
     console.log(baselineTotal, bbb, totalSums);
 
