@@ -23,7 +23,8 @@ export default class EnergyHistory extends React.Component {
         disablePrev: false
       },
       hideChart: false,
-      range: "day"
+      range: "day",
+      partPieView: "baseline"
     };
     this.indexReference = {
       hour: "day",
@@ -710,12 +711,25 @@ export default class EnergyHistory extends React.Component {
 
     const totalSums = partSumsAdjusted.concat(baselineTotal);
 
+    const averages = totalSums.map((x, index) => x / tempPartLengthArray[index])
+
     console.log(baselineTotal, bbb, totalSums);
+
+    const outputData = () => {
+      switch (this.state.partPieView) {
+        case "actual":
+          return partSums
+        case "baseline":
+          return totalSums
+        case "average":
+          return averages
+      }
+    }
 
     return {
       datasets: [
         {
-          data: totalSums,
+          data: outputData(),
           backgroundColor: this.colors,
           label: "Use"
         }
@@ -726,11 +740,17 @@ export default class EnergyHistory extends React.Component {
 
   getPieOptions = () => {
     return {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
       legend: {
         display: false
       }
     };
   };
+
+  handlePartPieView = (e) => {
+    this.setState({partPieView: e})
+  }
 
   render() {
     return (
@@ -766,6 +786,9 @@ export default class EnergyHistory extends React.Component {
           yoy={this.getYoyChange()}
           pieData={this.getPieData()}
           pieOptions={this.getPieOptions()}
+          defaultValue={this.state.partPieView}
+          handlePartPieView={this.handlePartPieView}
+          selectedPartPieView={this.state.partPieView}
         />
       </div>
     );

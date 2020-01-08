@@ -3,9 +3,7 @@ import { Pie } from "react-chartjs-2";
 
 const MiniPie = props => {
   return (
-    <div>
-      <Pie data={props.data} options={props.options} />
-    </div>
+    <Pie data={props.data} options={props.options} height={null} width={null} />
   );
 };
 
