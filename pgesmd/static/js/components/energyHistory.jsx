@@ -194,6 +194,8 @@ export default class EnergyHistory extends React.Component {
 
     const color = this.getChartColors(data, zoom[type], this.colors);
 
+    this.setState({ range: superType });
+
     this.setChartData(data, zoom[type], color);
   };
 
@@ -377,7 +379,7 @@ export default class EnergyHistory extends React.Component {
   };
 
   handleRangeSelect = event => {
-    const targetSuperType = event.target.value.toLowerCase();
+    const targetSuperType = event.toLowerCase();
     const targetType = this.superTypeToType[targetSuperType];
 
     if (targetSuperType === "complete") {
@@ -693,15 +695,11 @@ export default class EnergyHistory extends React.Component {
       [0, 0, 0]
     );
 
-    console.log(partSums, baselines);
-
     const baselinesTotals = baselines.map(baseline => baseline.y * 24);
 
     const baselineTotal = baselinesTotals.reduce((acc, x) => x + acc, 0);
 
     const tempPartLengthArray = [6, 11, 7]; // Backend knows this but it isn't in the database because derp.
-
-    console.log(partSums[0], baselines[0]["y"], baselineTotal);
 
     const partSumsAdjusted = partSums.map((partSum, index) =>
       Math.max(partSum - (baselineTotal / 24) * tempPartLengthArray[index], 0)
@@ -711,20 +709,20 @@ export default class EnergyHistory extends React.Component {
 
     const totalSums = partSumsAdjusted.concat(baselineTotal);
 
-    const averages = totalSums.slice(0, totalSums.length - 1).map((x, index) => x / tempPartLengthArray[index])
-
-    console.log(baselineTotal, bbb, totalSums);
+    const averages = totalSums
+      .slice(0, totalSums.length - 1)
+      .map((x, index) => x / tempPartLengthArray[index]);
 
     const outputData = () => {
       switch (this.state.partPieView) {
         case "actual":
-          return partSums
+          return partSums;
         case "baseline":
-          return totalSums
+          return totalSums;
         case "average":
-          return averages
+          return averages;
       }
-    }
+    };
 
     return {
       datasets: [
@@ -748,9 +746,9 @@ export default class EnergyHistory extends React.Component {
     };
   };
 
-  handlePartPieView = (e) => {
-    this.setState({partPieView: e})
-  }
+  handlePartPieView = e => {
+    this.setState({ partPieView: e });
+  };
 
   render() {
     return (
