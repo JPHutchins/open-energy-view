@@ -32,6 +32,7 @@
 }
 
 .right-bar > div {
+  padding: 5px;
   height: 100%;
   margin-top: 20px;
   margin-bottom: 20px;
@@ -57,7 +58,6 @@
 
 .btn {
   min-width: 130px;
-  max-width: 130px;
 }
 
 .form-control {
@@ -67,4 +67,9 @@
 
 .Part-Pie-Radio.active {
   background-color: blue !important;
+}
+
+.dropdown-toggle,
+.dropdown-menu {
+  width: 100% !important;
 }

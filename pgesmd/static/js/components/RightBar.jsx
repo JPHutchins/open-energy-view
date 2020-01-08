@@ -2,6 +2,7 @@ import React from "react";
 import Trendline from "./Trendline";
 import MiniPie from "./MiniPie";
 import PartRadio from "./PartRadio";
+import PartDropdown from "./PartDropdown";
 import "../../css/App.css";
 
 export default class RightBar extends React.PureComponent {
@@ -38,12 +39,12 @@ export default class RightBar extends React.PureComponent {
         </div>
         <div>Seasonal YoY: {this.props.yoy}</div>
         <div>
-          <PartRadio
+          <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
+          <PartDropdown
             handleClick={this.props.handlePartPieView}
             defaultValue={this.props.defaultValue}
             selected={this.props.selectedPartPieView}
           />
-          <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
         </div>
         <div>
           <Trendline
