@@ -1,5 +1,10 @@
 import React from "react";
-import { Dropdown, DropdownButton, ButtonGroup } from "react-bootstrap";
+import {
+  Dropdown,
+  DropdownButton,
+  OverlayTrigger,
+  Tooltip
+} from "react-bootstrap";
 
 const PartDropdown = props => {
   const makeTitle = value => {
@@ -13,15 +18,35 @@ const PartDropdown = props => {
     }
   };
 
+  const makeTooltip = value => {
+    switch (value) {
+      case "actual":
+        return "Shows how much energy was used during each daily period";
+      case "baseline":
+        return "Shows how much energy was actively used during each daily period compared to passive usage (fridge, AC, network, IoT)";
+      case "average":
+        return "Shows the average energy being actively used during each daily period";
+    }
+  };
+
+  const makeMenuItem = value => (
+    <OverlayTrigger
+      placement="left"
+      overlay={<Tooltip>{makeTooltip(value)}</Tooltip>}
+    >
+      <Dropdown.Item eventKey={value}>{makeTitle(value)}</Dropdown.Item>
+    </OverlayTrigger>
+  );
+
   return (
     <DropdownButton
       size="sm"
       title={makeTitle(props.defaultValue)}
       onSelect={e => e != props.defaultValue && props.handleClick(e)}
     >
-      <Dropdown.Item eventKey="actual">Total</Dropdown.Item>
-      <Dropdown.Item eventKey="baseline">Activity</Dropdown.Item>
-      <Dropdown.Item eventKey="average">Average Activity</Dropdown.Item>
+      {makeMenuItem("actual")}
+      {makeMenuItem("baseline")}
+      {makeMenuItem("average")}
     </DropdownButton>
   );
 };
