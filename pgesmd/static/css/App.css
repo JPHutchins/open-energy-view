@@ -51,9 +51,11 @@
 
 .energy-history {
   display: flex;
+  justify-content: center;
   padding: 10px;
   max-width: 1200px;
   max-height: 800px;
+  margin: auto;
 }
 
 .btn {
@@ -72,4 +74,9 @@
 .dropdown-toggle,
 .dropdown-menu {
   width: 100% !important;
+}
+
+.main {
+  display: flex;
+  justify-content: center
 }
