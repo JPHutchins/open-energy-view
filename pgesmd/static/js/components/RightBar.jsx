@@ -39,6 +39,7 @@ export default class RightBar extends React.PureComponent {
         </div>
         <div>Seasonal YoY: {this.props.yoy}</div>
         <div>
+          Time of Day
           <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
           <PartDropdown
             handleClick={this.props.handlePartPieView}
