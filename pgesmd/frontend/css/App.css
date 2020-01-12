@@ -86,6 +86,33 @@
   justify-content: center;
 }
 
+.info-big-number {
+  display: flex;
+  justify-content: center;
+  font-size: 26pt;
+}
+
+.info-medium-number {
+  display: flex;
+  justify-content: center;
+  font-size: 16pt;
+}
+
+.info-wrapper {
+  position: relative;
+}
+
+.arrow-icon {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 50%;
+  margin-top: -56px;
+  left: 50%;
+  margin-left: -56px;
+  opacity: 20%;
+}
+
 .info-details {
   display: flex;
   justify-content: center;
@@ -106,4 +133,36 @@
 
 .orange {
   color: orange;
+}
+
+@keyframes rotate-arrow-upside-down {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes rotate-arrow-upside-up {
+  from {
+    transform: rotate(180deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.rotate-arrow-upside-down {
+  animation-name: rotate-arrow-upside-down;
+  animation-duration: 500ms;
+  animation-iteration-count: 1;
+  animation-timing-function: ease-out;
+}
+
+.rotate-arrow-upside-up {
+  animation-name: rotate-arrow-upside-up;
+  animation-duration: 500ms;
+  animation-iteration-count: 1;
+  animation-timing-function: ease-out;
 }
