@@ -3,6 +3,7 @@ import Trendline from "./Trendline";
 import MiniPie from "./MiniPie";
 import PartRadio from "./PartRadio";
 import PartDropdown from "./PartDropdown";
+import ViewTotal from "./ViewTotal";
 import "../../css/App.css";
 
 export default class RightBar extends React.PureComponent {
@@ -33,10 +34,8 @@ export default class RightBar extends React.PureComponent {
   render() {
     return (
       <div className="right-bar">
-        <div>
-          Total: {Math.round(this.props.sum / 1000)}kWh{"\n"}
-          {Math.round((this.props.sum / 1000 / this.props.avg - 1) * 100)}%
-        </div>
+        <ViewTotal sum={this.props.sum} avg={this.props.avg} />
+
         <div>Seasonal YoY: {this.props.yoy}</div>
         <div>
           Time of Day

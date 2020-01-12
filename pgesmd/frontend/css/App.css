@@ -78,5 +78,32 @@
 
 .main {
   display: flex;
-  justify-content: center
+  justify-content: center;
+}
+
+.kilowatt-hour {
+  display: flex;
+  justify-content: center;
+}
+
+.info-details {
+  display: flex;
+  justify-content: center;
+  font-size: 8pt;
+}
+
+.background-green {
+  background-color: lightgreen;
+}
+
+.background-orange {
+  background-color: lightsalmon;
+}
+
+.green {
+  color: green;
+}
+
+.orange {
+  color: orange;
 }
