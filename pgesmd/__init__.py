@@ -13,8 +13,8 @@ def create_app(test_config=None):
     """Create the Flask app."""
     app = Flask(__name__,
                 instance_relative_config=True,
-                static_folder=f"./static/dist",
-                template_folder=f"./static")
+                static_folder=f"./frontend/dist",
+                template_folder=f"./frontend")
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=f'{PROJECT_PATH}/data/energy_history.db',
