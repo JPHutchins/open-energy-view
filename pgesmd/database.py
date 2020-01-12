@@ -79,7 +79,7 @@ class EnergyHistory():
                 client_secret,
                 cert_crt_path,
                 cert_key_path
-            )"""
+            );"""
         self.create_info_table = """
             CREATE TABLE IF NOT EXISTS info (
                 id INTEGER PRIMARY KEY,
