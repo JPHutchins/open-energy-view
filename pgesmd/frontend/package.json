@@ -48,6 +48,8 @@
     "@babel/preset-env": "^7.1.6",
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.7.7",
+    "@mdi/js": "^4.7.95",
+    "@mdi/react": "^1.2.1",
     "babel-polyfill": "^6.26.0",
     "bootstrap": "^4.4.1",
     "chart.js": "^2.9.3",
