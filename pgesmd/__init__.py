@@ -46,7 +46,8 @@ def create_app(test_config=None):
         json_now = {
             'info': db.json['info'],
             'hour': db.json['hour'][-168:],
-            'part': db.json['part'][db.json['hour'][-168]['i_part']:db.json['hour'][-1]['i_part']]
+            'part': db.json['part'][
+                db.json['hour'][-168]['i_part']:db.json['hour'][-1]['i_part']]
         }
         json_string = json.dumps(json_now)
         return json_string
