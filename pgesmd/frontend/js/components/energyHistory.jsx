@@ -24,7 +24,8 @@ export default class EnergyHistory extends React.Component {
       },
       hideChart: false,
       range: "day",
-      partPieView: "baseline"
+      partPieView: "baseline",
+      carbonMultiplier: 0.05 // PGE is actually 0.05
     };
     this.indexReference = {
       hour: "day",
@@ -605,7 +606,7 @@ export default class EnergyHistory extends React.Component {
       .get(superType)
       .get(yoyStart.toString());
 
-    if (i_yoyStart === undefined) return "No YoY Data";
+    if (i_yoyStart === undefined) return false;
 
     const i_yoyEnd = this.database
       .get("lookup")
@@ -620,9 +621,7 @@ export default class EnergyHistory extends React.Component {
     const curSeasonAvg =
       season.reduce((acc, x) => acc + x.get("sum"), 0) / season.size;
 
-    return (
-      Math.round((curSeasonAvg / prevSeasonAvg - 1) * 100).toString() + "%"
-    );
+    return Math.round((curSeasonAvg / prevSeasonAvg - 1) * 100);
   };
 
   getSeasonalAvg = () => {
@@ -781,6 +780,7 @@ export default class EnergyHistory extends React.Component {
           data={this.state.data.datasets}
           sum={this.getSum()}
           avg={this.getAllTimeAvg()}
+          carbonMultiplier={this.state.carbonMultiplier}
           yoy={this.getYoyChange()}
           pieData={this.getPieData()}
           pieOptions={this.getPieOptions()}
