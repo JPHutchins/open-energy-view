@@ -66,7 +66,20 @@ class EnergyHistory():
             "month": [],
             "year": []
         }
-
+        self.create_users_table = """
+            CREATE TABLE IF NOT EXISTS users (
+                id PRIMARY KEY,
+                email,
+                hash,
+                salt,
+                session_token,
+                registration_type,
+                third_party_id,
+                client_id,
+                client_secret,
+                cert_crt_path,
+                cert_key_path
+            )"""
         self.create_info_table = """
             CREATE TABLE IF NOT EXISTS info (
                 id INTEGER PRIMARY KEY,
@@ -190,6 +203,7 @@ class EnergyHistory():
 
         try:
             self.cursor = self.conn.cursor()
+            self.cursor.execute(self.create_users_table)
             self.cursor.execute(self.create_info_table)
             self.cursor.execute(self.create_updater_table)
             self.cursor.execute(self.create_incomplete_table)
