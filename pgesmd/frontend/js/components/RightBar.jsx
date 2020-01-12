@@ -4,7 +4,9 @@ import MiniPie from "./MiniPie";
 import PartRadio from "./PartRadio";
 import PartDropdown from "./PartDropdown";
 import ViewTotal from "./ViewTotal";
+import CarbonFootprint from "./CarbonFootprint";
 import "../../css/App.css";
+import SeasonalYoY from "./SeasonalYoY";
 
 export default class RightBar extends React.PureComponent {
   getData = (datasets, index) => {
@@ -34,11 +36,16 @@ export default class RightBar extends React.PureComponent {
   render() {
     return (
       <div className="right-bar">
+        {this.props.yoy && <SeasonalYoY yoy={this.props.yoy} />}
         <ViewTotal sum={this.props.sum} avg={this.props.avg} />
-
-        <div>Seasonal YoY: {this.props.yoy}</div>
+        <CarbonFootprint
+          sum={this.props.sum}
+          carbonMultiplier={this.props.carbonMultiplier}
+        />
         <div>
-          Time of Day
+          <div className="kilowatt-hour">
+          Time of Use
+          </div>
           <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
           <PartDropdown
             handleClick={this.props.handlePartPieView}
