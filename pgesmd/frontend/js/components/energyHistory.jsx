@@ -752,11 +752,6 @@ export default class EnergyHistory extends React.Component {
   render() {
     return (
       <div className="energy-history">
-        {/* <h>
-          {" "}
-          {this.state.description.interval}:{" "}
-          {this.state.description.intervalSum} kW hours consumed
-        </h> */}
         <div className="energy-chart">
           <EnergyChart
             ref="bargraph"
