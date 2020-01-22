@@ -595,11 +595,30 @@ export default class EnergyHistory extends React.Component {
     const curStartMoment = moment(curStart);
     const curEndMoment = moment(curEnd);
 
-    const yoyStartMoment = moment(curStartMoment).subtract(1, "year");
-    const yoyEndMoment = moment(curEndMoment).subtract(1, "year");
-
-    const yoyStart = yoyStartMoment.valueOf();
-    const yoyEnd = yoyEndMoment.valueOf();
+    let yoyStart;
+    let yoyEnd;
+    switch (superType) {
+      case "day":
+      case "month":
+      case "year":
+        yoyStart = moment(curStartMoment)
+          .subtract(1, "year")
+          .valueOf();
+        yoyEnd = moment(curEndMoment)
+          .subtract(1, "year")
+          .valueOf();
+        break;
+      case "week":
+        yoyStart = moment(curStartMoment)
+          .subtract(52, "week")
+          .valueOf();
+        yoyEnd = moment(curEndMoment)
+          .subtract(52, "week")
+          .valueOf();
+        break;
+      default:
+        console.error(`superType: ${superType} not found`);
+    }
 
     const i_yoyStart = this.database
       .get("lookup")
