@@ -36,7 +36,7 @@ export default class RightBar extends React.PureComponent {
   render() {
     return (
       <div className="right-bar">
-        {this.props.yoy && <SeasonalYoY yoy={this.props.yoy} />}
+        {this.props.yoy !== false && <SeasonalYoY yoy={this.props.yoy} />}
         <ViewTotal sum={this.props.sum} avg={this.props.avg} />
         <CarbonFootprint
           sum={this.props.sum}
