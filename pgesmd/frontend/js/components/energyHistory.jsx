@@ -643,7 +643,6 @@ export default class EnergyHistory extends React.Component {
         break;
       default:
         width = 0;
-        break;
     }
 
     const i_superType = this.database
