@@ -588,6 +588,7 @@ export default class EnergyHistory extends React.Component {
     const season = this.database
       .get(superType)
       .slice(i_superType - width, i_superType + width + 1);
+    if (season.get(0) === undefined) return false;
 
     const curStart = season.get(0).get("interval_start");
     const curEnd = season.get(season.size - 1).get("interval_end");
