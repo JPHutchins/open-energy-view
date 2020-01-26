@@ -65,7 +65,7 @@ export default class EnergyHistory extends React.Component {
       barPercentage: 1,
       barThickness: "flex"
     };
-    this.database = {};
+    this.database = undefined;
   }
 
   componentDidMount = () => {
@@ -791,6 +791,7 @@ export default class EnergyHistory extends React.Component {
         </div>
 
         <RightBar
+          database={this.database}
           data={this.state.data.datasets}
           sum={this.getSum()}
           avg={this.getAllTimeAvg()}
@@ -801,6 +802,7 @@ export default class EnergyHistory extends React.Component {
           defaultValue={this.state.partPieView}
           handlePartPieView={this.handlePartPieView}
           selectedPartPieView={this.state.partPieView}
+          range={this.state.range}
         />
       </div>
     );
