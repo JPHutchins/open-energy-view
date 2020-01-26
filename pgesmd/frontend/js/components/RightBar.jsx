@@ -36,6 +36,24 @@ export default class RightBar extends React.PureComponent {
   render() {
     return (
       <div className="right-bar">
+        <div>
+          <Trendline
+            data={this.getData(this.props.data, 0)}
+            database={this.props.database}
+            name="Usage"
+            range={this.props.range}
+            baseline={false}
+          />
+        </div>
+        <div>
+          <Trendline
+            data={this.getData(this.props.data, 0)}
+            database={this.props.database}
+            name="Baseline"
+            range={this.props.range}
+            baseline={true}
+          />
+        </div>
         {this.props.yoy !== false && <SeasonalYoY yoy={this.props.yoy} />}
         <ViewTotal sum={this.props.sum} avg={this.props.avg} />
         <CarbonFootprint
@@ -43,26 +61,12 @@ export default class RightBar extends React.PureComponent {
           carbonMultiplier={this.props.carbonMultiplier}
         />
         <div>
-          <div className="kilowatt-hour">
-          Time of Use
-          </div>
+          <div className="kilowatt-hour">Time of Use</div>
           <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
           <PartDropdown
             handleClick={this.props.handlePartPieView}
             defaultValue={this.props.defaultValue}
             selected={this.props.selectedPartPieView}
-          />
-        </div>
-        <div>
-          <Trendline
-            data={this.getData(this.props.data, 0)}
-            name="Overall Trend "
-          />
-        </div>
-        <div>
-          <Trendline
-            data={this.getData(this.props.data, 1)}
-            name="Baseline Trend "
           />
         </div>
       </div>
