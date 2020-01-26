@@ -38,8 +38,14 @@ const Trendline = props => {
       return null;
     }
 
-    if (range === "month" || range === "year" || range === "complete")
-      return data;
+    if (range === "year" || range === "complete") {
+      return database
+        .get("day")
+        .slice(data[0].i_day_start, data[data.length - 1].i_day_end + 1)
+        .toJS();
+    }
+
+    if (range === "month") return data;
 
     if (range === "week") {
       return database
