@@ -3,6 +3,18 @@ import regression from "regression";
 import Icon from "@mdi/react";
 import { mdiArrowUpCircle } from "@mdi/js";
 
+const average = arr => {
+  return arr.reduce((acc, val) => acc + val, 0) / arr.length;
+};
+
+const squaredDiffs = avg => arr => {
+  return arr.map(val => (val - avg) * (val - avg));
+};
+
+const std = arr => {
+  return Math.sqrt(average(squaredDiffs(average(arr))(arr)));
+};
+
 const Trendline = props => {
   const calculateTrend = baseline => data => {
     if (!data) return;
@@ -13,7 +25,14 @@ const Trendline = props => {
     let i = -1;
     const coords = data.map(item => [(i += 1), item[datatype]]);
 
-    const trendline = regression.linear(coords);
+    // Throw out data points that are outisde the standard deviation
+    const coordsAvg = average(coords.map(x => x[1]));
+    const coordsStd = std(coords.map(x => x[1]));
+    const coordsSmooth = coords.filter(
+      x => x[1] < coordsAvg + 2 * coordsStd && x[1] > coordsAvg - 2 * coordsStd
+    );
+
+    const trendline = regression.linear(coordsSmooth);
     const slope = trendline.equation[0];
     const intercept = trendline.equation[1];
 
@@ -22,7 +41,7 @@ const Trendline = props => {
     // measurement gives an estimation of the upward or downward trend in
     // usage during the entire period rather than the "interval over inter"
     const trend = Math.round(
-      (100 * (slope * coords.length + intercept)) / intercept - 100
+      (100 * (slope * coordsSmooth.length + intercept)) / intercept - 100
     );
 
     return trend;
