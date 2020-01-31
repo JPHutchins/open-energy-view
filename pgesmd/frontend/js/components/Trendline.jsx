@@ -119,24 +119,25 @@ const Trendline = props => {
   const upOrDown = percent <= 0 ? 0 : 180;
   const animation =
     percent <= 0 ? "rotate-arrow-upside-down" : "rotate-arrow-upside-up";
-  const greenOrOrange = percent <= 0 ? "#c6ffa6" : "#ffcaa6";
+  const greenOrOrange = percent <= 0 ? "green" : "orange";
 
   return (
     <>
       <div className="kilowatt-hour">{props.name}</div>
       <div className="info-details">Trending {aboveOrBelow} </div>
-      <div className="info-big-number">{perc + "%"}</div>
-      {/* <Icon
-        className="info-details"
-        path={percent > 0 ? mdiTrendingUp : mdiTrendingDown}
-        title="User Profile"
-        size={2}
-        horizontal
-        vertical
-        rotate="180"
-        color={greenOrOrange}
-      /> */}
-
+      <div className="info-big-number">
+        {perc + "%"}
+        <Icon
+          className={animation}
+          path={mdiArrowUpCircle}
+          title="User Profile"
+          size={2}
+          horizontal
+          vertical
+          rotate={upOrDown}
+          color={greenOrOrange}
+        />
+      </div>
       <div className="info-details">{description(props.range)}</div>
     </>
   );
