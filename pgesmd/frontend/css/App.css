@@ -34,8 +34,6 @@
 .right-bar > div {
   padding: 5px;
   height: 100%;
-  margin-top: 20px;
-  margin-bottom: 20px;
   width: 100%;
   min-width: 100px;
   max-width: 150px;
@@ -139,7 +137,6 @@
   z-index: -10;
 }
 
-
 @keyframes rotate-arrow-upside-down {
   from {
     transform: rotate(0deg);
@@ -171,4 +168,3 @@
   animation-iteration-count: 1;
   animation-timing-function: ease-out;
 }
-
