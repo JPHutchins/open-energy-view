@@ -37,36 +37,38 @@ export default class RightBar extends React.PureComponent {
     return (
       <div className="right-bar">
         <div>
-          <Trendline
-            data={this.getData(this.props.data, 0)}
-            database={this.props.database}
-            name="Usage"
-            range={this.props.range}
-            baseline={false}
+          <ViewTotal sum={this.props.sum} avg={this.props.avg} />
+          <hr />
+          <CarbonFootprint
+            sum={this.props.sum}
+            carbonMultiplier={this.props.carbonMultiplier}
           />
+          <hr />
+          {this.props.yoy !== false && <SeasonalYoY yoy={this.props.yoy} />}
         </div>
         <div>
-          <Trendline
-            data={this.getData(this.props.data, 0)}
-            database={this.props.database}
-            name="Baseline"
-            range={this.props.range}
-            baseline={true}
-          />
-        </div>
-        {this.props.yoy !== false && <SeasonalYoY yoy={this.props.yoy} />}
-        <ViewTotal sum={this.props.sum} avg={this.props.avg} />
-        <CarbonFootprint
-          sum={this.props.sum}
-          carbonMultiplier={this.props.carbonMultiplier}
-        />
-        <div>
-          <div className="kilowatt-hour">Time of Use</div>
+          <div className="kilowatt-hour">Activities</div>
           <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
           <PartDropdown
             handleClick={this.props.handlePartPieView}
             defaultValue={this.props.defaultValue}
             selected={this.props.selectedPartPieView}
+          />
+          <hr />
+          <Trendline
+            data={this.getData(this.props.data, 0)}
+            database={this.props.database}
+            name="Active"
+            range={this.props.range}
+            baseline={false}
+          />
+          <hr />
+          <Trendline
+            data={this.getData(this.props.data, 0)}
+            database={this.props.database}
+            name="Background"
+            range={this.props.range}
+            baseline={true}
           />
         </div>
       </div>

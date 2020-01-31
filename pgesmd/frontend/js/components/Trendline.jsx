@@ -1,7 +1,12 @@
 import React from "react";
 import regression from "regression";
 import Icon from "@mdi/react";
-import { mdiArrowUpCircle } from "@mdi/js";
+import {
+  mdiArrowUpCircle,
+  mdiTrendingUp,
+  mdiTrendingDown,
+  mdiTrendingNeutral
+} from "@mdi/js";
 
 const average = arr => {
   return arr.reduce((acc, val) => acc + val, 0) / arr.length;
@@ -15,15 +20,25 @@ const std = arr => {
   return Math.sqrt(average(squaredDiffs(average(arr))(arr)));
 };
 
+const getKey = baseline => {
+  return baseline ? "baseline" : "y";
+};
+
+const selectData = datatype => data => {
+  let i = -1;
+  if (datatype === "baseline") {
+    return data.map(item => [(i += 1), item["baseline"]]);
+  } else if (datatype === "y") {
+    return data.map(item => [(i += 1), item["y"] - item["baseline"]]);
+  }
+};
+
 const Trendline = props => {
   const calculateTrend = baseline => data => {
     if (!data) return;
 
-    let datatype;
-    baseline ? (datatype = "baseline") : (datatype = "y");
-
-    let i = -1;
-    const coords = data.map(item => [(i += 1), item[datatype]]);
+    const datatype = getKey(baseline);
+    const coords = selectData(datatype)(data);
 
     // Throw out data points that are outisde the standard deviation
     const coordsAvg = average(coords.map(x => x[1]));
@@ -104,27 +119,26 @@ const Trendline = props => {
   const upOrDown = percent <= 0 ? 0 : 180;
   const animation =
     percent <= 0 ? "rotate-arrow-upside-down" : "rotate-arrow-upside-up";
-  const greenOrOrange = percent <= 0 ? "green" : "orange";
+  const greenOrOrange = percent <= 0 ? "#c6ffa6" : "#ffcaa6";
 
   return (
-    <div className="info-wrapper">
+    <>
       <div className="kilowatt-hour">{props.name}</div>
       <div className="info-details">Trending {aboveOrBelow} </div>
-      <div className="info-big-number">
-        {perc + "%"}
-        <Icon
-          className={animation}
-          path={mdiArrowUpCircle}
-          title="User Profile"
-          size={2}
-          horizontal
-          vertical
-          rotate={upOrDown}
-          color={greenOrOrange}
-        />
-      </div>
+      <div className="info-big-number">{perc + "%"}</div>
+      {/* <Icon
+        className="info-details"
+        path={percent > 0 ? mdiTrendingUp : mdiTrendingDown}
+        title="User Profile"
+        size={2}
+        horizontal
+        vertical
+        rotate="180"
+        color={greenOrOrange}
+      /> */}
+
       <div className="info-details">{description(props.range)}</div>
-    </div>
+    </>
   );
 };
 

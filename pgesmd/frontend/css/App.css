@@ -135,6 +135,11 @@
   color: orange;
 }
 
+.mdi-trendline {
+  z-index: -10;
+}
+
+
 @keyframes rotate-arrow-upside-down {
   from {
     transform: rotate(0deg);
@@ -166,3 +171,4 @@
   animation-iteration-count: 1;
   animation-timing-function: ease-out;
 }
+

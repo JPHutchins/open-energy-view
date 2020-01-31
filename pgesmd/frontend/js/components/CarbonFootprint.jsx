@@ -5,8 +5,7 @@ const CarbonFootprint = props => {
 
   return (
     <div>
-      <div className="kilowatt-hour">Carbon Footprint</div>
-      <div className="info-medium-number">{carbon}lbs</div>
+      <div className="kilowatt-hour">{carbon}lbs carbon</div>
     </div>
   );
 };

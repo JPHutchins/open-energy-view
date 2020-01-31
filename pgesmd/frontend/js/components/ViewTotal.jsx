@@ -6,7 +6,7 @@ const ViewTotal = props => {
 
   return (
     <div>
-      <div className="kilowatt-hour">Total Used</div>
+      <div className="kilowatt-hour">Total</div>
       <div className="info-medium-number">
         {Math.round(props.sum / 1000)}kWh{"\n"}
       </div>
