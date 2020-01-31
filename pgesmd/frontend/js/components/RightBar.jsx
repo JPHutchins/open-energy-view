@@ -45,7 +45,7 @@ export default class RightBar extends React.PureComponent {
           />
           <hr />
           {this.props.yoy !== false && <SeasonalYoY yoy={this.props.yoy} />}
-          
+          <hr />
           <div className="kilowatt-hour">Activities</div>
           <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
           <PartDropdown
