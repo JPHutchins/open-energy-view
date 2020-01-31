@@ -18,7 +18,13 @@ export function getPromise() {
   });
 }
 
-export function makeOptions(data, callback, database, chart) {
+export function makeOptions(
+  data,
+  clickCallback,
+  tooltipCallback,
+  database,
+  chart
+) {
   const type = data[0].type;
 
   let xLabelOffset = 0;
@@ -59,7 +65,10 @@ export function makeOptions(data, callback, database, chart) {
   const options = {
     maintainAspectRatio: false,
     responsiveness: true,
-    onClick: (event, array) => callback(array[0]._index),
+    onClick: (event, array) => clickCallback(array[0]._index),
+    tooltips: {
+      callbacks: tooltipCallback
+    },
     legend: {
       display: false
     },
