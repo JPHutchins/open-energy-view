@@ -200,6 +200,29 @@ export default class EnergyHistory extends React.Component {
     this.setChartData(data, zoom[type], color);
   };
 
+  tooltip = data => ({
+    label: (tooltipItem, data) => {
+      return tooltipItem.yLabel + " Watts used";
+    },
+    title: (tooltipItem, data) => {
+      let bar = moment(tooltipItem[0].xLabel);
+      let start = bar.add(-30, "m");
+      let date = start.format("MMMM Do YYYY");
+      let weekday = start.format("dddd");
+      let start_hour = start.format("hA").toString();
+      let end = bar.add(60, "m");
+      let interval =
+        weekday +
+        "\n" +
+        date +
+        "\n" +
+        start_hour +
+        " - " +
+        end.format("hA").toString();
+      return interval;
+    }
+  });
+
   getChartDataset = (data, color) => {
     return {
       data: data,
@@ -316,14 +339,25 @@ export default class EnergyHistory extends React.Component {
             this.getBaselineDataset(data)
           ]
         },
-        options: makeOptions(data, this.barClickEvent, this.database),
+        options: makeOptions(
+          data,
+          this.barClickEvent,
+          this.tooltip(data),
+          this.database
+        ),
         description: this.createDescription(data, type),
         disableScroll: this.checkDisableScroll(data, type, this.database)
       },
       () => {
         const chart = this.refs.bargraph.refs.bargraph.chartInstance;
         this.setState({
-          options: makeOptions(data, this.barClickEvent, this.database, chart)
+          options: makeOptions(
+            data,
+            this.barClickEvent,
+            this.tooltip(data),
+            this.database,
+            chart
+          )
         });
       }
     );
