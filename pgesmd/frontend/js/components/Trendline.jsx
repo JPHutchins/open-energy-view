@@ -124,8 +124,6 @@ const Trendline = props => {
         ? Math.max(percent, -steepest)
         : Math.min(percent, steepest);
     };
-    console.log(percent);
-
     return 270 - (angle(percent) / steepest) * 90;
   };
   const greenOrOrange = percent <= 0 ? "green" : "orange";
