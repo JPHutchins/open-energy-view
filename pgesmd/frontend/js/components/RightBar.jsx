@@ -57,7 +57,7 @@ export default class RightBar extends React.PureComponent {
           <Trendline
             data={this.getData(this.props.data, 0)}
             database={this.props.database}
-            name="Active"
+            name="Active Use"
             range={this.props.range}
             baseline={false}
           />
