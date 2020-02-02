@@ -3,6 +3,7 @@ import regression from "regression";
 import Icon from "@mdi/react";
 import {
   mdiArrowUpCircle,
+  mdiArrowUp,
   mdiTrendingUp,
   mdiTrendingDown,
   mdiTrendingNeutral
@@ -116,25 +117,31 @@ const Trendline = props => {
   );
   const perc = Math.abs(percent);
   const aboveOrBelow = percent <= 0 ? "down" : "up";
-  const upOrDown = percent <= 0 ? 0 : 180;
-  const animation =
-    percent <= 0 ? "rotate-arrow-upside-down" : "rotate-arrow-upside-up";
+  const upOrDown = percent => {
+    const steepest = 50;
+    const angle = percent => {
+      return percent <= 0
+        ? Math.max(percent, -steepest)
+        : Math.min(percent, steepest);
+    };
+    console.log(percent);
+
+    return 270 - (angle(percent) / steepest) * 90;
+  };
   const greenOrOrange = percent <= 0 ? "green" : "orange";
 
   return (
     <>
       <div className="kilowatt-hour">{props.name}</div>
-      <div className="info-details">Trending {aboveOrBelow} </div>
+      <div className="info-details">Trending {aboveOrBelow} {perc + "%"}</div>
       <div className="info-big-number">
-        {perc + "%"}
         <Icon
-          className={animation}
-          path={mdiArrowUpCircle}
+          path={mdiArrowUp}
           title="User Profile"
           size={2}
           horizontal
           vertical
-          rotate={upOrDown}
+          rotate={upOrDown(percent)}
           color={greenOrOrange}
         />
       </div>
