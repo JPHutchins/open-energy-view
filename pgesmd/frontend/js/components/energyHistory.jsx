@@ -784,16 +784,55 @@ export default class EnergyHistory extends React.Component {
           label: "Use"
         }
       ],
-      labels: ["Night", "Day", "Evening", "Baseline"]
+      labels: ["Night", "Day", "Evening", "Background"]
     };
   };
 
-  getPieOptions = () => {
+  getPieOptions = data => {
+    const slices = data => {
+      if (data) {
+        return data.datasets[0].data.reduce((acc, x) => acc + x, 0);
+      }
+    };
+    const percents = slices => {
+      const total = slices.reduce((acc, x) => acc + x, 0);
+      return slices.map(x => Math.round(x / total));
+    };
+
+    const total = slices(data);
+
+    const readableWatts = watts => {
+      if (watts < 1000) {
+        return watts.toString() + "W";
+      } else if (watts < 10000) {
+        return (watts / 1000).toFixed(2).toString() + "kW";
+      } else {
+        return (watts / 1000).toFixed(1).toString() + "kW";
+      }
+    };
+
     return {
       maintainAspectRatio: true,
       aspectRatio: 1,
       legend: {
         display: false
+      },
+      tooltips: {
+        callbacks: {
+          title: tooltipItem => {
+            return data.labels[tooltipItem[0].index];
+          },
+          label: tooltipItem => {
+            return (
+              Math.round(
+                (data.datasets[0].data[tooltipItem.index] / total) * 100
+              ) +
+              "%" +
+              "\n" +
+              readableWatts(data.datasets[0].data[tooltipItem.index])
+            );
+          }
+        }
       }
     };
   };
@@ -832,7 +871,7 @@ export default class EnergyHistory extends React.Component {
           carbonMultiplier={this.state.carbonMultiplier}
           yoy={this.getYoyChange()}
           pieData={this.getPieData()}
-          pieOptions={this.getPieOptions()}
+          pieOptions={this.getPieOptions(this.getPieData())}
           defaultValue={this.state.partPieView}
           handlePartPieView={this.handlePartPieView}
           selectedPartPieView={this.state.partPieView}
