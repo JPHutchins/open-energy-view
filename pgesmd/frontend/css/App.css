@@ -51,6 +51,7 @@
   display: flex;
   justify-content: center;
   padding: 10px;
+  padding-top: 20px;
   max-width: 1200px;
   max-height: 800px;
   margin: auto;
