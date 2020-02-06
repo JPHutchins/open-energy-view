@@ -9,7 +9,8 @@ export default class EnergyChart extends React.Component {
 
   render() {
     return (
-      <div>
+      <div style={{ position: "relative", margin: "auto", width: "1200px"}}>
+        <div className="big-chart-title">AVERAGE HOURLY ELECTRICAL USAGE</div>
         <Bar
           ref="bargraph"
           data={this.props.data}
