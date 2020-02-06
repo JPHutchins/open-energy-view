@@ -100,6 +100,12 @@
   position: relative;
 }
 
+.big-chart-title {
+  justify-content: center;
+  font-size: 26pt;
+  padding: 10px;
+}
+
 .arrow-icon {
   width: 100%;
   height: 100%;
