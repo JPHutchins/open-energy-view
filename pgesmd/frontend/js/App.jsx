@@ -23,14 +23,6 @@ export default class App extends React.Component {
               <Nav.Link>Insights</Nav.Link>
               <DataRegistrationModal />
             </Nav>
-            <Form inline>
-              <FormControl
-                type="text"
-                placeholder="Questions"
-                className="mr-sm-2"
-              />
-              <Button variant="outline-success">Search</Button>
-            </Form>
           </Navbar.Collapse>
         </Navbar>
         <EnergyHistory />
