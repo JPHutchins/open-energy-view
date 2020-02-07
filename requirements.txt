@@ -5,6 +5,7 @@ Click==7.0
 entrypoints==0.3
 flake8==3.7.8
 Flask==1.1.1
+Flask-Login==0.4.1
 idna==2.8
 isort==4.3.21
 itsdangerous==1.1.0

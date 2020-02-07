@@ -3,6 +3,7 @@
 import os
 from flask import Flask, render_template
 import json
+from flask-login import LoginManager, UserMixin
 
 from pgesmd.database import EnergyHistory
 
@@ -36,6 +37,10 @@ def create_app(test_config=None):
     # initialize the database for json requests
     db = EnergyHistory(path='/test/data/energy_history_test.db')
     db.save_json()
+
+    # initialize flask-login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
 
     @app.route('/')
     def index():
