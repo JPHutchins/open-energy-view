@@ -3,7 +3,7 @@
 import os
 from flask import Flask, render_template
 import json
-from flask-login import LoginManager, UserMixin
+from flask_login import LoginManager, UserMixin
 
 from pgesmd.database import EnergyHistory
 
