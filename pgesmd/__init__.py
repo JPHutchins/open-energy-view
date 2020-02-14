@@ -5,6 +5,7 @@ from flask import Flask, render_template
 import json
 from flask_login import LoginManager, UserMixin
 from flask_bcrypt import Bcrypt
+from flask_sqlalchemy import SQLAlchemy
 from pgesmd.database import EnergyHistory
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
