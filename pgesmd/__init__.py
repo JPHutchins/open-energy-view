@@ -20,6 +20,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=f'{PROJECT_PATH}/data/energy_history.db',
+        SQLALCHEMY_DATABASE_URI='sqlite:///test/data/energy_history_test.db'
     )
 
     if test_config is None:
@@ -39,9 +40,22 @@ def create_app(test_config=None):
     db = EnergyHistory(path='/test/data/energy_history_test.db')
     db.save_json()
 
+    db = SQLAlchemy(app)
+    print("Flask loaded db")
+    
+    class Hour(SQLAlchemy.Base):
+        __table__ = SQLAlchemy.Table('hour', SQLAlchemy.Base.metadata,
+                                     autoload=True, autoload_with=db)
+    
+    hour = Hour()
+    print("sherbet", hour.query_all())
+
+
+    print("done")
+
     # initialize flask-login
-    login_manager = LoginManager()
-    login_manager.init_app(app)
+    # login_manager = LoginManager()
+    # login_manager.init_app(app)
 
     @app.route('/')
     def index():

@@ -9,6 +9,7 @@ flake8==3.7.8
 Flask==1.1.1
 Flask-Bcrypt==0.7.1
 Flask-Login==0.4.1
+Flask-SQLAlchemy==2.4.1
 idna==2.8
 isort==4.3.21
 itsdangerous==1.1.0
