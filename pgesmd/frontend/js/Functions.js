@@ -16,6 +16,13 @@ export const checkDisableScroll = (data, database, direction) => {
   }
 };
 
+/**
+ * Get the index of the interval specified by type and startDate.
+ *
+ * @param {ImmutableJSMapsAndLists} database The ImmutableJS representation of the database.
+ * @param {string} type The type of interval.
+ * @param {number} startDate The date in seconds since Unix epoch.
+ */
 export const getLo = (database, type, startDate) => {
   return database
     .get("lookup")
