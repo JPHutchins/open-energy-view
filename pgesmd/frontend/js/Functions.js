@@ -52,6 +52,12 @@ export const getChartData = (database, type, lo, hi) => {
     .toJS();
 };
 
+/**
+ * Return a string or [string, ...] of color(s) corresponding to "partitions".
+ *
+ * @param {object} data The data as prepared for ChartJS by a function like getChartData.
+ * @param {array} color The colors of "partitions" [color of part 0, color of part 1 , ...].
+ */
 export const getChartColors = (data, color) => {
   if (data[0].type === "part" || data[0].type === "hour") {
     return data.map(item => color[item["part"]]);
