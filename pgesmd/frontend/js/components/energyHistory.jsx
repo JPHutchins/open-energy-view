@@ -91,6 +91,13 @@ export default class EnergyHistory extends React.Component {
     this.setChartData(data, type, color);
   };
 
+  /**
+   * Return object specifying whether to disable forward or backward scrolling.
+   *
+   * @param {object} data The ChartJS data object (current view).
+   * @param {string} type The type of interval.
+   * @param {ImmutableJSMapsAndLists} database The ImmutableJS represenatation of the database.
+   */
   checkDisableScroll = (data, type, database) => {
     const lastEntry = database
       .get("lookup")
