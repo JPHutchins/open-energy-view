@@ -40,7 +40,7 @@ export const getHi = (database, type, endDate) => {
 /**
  * Return JSON slice of database of the specified type between index lo and hi.
  *
- * @param {ImmutableJSMapsAndLists} database The ImmutableJS represenatation of the databse.
+ * @param {ImmutableJSMapsAndLists} database The ImmutableJS represenatation of the database.
  * @param {string} type The type of interval.
  * @param {number} lo The starting index of the interval.
  * @param {number} hi The end index of the interval.
