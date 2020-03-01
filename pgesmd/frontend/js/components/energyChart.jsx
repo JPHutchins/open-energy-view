@@ -1,6 +1,9 @@
 import React from "react";
 import { Bar } from "react-chartjs-2";
 
+/**
+ * Container for the primary data display - the "view window".
+ */
 export default class EnergyChart extends React.Component {
   constructor(props) {
     super(props);
@@ -9,7 +12,7 @@ export default class EnergyChart extends React.Component {
 
   render() {
     return (
-      <div style={{ position: "relative", margin: "auto", width: "1200px"}}>
+      <div style={{ position: "relative", margin: "auto", width: "1200px" }}>
         <div className="big-chart-title">AVERAGE HOURLY ELECTRICAL USAGE</div>
         <Bar
           ref="bargraph"
