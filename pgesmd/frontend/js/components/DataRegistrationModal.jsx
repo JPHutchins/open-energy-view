@@ -1,6 +1,9 @@
 import React from "react";
 import { Modal, Button, Nav } from "react-bootstrap";
 
+/**
+ * The modal for setting options.
+ */
 const DataRegistrationModal = () => {
   const [show, setShow] = React.useState(false);
 
@@ -9,15 +12,15 @@ const DataRegistrationModal = () => {
 
   return (
     <>
-      <Nav.Link onClick={handleShow}>
-        Setup
-      </Nav.Link>
+      <Nav.Link onClick={handleShow}>Setup</Nav.Link>
 
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>Setup</Modal.Title>
         </Modal.Header>
-        <Modal.Body>Forms for setting up data sources, probably need tabs.</Modal.Body>
+        <Modal.Body>
+          Forms for setting up data sources, probably need tabs.
+        </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
             Close
