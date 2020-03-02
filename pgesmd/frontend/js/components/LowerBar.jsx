@@ -2,8 +2,11 @@ import React from "react";
 import LeftDate from "./LeftDate";
 import RightDate from "./RightDate";
 import "../../css/App.css";
-import { DropdownButton, Dropdown} from "react-bootstrap"
+import { DropdownButton, Dropdown } from "react-bootstrap";
 
+/**
+ * The component to provide navigation of the data window.
+ */
 export default class LowerBar extends React.PureComponent {
   render() {
     return (
@@ -18,7 +21,10 @@ export default class LowerBar extends React.PureComponent {
           >
             Previous
           </button>
-          <DropdownButton title={this.props.range} onSelect={this.props.onChange}>
+          <DropdownButton
+            title={this.props.range}
+            onSelect={this.props.onChange}
+          >
             <Dropdown.Item eventKey="Day">Day</Dropdown.Item>
             <Dropdown.Item eventKey="Week">Week</Dropdown.Item>
             <Dropdown.Item eventKey="Month">Month</Dropdown.Item>
