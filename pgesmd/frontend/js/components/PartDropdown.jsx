@@ -6,6 +6,13 @@ import {
   Tooltip
 } from "react-bootstrap";
 
+/**
+ * The dropdown for selecting how activity ("partition") data is displayed in the mini pie chart.
+ *
+ * @param {Object} props React props.
+ * @param {Function} props.handleClick The callback function called on making a selection from the dropdown.
+ * @param {String} props.defaultValue The preselected item of the dropdown.
+ */
 const PartDropdown = props => {
   const makeTitle = value => {
     switch (value) {
@@ -29,6 +36,11 @@ const PartDropdown = props => {
     }
   };
 
+  /**
+   * Return the dropdown items with tooltip overlays.
+   *
+   * @param {String} value The title and tooltip to create: "actual", "baseline", "average"
+   */
   const makeMenuItem = value => (
     <OverlayTrigger
       placement="left"
