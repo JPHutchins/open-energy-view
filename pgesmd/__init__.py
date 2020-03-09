@@ -1,7 +1,7 @@
 """Initialize the application backend."""
 
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import json
 from flask_login import LoginManager, UserMixin
 
@@ -45,6 +45,12 @@ def create_app(test_config=None):
     @app.route('/')
     def index():
         return render_template('index.html')
+
+    @app.route('/loginUser', methods=['POST'])
+    def login():
+        print("hit that login route yo")
+        print(request.get_json())
+        return "success"
 
     @app.route('/data/json/now', methods=['GET'])
     def get_json_now():
