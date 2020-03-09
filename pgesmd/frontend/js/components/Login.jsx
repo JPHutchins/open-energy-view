@@ -1,12 +1,37 @@
-import React from "react";
-import Form from "react-bootstrap";
+import React, { useState } from "react";
+import { Form, Button } from "react-bootstrap";
 
 const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    console.log(email, password);
+    fetch("/loginUser", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email: email, password: password })
+    })
+      .then(data => {
+        console.log(data);
+      })
+      .then(res => {
+        console.log(res);
+      });
+  };
+
   return (
-    <Form>
+    <Form onSubmit={handleSubmit}>
       <Form.Group controlId="formBasicEmail">
         <Form.Label>Email address</Form.Label>
-        <Form.Control type="email" placeholder="Enter email" />
+        <Form.Control
+          type="email"
+          placeholder="Enter email"
+          onChange={e => setEmail(e.target.value)}
+        />
         <Form.Text className="text-muted">
           We'll never share your email with anyone else.
         </Form.Text>
@@ -14,7 +39,11 @@ const Login = () => {
 
       <Form.Group controlId="formBasicPassword">
         <Form.Label>Password</Form.Label>
-        <Form.Control type="password" placeholder="Password" />
+        <Form.Control
+          type="password"
+          placeholder="Password"
+          onChange={e => setPassword(e.target.value)}
+        />
       </Form.Group>
       <Button variant="primary" type="submit">
         Submit
