@@ -9,11 +9,15 @@ import {
 } from "react-bootstrap";
 import EnergyHistory from "./components/energyHistory";
 import DataRegistrationModal from "./components/DataRegistrationModal";
+import Login from "./components/Login";
+
+const testing = true;
 
 export default class App extends React.Component {
   render() {
     return (
       <>
+      <Login />
         <Navbar bg="dark" variant="dark">
           <Navbar.Brand href="#home">Energy Monitor</Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
