@@ -68,7 +68,7 @@ class EnergyHistory():
         }
         self.create_users_table = """
             CREATE TABLE IF NOT EXISTS users (
-                id PRIMARY KEY,
+                id INTEGER PRIMARY KEY,
                 email,
                 hash,
                 salt,
