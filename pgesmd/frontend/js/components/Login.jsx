@@ -5,23 +5,39 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = e => {
+  async function handleSubmit(e) {
     e.preventDefault();
     console.log(email, password);
-    fetch("/loginUser", {
+    let token = await fetch("/auth", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ email: email, password: password })
+      body: JSON.stringify({ username: email, password: password })
     })
+      .then(response => response)
       .then(data => {
-        console.log(data);
+        return data.json();
       })
-      .then(res => {
-        console.log(res);
+      .catch(e => {
+        console.error(e);
       });
-  };
+    console.log(token.access_token);
+    fetch("/testauth", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "JWT " + token.access_token
+      }
+    })
+      .then(response => response.body)
+      .then(body => {
+        console.log(body.getReader());
+      })
+      .catch(e => {
+        console.error(e);
+      });
+  }
 
   return (
     <Form onSubmit={handleSubmit}>
