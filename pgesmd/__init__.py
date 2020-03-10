@@ -4,8 +4,9 @@ import os
 from flask import Flask, render_template, request
 import json
 from flask_login import LoginManager, UserMixin
-
+from flask_jwt import JWT, jwt_required, current_identity
 from pgesmd.database import EnergyHistory
+from flask_bcrypt import Bcrypt
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -34,22 +35,65 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # jwt = JWT(app, authenticate, identity)
+    bcrypt = Bcrypt(app)
+
+    pw_hash = bcrypt.generate_password_hash('demo')
+
+
     # initialize the database for json requests
     db = EnergyHistory(path='/test/data/energy_history_test.db')
     db.save_json()
+
+    db.cursor.execute("""REPLACE INTO users (
+        email,
+        hash)
+        VALUES ('demo@demo.com', ?);""", (pw_hash,))
+    db.cursor.execute("COMMIT")
 
     # initialize flask-login
     login_manager = LoginManager()
     login_manager.init_app(app)
 
+    class User:
+        def __init__(self, user_id):
+            self.id = user_id
+
+    def authenticate(email, password):
+        db = EnergyHistory(path='/test/data/energy_history_test.db')
+        db.cursor.execute("SELECT id FROM users WHERE email=?;", (email,))
+        user_id = db.cursor.fetchone()[0]
+        db.cursor.execute("SELECT hash FROM users WHERE id=?;", (user_id,))
+        pw_hash = db.cursor.fetchone()[0]
+        if user_id and bcrypt.check_password_hash(pw_hash, password):
+            return User(user_id)
+    
+    def identity(payload):
+        db = EnergyHistory(path='/test/data/energy_history_test.db')
+        user_id = payload['identity']
+        db.cursor.execute("SELECT email FROM users WHERE id=?;", (user_id,))
+        email = db.cursor.fetchone()[0]
+        return email
+    
+    jwt = JWT(app, authenticate, identity)
+
+    @app.route('/testauth')
+    @jwt_required()
+    def testauth():
+        print('Found user: %s' % current_identity)
+        return '%s' % current_identity
+
     @app.route('/')
     def index():
         return render_template('index.html')
 
-    @app.route('/loginUser', methods=['POST'])
+    @app.route('/authCustom', methods=['POST'])
     def login():
         print("hit that login route yo")
         print(request.get_json())
+        email = request.get_json()['email']
+        password = request.get_json()['password']
+        print(authenticate(email, password))
         return "success"
 
     @app.route('/data/json/now', methods=['GET'])
