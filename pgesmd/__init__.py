@@ -4,13 +4,13 @@ import os
 from flask import Flask, render_template, request
 import json
 from flask_login import LoginManager, UserMixin
-from flask_jwt_extended import (JWTManager, jwt_required, 
-                                jwt_refresh_token_required, 
-                                jwt_optional, fresh_jwt_required, 
+from flask_jwt_extended import (JWTManager, jwt_required,
+                                jwt_refresh_token_required,
+                                jwt_optional, fresh_jwt_required,
                                 get_raw_jwt, get_jwt_identity,
-                                create_access_token, create_refresh_token, 
-                                set_access_cookies, set_refresh_cookies, 
-                                unset_jwt_cookies,unset_access_cookies)
+                                create_access_token, create_refresh_token,
+                                set_access_cookies, set_refresh_cookies,
+                                unset_jwt_cookies, unset_access_cookies)
 from pgesmd.database import EnergyHistory
 from flask_bcrypt import Bcrypt
 
@@ -26,6 +26,10 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=f'{PROJECT_PATH}/data/energy_history.db',
+        JWT_SECRET_KEY='dev',
+        JWT_TOKEN_LOCATION='cookies',
+        JWT_COOKIE_CSRF_PROTECT=True,
+        JWT_CSRF_CHECK_FORM=True
     )
 
     if test_config is None:
