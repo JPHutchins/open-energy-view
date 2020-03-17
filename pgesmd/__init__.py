@@ -4,7 +4,13 @@ import os
 from flask import Flask, render_template, request
 import json
 from flask_login import LoginManager, UserMixin
-from flask_jwt import JWT, jwt_required, current_identity
+from flask_jwt_extended import (JWTManager, jwt_required, 
+                                jwt_refresh_token_required, 
+                                jwt_optional, fresh_jwt_required, 
+                                get_raw_jwt, get_jwt_identity,
+                                create_access_token, create_refresh_token, 
+                                set_access_cookies, set_refresh_cookies, 
+                                unset_jwt_cookies,unset_access_cookies)
 from pgesmd.database import EnergyHistory
 from flask_bcrypt import Bcrypt
 
@@ -75,7 +81,7 @@ def create_app(test_config=None):
         email = db.cursor.fetchone()[0]
         return email
     
-    jwt = JWT(app, authenticate, identity)
+    jwt = JWTManager(app, authenticate, identity)
 
     @app.route('/testauth')
     @jwt_required()
