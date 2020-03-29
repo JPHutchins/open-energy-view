@@ -1,71 +1,80 @@
 import React, { useState } from "react";
 import { Form, Button } from "react-bootstrap";
+import cookie from "react-cookies";
+import AuthService from "../service/AuthService";
+import { withRouter, Link } from "react-router-dom";
 
-const Login = () => {
+const Login = props => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [badCreds, setBadCreds] = useState("");
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
-    console.log(email, password);
-    let token = await fetch("/auth", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ username: email, password: password })
-    })
-      .then(response => response)
-      .then(data => {
-        return data.json();
-      })
-      .catch(e => {
-        console.error(e);
-      });
-    console.log(token.access_token);
-    fetch("/testauth", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "JWT " + token.access_token
+    const credentials = { email: email, password: password };
+    AuthService.login(credentials).then(res => {
+      if (res.status === 401) {
+        setBadCreds("Incorrect email and/or password.");
+      } else {
+        cookie.save("logged_in", true, { maxAge: 900 });
+        props.callback();
+        props.history.push("/");
       }
-    })
-      .then(response => response.body)
-      .then(body => {
-        console.log(body.getReader());
-      })
-      .catch(e => {
-        console.error(e);
-      });
+    });
+  }
+
+  function handleDemo(e) {
+    const creds = { email: "jph@demo.com", password: "password" };
+    AuthService.login(creds).then(res => {
+      if (res.status === 401) {
+        throw Error("That's weird, the demo credentials are missing.");
+      } else {
+        cookie.save("logged_in", true, { maxAge: 900 });
+        props.callback();
+        props.history.push("/");
+      }
+    });
   }
 
   return (
-    <Form onSubmit={handleSubmit}>
-      <Form.Group controlId="formBasicEmail">
-        <Form.Label>Email address</Form.Label>
-        <Form.Control
-          type="email"
-          placeholder="Enter email"
-          onChange={e => setEmail(e.target.value)}
-        />
-        <Form.Text className="text-muted">
-          We'll never share your email with anyone else.
-        </Form.Text>
-      </Form.Group>
+    <div className="login-box">
+      <Form onSubmit={handleSubmit}>
+        <Form.Text className="form-title">Login</Form.Text>
+        <hr />
+        <Form.Group controlId="formBasicEmail">
+          <Form.Label>Email address</Form.Label>
+          <Form.Control
+            className="login-form"
+            type="email"
+            placeholder="Enter email"
+            onChange={e => setEmail(e.target.value)}
+          />
+        </Form.Group>
 
-      <Form.Group controlId="formBasicPassword">
-        <Form.Label>Password</Form.Label>
-        <Form.Control
-          type="password"
-          placeholder="Password"
-          onChange={e => setPassword(e.target.value)}
-        />
-      </Form.Group>
-      <Button variant="primary" type="submit">
-        Submit
-      </Button>
-    </Form>
+        <Form.Group controlId="formBasicPassword">
+          <Form.Label>Password</Form.Label>
+          <Form.Control
+            className="login-form"
+            type="password"
+            placeholder="Password"
+            onChange={e => setPassword(e.target.value)}
+          />
+        </Form.Group>
+        <Form.Text className="bad-creds">{badCreds}</Form.Text>
+        <Button variant="primary" type="submit">
+          Submit
+        </Button>
+        <hr />
+        <Form.Text className="default-text">
+          No account? <Link to="/create_account">Register now!</Link>
+          <br />
+          <a className="demo-link" onClick={handleDemo}>
+            Or use the demo
+          </a>
+        </Form.Text>
+      </Form>
+    </div>
   );
 };
 
-export default Login;
+export default withRouter(Login);
