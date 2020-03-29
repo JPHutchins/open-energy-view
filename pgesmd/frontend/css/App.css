@@ -1,7 +1,12 @@
 .container {
   display: flex;
-  padding: 10px;
+  padding: 5px;
+  margin-top: 20px;
   max-width: none;
+  height: 55px;
+  width: 100%;
+  min-width: 100px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .box {
@@ -41,18 +46,55 @@
 }
 
 .energy-chart {
-  flex: 1;
+  margin-left: 0px;
+  margin-right: 0px;
   padding: 10px;
-  max-width: none;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
+.default-text {
+  font-size: 12pt;
+  padding-top: 10px;
+}
+
+.demo-link {
+  font-size: 12pt;
+  padding-top: 10px;
+  cursor: pointer;
+}
+
+.demo-link:hover {
+  text-decoration: underline;
+}
+
+.login-box {
+  margin: auto;
+  margin-top: 40px;
+  padding: 10px;
+  max-width: 400px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.register-box {
+  margin: auto;
+  margin-top: 40px;
+  padding: 10px;
+  max-width: 600px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.data-loader {
+  display: block;
+  margin: auto;
+  text-align: center;
+}
+
 .energy-history {
-  display: flex;
+  display: block;
   justify-content: center;
+  align-content: space-around;
   padding: 10px;
   padding-top: 20px;
-  max-width: 1200px;
   max-height: 800px;
   margin: auto;
 }
@@ -64,6 +106,21 @@
 .form-control {
   min-width: 130px;
   max-width: 130px;
+}
+
+.login-form {
+  min-width: 130px;
+  max-width: 300px;
+}
+
+.form-title {
+  font-size: 26pt;
+}
+
+.bad-creds {
+  font-size: 10pt;
+  color: red;
+  margin-bottom: 10px;
 }
 
 .Part-Pie-Radio.active {
