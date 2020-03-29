@@ -1,10 +1,13 @@
 import React from "react";
 import moment from "moment";
 import EnergyChart from "./energyChart";
+import DataLoader from "./DataLoader";
 import { getCompleteData, makeOptions } from "../utils.js";
 import "../../css/App.css";
 import LowerBar from "./LowerBar";
 import RightBar from "./RightBar";
+import axios from "axios";
+import AuthService from "../service/AuthService";
 
 const { fromJS } = require("immutable");
 
@@ -66,12 +69,15 @@ export default class EnergyHistory extends React.Component {
       barThickness: "flex"
     };
     this.database = undefined;
+    this.loadingData = true;
   }
 
   componentDidMount = () => {
-    getCompleteData()
-      .then(data => {
-        this.database = fromJS(data);
+    axios
+      .post("/api/data", {source: "PG&E"}, AuthService.getAuthHeader())
+      .then(res => {
+        this.database = fromJS(JSON.parse(res.data));
+        this.loadingData = false;
         console.log(this.database.toJS());
       })
       .then(() => {
@@ -850,40 +856,49 @@ export default class EnergyHistory extends React.Component {
 
   render() {
     return (
-      <div className="energy-history">
-        <div className="energy-chart">
-          <EnergyChart
-            ref="bargraph"
-            data={this.state.data}
-            options={this.state.options}
-            colors={this.colors}
-            database={this.database}
-          />
-          <LowerBar
-            range={this.state.range}
-            startDate={this.state.description.startDate}
-            endDate={this.state.description.endDate}
-            onClick={this.handleScroll}
-            disableNext={this.state.disableScroll.disableNext}
-            disablePrev={this.state.disableScroll.disablePrev}
-            onChange={this.handleRangeSelect}
-          />
-        </div>
+      <div>
+        {this.loadingData ? (
+          <DataLoader />
+        ) : (
+          <div className="energy-history">
+            <div style={{ display: "flex" }}>
+              <div className="energy-chart">
+                <EnergyChart
+                  ref="bargraph"
+                  data={this.state.data}
+                  options={this.state.options}
+                  colors={this.colors}
+                  database={this.database}
+                />
+              </div>
 
-        <RightBar
-          database={this.database}
-          data={this.state.data.datasets}
-          sum={this.getSum()}
-          avg={this.getAllTimeAvg()}
-          carbonMultiplier={this.state.carbonMultiplier}
-          yoy={this.getYoyChange()}
-          pieData={this.getPieData()}
-          pieOptions={this.getPieOptions(this.getPieData())}
-          defaultValue={this.state.partPieView}
-          handlePartPieView={this.handlePartPieView}
-          selectedPartPieView={this.state.partPieView}
-          range={this.state.range}
-        />
+              <RightBar
+                database={this.database}
+                data={this.state.data.datasets}
+                sum={this.getSum()}
+                avg={this.getAllTimeAvg()}
+                carbonMultiplier={this.state.carbonMultiplier}
+                yoy={this.getYoyChange()}
+                pieData={this.getPieData()}
+                pieOptions={this.getPieOptions(this.getPieData())}
+                defaultValue={this.state.partPieView}
+                handlePartPieView={this.handlePartPieView}
+                selectedPartPieView={this.state.partPieView}
+                range={this.state.range}
+              />
+            </div>
+
+            <LowerBar
+              range={this.state.range}
+              startDate={this.state.description.startDate}
+              endDate={this.state.description.endDate}
+              onClick={this.handleScroll}
+              disableNext={this.state.disableScroll.disableNext}
+              disablePrev={this.state.disableScroll.disablePrev}
+              onChange={this.handleRangeSelect}
+            />
+          </div>
+        )}
       </div>
     );
   }
