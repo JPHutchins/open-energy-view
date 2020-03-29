@@ -18,7 +18,7 @@ from pgesmd.database_helpers import (
     insert_into_week,
     insert_into_day,
     insert_into_part,
-    insert_into_hour
+    insert_into_hour,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,16 +27,15 @@ PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 timezone = pytz.timezone("US/Pacific")
 
 
-class EnergyHistory():
+class EnergyHistory:
     """Class to hold PGE SMD SQL statements and simple database commands."""
 
-    def __init__(self,
-                 path='/data/energy_history.db',
-                 json_path='/data/energy_history_test.json',
-                 partitions=[
-                     (1, "Night"),
-                     (7, "Day"),
-                     (18, "Evening")]):
+    def __init__(
+        self,
+        path="/data/energy_history.db",
+        json_path="/data/energy_history_test.json",
+        partitions=[(1, "Night"), (7, "Day"), (18, "Evening")],
+    ):
         """Open the connection to database and create tables."""
         self.path = path
         self.partitions = partitions
@@ -46,9 +45,7 @@ class EnergyHistory():
         #         self.json = json.load(json_file)
         # except FileNotFoundError:
         self.json = {
-            "info": {
-                "last_update": 0
-            },
+            "info": {"last_update": 0},
             "lookup": {
                 "data": {},
                 "hour": {},
@@ -56,7 +53,7 @@ class EnergyHistory():
                 "day": {},
                 "week": {},
                 "month": {},
-                "year": {}
+                "year": {},
             },
             "data": [],
             "hour": [],
@@ -64,12 +61,12 @@ class EnergyHistory():
             "day": [],
             "week": [],
             "month": [],
-            "year": []
+            "year": [],
         }
         self.create_users_table = """
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
-                email,
+                email UNIQUE,
                 hash,
                 salt,
                 session_token,
@@ -197,23 +194,24 @@ class EnergyHistory():
 
         try:
             self.conn = sqlite3.connect(
-                f'{PROJECT_PATH}{self.path}')
+                f"{PROJECT_PATH}{self.path}", check_same_thread=False
+            )
         except Exception as e:
             _LOGGER.error(e)
 
         try:
             self.cursor = self.conn.cursor()
-            self.cursor.execute(self.create_users_table)
+            # self.cursor.execute(self.create_users_table)
             self.cursor.execute(self.create_info_table)
             self.cursor.execute(self.create_updater_table)
             self.cursor.execute(self.create_incomplete_table)
-            self.cursor.execute(self.create_data_table)
-            self.cursor.execute(self.create_hour_table)
-            self.cursor.execute(self.create_part_table)
-            self.cursor.execute(self.create_day_table)
-            self.cursor.execute(self.create_week_table)
-            self.cursor.execute(self.create_month_table)
-            self.cursor.execute(self.create_year_table)
+            # self.cursor.execute(self.create_data_table)
+            # self.cursor.execute(self.create_hour_table)
+            # self.cursor.execute(self.create_part_table)
+            # self.cursor.execute(self.create_day_table)
+            # self.cursor.execute(self.create_week_table)
+            # self.cursor.execute(self.create_month_table)
+            # self.cursor.execute(self.create_year_table)
         except Exception as e:
             _LOGGER.error(e)
 
@@ -235,8 +233,7 @@ class EnergyHistory():
 
         self.is_empty = self.last_entry == 0
 
-        self.cursor.execute(
-            "UPDATE info SET n_parts = ?;", (len(self.partitions),))
+        self.cursor.execute("UPDATE info SET n_parts = ?;", (len(self.partitions),))
 
         part_times, names = zip(*self.partitions)
         self.part_intervals = []
@@ -257,7 +254,7 @@ class EnergyHistory():
         self.part_desc = []
         for i in range(len(part_times)):
             start = part_times[i]
-            end = part_times[(i+1) % len(part_times)]
+            end = part_times[(i + 1) % len(part_times)]
 
             if start <= 12:
                 start = str(start) + "AM"
@@ -285,12 +282,12 @@ class EnergyHistory():
     def get_next_start(self):
         """Return the value needed for API 'published-min'."""
         return self.last_entry + 3600
-    
+
     def get_json(self):
         """Return the JSON representation of the database."""
         return self.json
 
-    def insert_espi_xml(self, xml_file, overwrite=False):
+    def insert_espi_xml(self, xml_file, pge_id, overwrite=False):
         """Insert an ESPI XML file into the database.
 
         The TABLE "espi" is updated with the raw ESPI data as well as a field,
@@ -333,7 +330,7 @@ class EnergyHistory():
 
         def get_hours_mins(time):
             t = datetime.fromtimestamp(time)
-            return float(t.strftime('%H')) + (float(t.strftime('%M')) / 60)
+            return float(t.strftime("%H")) + (float(t.strftime("%M")) / 60)
 
         if self.last_entry == 0:  # first import, initialize starting values
             # print("OVERWRITING")
@@ -353,7 +350,8 @@ class EnergyHistory():
 
         else:  # retrieve the incomplete interval values and initialize
             # print("Querying the incomplete table")
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT 
                     start, date,
                     part_sum, part_type, part_start,
@@ -362,14 +360,29 @@ class EnergyHistory():
                     month_sum, month_cnt, month_start,
                     year_sum, year_cnt, year_start FROM info
                 JOIN incomplete ON info.last_update = incomplete.id;
-                """)
+                """
+            )
             # print(*self.cursor.fetchone())
-            (start, date,
-             part_sum, part_type, part_start,
-             day_sum, day_cnt, day_start, day_min,
-             week_sum, week_cnt, week_start,
-             month_sum, month_cnt, month_start,
-             year_sum, year_cnt, year_start) = self.cursor.fetchone()
+            (
+                start,
+                date,
+                part_sum,
+                part_type,
+                part_start,
+                day_sum,
+                day_cnt,
+                day_start,
+                day_min,
+                week_sum,
+                week_cnt,
+                week_start,
+                month_sum,
+                month_cnt,
+                month_start,
+                year_sum,
+                year_cnt,
+                year_start,
+            ) = self.cursor.fetchone()
 
             prev_start = start
             prev_date = date
@@ -382,14 +395,13 @@ class EnergyHistory():
             month_sum, month_cnt, month_start = month_sum, month_cnt, month_start
             year_sum, year_cnt, year_start = year_sum, year_cnt, year_start
 
-        prev_datetime = datetime.strptime(prev_date, '%Y-%m-%d')
+        prev_datetime = datetime.strptime(prev_date, "%Y-%m-%d")
         prev_week = prev_datetime.isocalendar()[1]
-        prev_month = prev_datetime.strftime('%m')
-        prev_year = prev_datetime.strftime('%Y')
+        prev_month = prev_datetime.strftime("%m")
+        prev_year = prev_datetime.strftime("%Y")
         cur_datetime = prev_datetime
 
-        c = Crosses(
-                self.partitions[(part_type + 1) % len(self.partitions)][0])
+        c = Crosses(self.partitions[(part_type + 1) % len(self.partitions)][0])
 
         for entry in parse_espi_data(xml_file):
             start, duration, value, watt_hours, date = entry
@@ -399,56 +411,96 @@ class EnergyHistory():
                 continue  # fast forward to data that has not been entered yet
 
             data_added = True
-            
-            cur_datetime = datetime.strptime(date, '%Y-%m-%d')
+
+            cur_datetime = datetime.strptime(date, "%Y-%m-%d")
             cur_week = cur_datetime.isocalendar()[1]
-            cur_month = cur_datetime.strftime('%m')
-            cur_year = cur_datetime.strftime('%Y')
+            cur_month = cur_datetime.strftime("%m")
+            cur_year = cur_datetime.strftime("%Y")
 
             #  Push yearly changes & reinitialize
             if cur_year != prev_year:
                 print(cur_datetime)
-                insert_into_year(self, start, year_start, prev_date, year_sum,
-                                 year_cnt, S_ONE_WEEK)
+                insert_into_year(
+                    self,
+                    start,
+                    year_start,
+                    prev_date,
+                    year_sum,
+                    year_cnt,
+                    S_ONE_WEEK,
+                    pge_id,
+                )
                 prev_year = cur_year
                 year_sum, year_cnt, year_start = 0, 0, start
 
             #  Push monthly changes & reinitialize
             if cur_month != prev_month:
-                insert_into_month(self, start, month_start, prev_date,
-                                  month_sum, month_cnt, ONE_MONTH,
-                                  cur_datetime)
+                insert_into_month(
+                    self,
+                    start,
+                    month_start,
+                    prev_date,
+                    month_sum,
+                    month_cnt,
+                    ONE_MONTH,
+                    cur_datetime,
+                    pge_id,
+                )
                 prev_month = cur_month
                 month_sum, month_cnt, month_start = 0, 0, start
 
             #  Push weekly changes & reinitialize
             if cur_week != prev_week:
-                insert_into_week(self, start, week_start, prev_date, week_sum,
-                                 week_cnt, S_ONE_WEEK)
+                insert_into_week(
+                    self,
+                    start,
+                    week_start,
+                    prev_date,
+                    week_sum,
+                    week_cnt,
+                    S_ONE_WEEK,
+                    pge_id,
+                )
                 prev_week = cur_week
                 week_sum, week_cnt, week_start = 0, 0, start
 
             #  Push daily changes & reinitialize
             if date != prev_date:
-                insert_into_day(self, start, day_start, prev_date, day_sum,
-                                day_cnt, S_ONE_DAY, min_heap)
+                insert_into_day(
+                    self,
+                    start,
+                    day_start,
+                    prev_date,
+                    day_sum,
+                    day_cnt,
+                    S_ONE_DAY,
+                    min_heap,
+                    pge_id,
+                )
                 prev_date, min_heap = date, []
                 day_sum, day_cnt, day_start = 0, 0, start
 
             #  Push partition changes & reinitialize
             espi_time = get_hours_mins(start)
             if c.test(espi_time):
-                insert_into_part(self, start, part_start, prev_date, part_sum,
-                                 timezone, part_type)
+                insert_into_part(
+                    self,
+                    start,
+                    part_start,
+                    prev_date,
+                    part_sum,
+                    timezone,
+                    part_type,
+                    pge_id,
+                )
                 part_type = (part_type + 1) % len(self.partitions)
-                c = Crosses(self.partitions[
-                    (part_type + 1) % len(self.partitions)]
-                    [0])
+                c = Crosses(self.partitions[(part_type + 1) % len(self.partitions)][0])
                 part_sum, part_start = 0, start
 
             #  Insert into the hour table
-            insert_into_hour(self, start, duration, value, watt_hours, date,
-                             part_type)
+            insert_into_hour(
+                self, start, duration, value, watt_hours, date, part_type, pge_id
+            )
 
             #  Update the info table
             if start < self.first_entry:
@@ -475,42 +527,89 @@ class EnergyHistory():
 
             #  Keep track of daily minimum
             min_heap.append(watt_hours)
-        
+
         if not data_added:
             _LOGGER.info("No new data added.")
             return
 
         interval_end = start + 3600
         #  Iteration complete - push the data from the last entries
-        insert_into_year(self, interval_end, year_start, prev_date, year_sum,
-                         year_cnt, S_ONE_WEEK)
-        insert_into_month(self, interval_end, month_start, prev_date, month_sum,
-                          month_cnt, ONE_MONTH, cur_datetime)
-        insert_into_week(self, interval_end, week_start, prev_date, week_sum,
-                         week_cnt, S_ONE_WEEK)
-        insert_into_day(self, interval_end, day_start, prev_date, day_sum,
-                        day_cnt, S_ONE_DAY, min_heap)
-        insert_into_part(self, interval_end, part_start, prev_date, part_sum,
-                         timezone, part_type)
-        insert_into_hour(self, start, duration, value, watt_hours, date,
-                             part_type)
+        insert_into_year(
+            self,
+            interval_end,
+            year_start,
+            prev_date,
+            year_sum,
+            year_cnt,
+            S_ONE_WEEK,
+            pge_id,
+        )
+        insert_into_month(
+            self,
+            interval_end,
+            month_start,
+            prev_date,
+            month_sum,
+            month_cnt,
+            ONE_MONTH,
+            cur_datetime,
+            pge_id,
+        )
+        insert_into_week(
+            self,
+            interval_end,
+            week_start,
+            prev_date,
+            week_sum,
+            week_cnt,
+            S_ONE_WEEK,
+            pge_id,
+        )
+        insert_into_day(
+            self,
+            interval_end,
+            day_start,
+            prev_date,
+            day_sum,
+            day_cnt,
+            S_ONE_DAY,
+            min_heap,
+            pge_id,
+        )
+        insert_into_part(
+            self,
+            interval_end,
+            part_start,
+            prev_date,
+            part_sum,
+            timezone,
+            part_type,
+            pge_id,
+        )
+        insert_into_hour(
+            self, start, duration, value, watt_hours, date, part_type, pge_id
+        )
 
         #  Update the info table
         self.cursor.execute(
-            "UPDATE info SET first_entry = ? WHERE id=0;", (self.first_entry,))
+            "UPDATE info SET first_entry = ? WHERE id=0;", (self.first_entry,)
+        )
         self.cursor.execute(
-            "UPDATE info SET last_entry = ? WHERE id=0;", (self.last_entry,))
+            "UPDATE info SET last_entry = ? WHERE id=0;", (self.last_entry,)
+        )
         self.cursor.execute(
-            "UPDATE info SET max_watt_hour = ? WHERE id=0;",
-            (self.max_watt_hour,))
-        cur_timestamp = int(time.time()*1000)
+            "UPDATE info SET max_watt_hour = ? WHERE id=0;", (self.max_watt_hour,)
+        )
+        cur_timestamp = int(time.time() * 1000)
         self.cursor.execute(
-            "UPDATE info SET last_update = ? WHERE id=0;", (cur_timestamp,))
+            "UPDATE info SET last_update = ? WHERE id=0;", (cur_timestamp,)
+        )
         self.last_update = cur_timestamp
 
         #  Insert into the incomplete table
         day_min = min(min_heap)
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             INSERT INTO incomplete (
                 id,
                 start,
@@ -536,31 +635,29 @@ class EnergyHistory():
                 year_sum,
                 year_cnt,
                 year_start)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);""", (
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);""",
+            (
                 cur_timestamp,
                 start,
                 date,
-
                 part_sum,
                 part_type,
                 part_start,
-
                 day_sum,
                 day_cnt,
                 day_start,
                 day_min,
-
                 week_sum,
                 week_cnt,
                 week_start,
-
                 month_sum,
                 month_cnt,
                 month_start,
-
                 year_sum,
                 year_cnt,
-                year_start))
+                year_start,
+            ),
+        )
 
         #  Commit changes to the database
         self.cursor.execute("COMMIT")
@@ -570,19 +667,19 @@ class EnergyHistory():
         calculate_baseline(self)
 
         self.cursor.execute("COMMIT")
-        
-        
 
-    def save_json(self, type='json'):
+    def save_json(self, pge_id, type="json"):
         """Make the JSON representation of the EnergyHistory DB."""
 
         cur = self.cursor
 
         #  Check for any changes in the DB
         cur.execute("SELECT last_update FROM info")
-        if self.json['info']['last_update'] == self.last_update:
-            _LOGGER.info(f"DB last_update {self.json['info']['last_update']} "
-                         f"matches JSON last_update {self.last_update}")
+        if self.json["info"]["last_update"] == self.last_update:
+            _LOGGER.info(
+                f"DB last_update {self.json['info']['last_update']} "
+                f"matches JSON last_update {self.last_update}"
+            )
             return True
 
         #  Set timedeltas
@@ -596,56 +693,76 @@ class EnergyHistory():
         MS_HOUR = 3600000
 
         #  Get the table index references
-        cur.execute("SELECT start FROM hour ORDER BY start ASC;")
+        cur.execute(
+            "SELECT start FROM hour WHERE pge_id=? ORDER BY start ASC;", (pge_id,)
+        )
         hour_list = [x[0] * 1000 for x in cur.fetchall()]
-        cur.execute("SELECT start FROM part ORDER BY start ASC;")
+        cur.execute(
+            "SELECT start FROM part WHERE pge_id=? ORDER BY start ASC;", (pge_id,)
+        )
         part_list = [x[0] * 1000 for x in cur.fetchall()]
-        cur.execute("SELECT start FROM day ORDER BY start ASC;")
+        cur.execute(
+            "SELECT start FROM day WHERE pge_id=? ORDER BY start ASC;", (pge_id,)
+        )
         day_list = [x[0] * 1000 for x in cur.fetchall()]
-        cur.execute("SELECT start FROM week ORDER BY start ASC;")
+        cur.execute(
+            "SELECT start FROM week WHERE pge_id=? ORDER BY start ASC;", (pge_id,)
+        )
         week_list = [x[0] * 1000 for x in cur.fetchall()]
-        cur.execute("SELECT start FROM month ORDER BY start ASC;")
+        cur.execute(
+            "SELECT start FROM month WHERE pge_id=? ORDER BY start ASC;", (pge_id,)
+        )
         month_list = [x[0] * 1000 for x in cur.fetchall()]
-        cur.execute("SELECT start FROM year ORDER BY start ASC;")
+        cur.execute(
+            "SELECT start FROM year WHERE pge_id=? ORDER BY start ASC;", (pge_id,)
+        )
         year_list = [x[0] * 1000 for x in cur.fetchall()]
 
         hour_count = len(hour_list)
-        
+
         #  Get the info TABLE.
-        cur.execute("""
+        cur.execute(
+            """
             SELECT max_watt_hour, first_entry, last_entry, n_parts,
                 part_values, last_update
             FROM info
             WHERE id=0;
-            """)
+            """
+        )
 
-        (max_watt_hour,
-         first_entry,
-         last_entry,
-         n_parts,
-         part_values,
-         last_update) = cur.fetchone()
+        (
+            max_watt_hour,
+            first_entry,
+            last_entry,
+            n_parts,
+            part_values,
+            last_update,
+        ) = cur.fetchone()
 
-        self.json['info'] = {
-            'max_watt_hour': max_watt_hour,
-            'first_entry': first_entry,
-            'last_entry': last_entry,
-            'n_parts': n_parts,
-            'part_values': part_values,
-            'last_update': last_update
+        self.json["info"] = {
+            "max_watt_hour": max_watt_hour,
+            "first_entry": first_entry,
+            "last_entry": last_entry,
+            "n_parts": n_parts,
+            "part_values": part_values,
+            "last_update": last_update,
         }
 
-#  year ----------------------------------------------------------------------
+        #  year ----------------------------------------------------------------------
         update_end = 0
-        if len(self.json['year']) > 0:
-            update_end = self.json['year'][-1]['interval_end']
+        if len(self.json["year"]) > 0:
+            update_end = self.json["year"][-1]["interval_end"]
 
-        cur.execute("""
+        cur.execute(
+            """
             SELECT start, year_avg, year_sum, middle, end
             FROM year
             WHERE end > ?
+            AND pge_id=?
             ORDER BY start ASC;
-            """, (update_end,))
+            """,
+            (update_end, pge_id),
+        )
 
         i = 0
         for start, year_avg, year_sum, middle, end in cur.fetchall():
@@ -659,38 +776,39 @@ class EnergyHistory():
             #  Let's have this write to a variable instead of directly to json
             #  The variable can be passed to json with .extend and sent to
             #  JS as "the new data"
-            self.json['year'].append({
-                'x': bar_center,
-                'y': year_avg,
-                
-                'sum': year_sum,
-
-                'type': 'year',
-                'interval_start': start,
-                'interval_end': end,
-
-                'i_month_start': bisect_left(month_list, start),
-                'i_month_end': bisect_left(month_list, end),
-                'i_week_start': bisect_left(week_list, start),
-                'i_week_end': bisect_left(week_list, end),
-                'i_day_start': bisect_left(day_list, start),
-                'i_day_end': bisect_left(day_list, end),
-                'i_part_start': bisect_left(part_list, start),
-                'i_part_end': bisect_left(part_list, end),
-                'i_hour_start': bisect_left(hour_list, start),
-                'i_hour_end': bisect_left(hour_list, end),
-
-                })
-            self.json['lookup']['year'][start] = i
+            self.json["year"].append(
+                {
+                    "x": bar_center,
+                    "y": year_avg,
+                    "sum": year_sum,
+                    "type": "year",
+                    "interval_start": start,
+                    "interval_end": end,
+                    "i_month_start": bisect_left(month_list, start),
+                    "i_month_end": bisect_left(month_list, end),
+                    "i_week_start": bisect_left(week_list, start),
+                    "i_week_end": bisect_left(week_list, end),
+                    "i_day_start": bisect_left(day_list, start),
+                    "i_day_end": bisect_left(day_list, end),
+                    "i_part_start": bisect_left(part_list, start),
+                    "i_part_end": bisect_left(part_list, end),
+                    "i_hour_start": bisect_left(hour_list, start),
+                    "i_hour_end": bisect_left(hour_list, end),
+                }
+            )
+            self.json["lookup"]["year"][start] = i
             i += 1
-#  /year ---------------------------------------------------------------------
+        #  /year ---------------------------------------------------------------------
 
-#  month ----------------------------------------------------------------------
-        cur.execute("""
+        #  month ----------------------------------------------------------------------
+        cur.execute(
+            """
             SELECT start, middle, end, month_avg, month_sum
             FROM month
+            WHERE pge_id=?
             ORDER BY start ASC;
-            """)
+            """, (pge_id,)
+        )
 
         i = 0
         for start, middle, end, month_avg, month_sum in cur.fetchall():
@@ -700,43 +818,48 @@ class EnergyHistory():
             start = start * 1000
             bar_center = middle * 1000
             end = end * 1000
-    
-            i_year = bisect_right(
-                [year_obj['interval_start'] for year_obj in self.json['year']],
-                start) - 1
 
-            self.json['month'].append({
-                'x': bar_center,
-                'y': month_avg,
-                
-                'sum': month_sum,
+            i_year = (
+                bisect_right(
+                    [year_obj["interval_start"] for year_obj in self.json["year"]],
+                    start,
+                )
+                - 1
+            )
 
-                'type': 'month',
-                'interval_start': start,
-                'interval_end': end,
-
-                'i_week_start': bisect_left(week_list, start),
-                'i_week_end': bisect_left(week_list, end),
-                'i_day_start': bisect_left(day_list, start),
-                'i_day_end': bisect_left(day_list, end),
-                'i_part_start': bisect_left(part_list, start),
-                'i_part_end': bisect_left(part_list, end),
-                'i_hour_start': bisect_left(hour_list, start),
-                'i_hour_end': bisect_left(hour_list, end),
-
-                'i_year': i_year,
-                })
-            self.json['lookup']['month'][start] = i
+            self.json["month"].append(
+                {
+                    "x": bar_center,
+                    "y": month_avg,
+                    "sum": month_sum,
+                    "type": "month",
+                    "interval_start": start,
+                    "interval_end": end,
+                    "i_week_start": bisect_left(week_list, start),
+                    "i_week_end": bisect_left(week_list, end),
+                    "i_day_start": bisect_left(day_list, start),
+                    "i_day_end": bisect_left(day_list, end),
+                    "i_part_start": bisect_left(part_list, start),
+                    "i_part_end": bisect_left(part_list, end),
+                    "i_hour_start": bisect_left(hour_list, start),
+                    "i_hour_end": bisect_left(hour_list, end),
+                    "i_year": i_year,
+                }
+            )
+            self.json["lookup"]["month"][start] = i
             i += 1
-#  /month ---------------------------------------------------------------------
+        #  /month ---------------------------------------------------------------------
 
-#  week -----------------------------------------------------------------------
-        cur.execute("""
+        #  week -----------------------------------------------------------------------
+        cur.execute(
+            """
             SELECT start, middle, end, week_avg, week_sum
             FROM week
+            WHERE pge_id=?
             ORDER BY start ASC;
-            """)
-        #print([month_obj['interval_start'] for month_obj in self.json['month']])
+            """, (pge_id,)
+        )
+        # print([month_obj['interval_start'] for month_obj in self.json['month']])
         i = 0
         for start, middle, end, week_avg, week_sum in cur.fetchall():
 
@@ -746,42 +869,47 @@ class EnergyHistory():
             bar_center = middle * 1000
             end = end * 1000
 
-            i_month = bisect_right(
-                [month_obj['interval_start'] for month_obj in self.json['month']],
-                start) - 1
-            #print(f'{start} is < {self.json["month"][i_month]["interval_start"]}')
-            #print(i_month)
+            i_month = (
+                bisect_right(
+                    [month_obj["interval_start"] for month_obj in self.json["month"]],
+                    start,
+                )
+                - 1
+            )
+            # print(f'{start} is < {self.json["month"][i_month]["interval_start"]}')
+            # print(i_month)
 
-            self.json['week'].append({
-                'x': bar_center,
-                'y': week_avg,
-                
-                'sum': week_sum,
-
-                'type': 'week',
-                'interval_start': start,
-                'interval_end': end,
-
-                'i_day_start': bisect_left(day_list, start),
-                'i_day_end': bisect_left(day_list, end),
-                'i_part_start': bisect_left(part_list, start),
-                'i_part_end': bisect_left(part_list, end),
-                'i_hour_start': bisect_left(hour_list, start),
-                'i_hour_end': bisect_left(hour_list, end),
-
-                'i_month': i_month,
-                'i_year': self.json['month'][i_month]['i_year'],
-                })
-            self.json['lookup']['week'][start] = i
+            self.json["week"].append(
+                {
+                    "x": bar_center,
+                    "y": week_avg,
+                    "sum": week_sum,
+                    "type": "week",
+                    "interval_start": start,
+                    "interval_end": end,
+                    "i_day_start": bisect_left(day_list, start),
+                    "i_day_end": bisect_left(day_list, end),
+                    "i_part_start": bisect_left(part_list, start),
+                    "i_part_end": bisect_left(part_list, end),
+                    "i_hour_start": bisect_left(hour_list, start),
+                    "i_hour_end": bisect_left(hour_list, end),
+                    "i_month": i_month,
+                    "i_year": self.json["month"][i_month]["i_year"],
+                }
+            )
+            self.json["lookup"]["week"][start] = i
             i += 1
-#  /week ----------------------------------------------------------------------
+        #  /week ----------------------------------------------------------------------
 
-#  day  -----------------------------------------------------------------------
-        cur.execute("""
+        #  day  -----------------------------------------------------------------------
+        cur.execute(
+            """
             SELECT start, middle, end, day_avg, day_sum, baseline
             FROM day
+            WHERE pge_id=?
             ORDER BY start ASC;
-            """)
+            """, (pge_id,)
+        )
 
         # Behold, an unfortunately lengthy indented for block
         i = 0
@@ -793,72 +921,83 @@ class EnergyHistory():
             bar_center = middle * 1000
             end = end * 1000
 
-            i_week = bisect_right(
-                [week_obj['interval_start'] for week_obj in self.json['week']],
-                start) - 1
-            
-            i_month = bisect_right(
-                [month_obj['interval_start'] for month_obj in self.json['month']],
-                start) - 1
+            i_week = (
+                bisect_right(
+                    [week_obj["interval_start"] for week_obj in self.json["week"]],
+                    start,
+                )
+                - 1
+            )
 
-            self.json['day'].append({
-                'x': bar_center,
-                'y': day_avg,
-                
-                'sum': day_sum,
+            i_month = (
+                bisect_right(
+                    [month_obj["interval_start"] for month_obj in self.json["month"]],
+                    start,
+                )
+                - 1
+            )
 
-                'type': 'day',
-                'baseline': baseline,
-                'interval_start': start,
-                'interval_end': end,
-
-                'i_hour_start': bisect_left(hour_list, start),
-                'i_hour_end': bisect_left(hour_list, end),
-
-                'i_week': i_week,
-                'i_month': i_month,
-                'i_year': self.json['week'][i_week]['i_year'],
-                })
-            self.json['lookup']['day'][start] = i
+            self.json["day"].append(
+                {
+                    "x": bar_center,
+                    "y": day_avg,
+                    "sum": day_sum,
+                    "type": "day",
+                    "baseline": baseline,
+                    "interval_start": start,
+                    "interval_end": end,
+                    "i_hour_start": bisect_left(hour_list, start),
+                    "i_hour_end": bisect_left(hour_list, end),
+                    "i_week": i_week,
+                    "i_month": i_month,
+                    "i_year": self.json["week"][i_week]["i_year"],
+                }
+            )
+            self.json["lookup"]["day"][start] = i
             i += 1
-#  /day  ----------------------------------------------------------------------
+        #  /day  ----------------------------------------------------------------------
 
-#  part -----------------------------------------------------------------------
-        cur.execute("""
-            SELECT start, start_iso_8601, end, end_iso_8601, middle,
-                middle_iso_8601, date, part_type, part_avg, part_sum
-            FROM part;
-            """)
+        #  part -----------------------------------------------------------------------
+        cur.execute(
+            """
+            SELECT start, end, middle, date, part_type, part_avg, part_sum
+            FROM part
+            WHERE pge_id=?;
+            """, (pge_id,)
+        )
 
         # Behold, an unfortunately lengthy indented for block
         i = 0
         next_start = 0
-        for (   start,
-                start_iso_8601,
-                end,
-                end_iso_8601,
-                middle,
-                middle_iso_8601,
-                date,
-                part_type,
-                part_avg,
-                part_sum) in cur.fetchall():
+        for (
+            start,
+            end,
+            middle,
+            date,
+            part_type,
+            part_avg,
+            part_sum,
+        ) in cur.fetchall():
 
             bar_center = middle * 1000
             start = start * 1000
             end = end * 1000
 
-            i_day = bisect_right(
-                [day_obj['interval_start'] for day_obj in self.json['day']],
-                bar_center) - 1
+            i_day = (
+                bisect_right(
+                    [day_obj["interval_start"] for day_obj in self.json["day"]],
+                    bar_center,
+                )
+                - 1
+            )
 
             interval = self.part_intervals[part_type]
-            
+
             if start == hour_list[next_start]:
                 i_hour_start = next_start
             else:
                 i_hour_start = bisect_left(hour_list, start)
-            
+
             end_index = min(i_hour_start + interval, hour_count - 1)
 
             if end == hour_list[end_index]:
@@ -866,39 +1005,40 @@ class EnergyHistory():
             else:
                 i_hour_end = bisect_left(hour_list, end)
 
-            self.json['part'].append({
-                'x': bar_center,
-                'y': part_avg,
-                
-                'sum': part_sum,
-
-                'type': 'part',
-                'part': part_type,
-                'interval_start': start,
-                'interval_end': end,
-
-                'i_hour_start': i_hour_start,
-                'i_hour_end': i_hour_end,
-
-                'i_day': i_day,
-                'i_week': self.json['day'][i_day]['i_week'],
-                'i_month': self.json['day'][i_day]['i_month'],
-                'i_year': self.json['day'][i_day]['i_year'],
-                })
-            self.json['lookup']['part'][start] = i
+            self.json["part"].append(
+                {
+                    "x": bar_center,
+                    "y": part_avg,
+                    "sum": part_sum,
+                    "type": "part",
+                    "part": part_type,
+                    "interval_start": start,
+                    "interval_end": end,
+                    "i_hour_start": i_hour_start,
+                    "i_hour_end": i_hour_end,
+                    "i_day": i_day,
+                    "i_week": self.json["day"][i_day]["i_week"],
+                    "i_month": self.json["day"][i_day]["i_month"],
+                    "i_year": self.json["day"][i_day]["i_year"],
+                }
+            )
+            self.json["lookup"]["part"][start] = i
             i += 1
             next_start = i_hour_start + interval
-#  /part ----------------------------------------------------------------------
+        #  /part ----------------------------------------------------------------------
 
-#  TO DO - data table for raw ESPI/other
+        #  TO DO - data table for raw ESPI/other
 
-#  hour -----------------------------------------------------------------------
-        cur.execute("""
+        #  hour -----------------------------------------------------------------------
+        cur.execute(
+            """
             SELECT start, middle, end, watt_hours, part_type
             FROM hour
+            WHERE pge_id=?
             ORDER BY start ASC;
-            """)
-        
+            """, (pge_id,)
+        )
+
         i = 0
         for start, middle, end, watt_hours, part_type in cur.fetchall():
             #  TO DO : memoize to reduce search size on the bisect
@@ -907,36 +1047,41 @@ class EnergyHistory():
             bar_center = middle * 1000
             end = end * 1000
 
-            i_part = bisect_right(
-                    [part_obj['interval_start'] for part_obj in self.json['part']],
-                    start) - 1
+            i_part = (
+                bisect_right(
+                    [part_obj["interval_start"] for part_obj in self.json["part"]],
+                    start,
+                )
+                - 1
+            )
 
-            i_day = bisect_right(
-                [day_obj['interval_start'] for day_obj in self.json['day']],
-                start) - 1
+            i_day = (
+                bisect_right(
+                    [day_obj["interval_start"] for day_obj in self.json["day"]], start
+                )
+                - 1
+            )
 
-            self.json['hour'].append({
-                'x': bar_center,
-                'y': watt_hours,
-
-                'sum': watt_hours,
-
-                'type': 'hour',
-                'part': part_type,
-                'interval_start': start,
-                'interval_end': end,
-
-                'i_data_start': 0,
-                'i_data_end': 0,
-
-                'i_part': i_part,
-                'i_day': i_day,
-                'i_week': self.json['day'][i_day]['i_week'],
-                'i_month': self.json['day'][i_day]['i_month'],
-                'i_year': self.json['day'][i_day]['i_year'],
-            })
-            self.json['lookup']['hour'][start] = i
+            self.json["hour"].append(
+                {
+                    "x": bar_center,
+                    "y": watt_hours,
+                    "sum": watt_hours,
+                    "type": "hour",
+                    "part": part_type,
+                    "interval_start": start,
+                    "interval_end": end,
+                    "i_data_start": 0,
+                    "i_data_end": 0,
+                    "i_part": i_part,
+                    "i_day": i_day,
+                    "i_week": self.json["day"][i_day]["i_week"],
+                    "i_month": self.json["day"][i_day]["i_month"],
+                    "i_year": self.json["day"][i_day]["i_year"],
+                }
+            )
+            self.json["lookup"]["hour"][start] = i
             i += 1
-#  /hour ----------------------------------------------------------------------
+        #  /hour ----------------------------------------------------------------------
 
         return True
