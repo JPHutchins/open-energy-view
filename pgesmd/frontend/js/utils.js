@@ -1,3 +1,4 @@
+
 export function getPromise() {
   return new Promise(function(resolve, reject) {
     const request = new XMLHttpRequest();
@@ -122,9 +123,10 @@ export function getDataNow() {
 }
 
 export async function getCompleteData() {
-  let response = await fetch("/data/json");
-  let data = await response.json();
-  return data;
+  return axios.get("/api/data", AuthService.getAuthHeader())
+  // let response = await fetch("/data/json");
+  // let data = await response.json();
+  // return data;
 }
 
 function getEnergyHistory(promise) {
