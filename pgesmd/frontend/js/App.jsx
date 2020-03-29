@@ -1,36 +1,41 @@
-import React from "react";
-import {
-  Navbar,
-  Nav,
-  NavDropdown,
-  Form,
-  FormControl,
-  Button
-} from "react-bootstrap";
+import React, { useState } from "react";
+import cookie from "react-cookies";
 import EnergyHistory from "./components/energyHistory";
-import DataRegistrationModal from "./components/DataRegistrationModal";
 import Login from "./components/Login";
+import NavigationBar from "./components/NavigationBar";
+import UserRegistration from "./components/UserRegistration";
+import { withRouter, Route, Switch, Redirect } from "react-router-dom";
+import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 
 const testing = true;
 
-export default class App extends React.Component {
-  render() {
-    return (
-      <>
-      <Login />
-        <Navbar bg="dark" variant="dark">
-          <Navbar.Brand href="#home">Energy Monitor</Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="mr-auto">
-              <Nav.Link>History</Nav.Link>
-              <Nav.Link>Insights</Nav.Link>
-              <DataRegistrationModal />
-            </Nav>
-          </Navbar.Collapse>
-        </Navbar>
-        <EnergyHistory />
-      </>
-    );
-  }
-}
+const App = props => {
+  const [view, setView] = useState(<Redirect to="/login" />);
+
+  const restrictView = () => {
+    if (cookie.load("logged_in")) {
+      setView(<EnergyHistory />);
+    } else {
+      setView(<Redirect to="/login" />);
+    }
+  };
+
+  return (
+    <>
+      <NavigationBar callback={restrictView} />
+      <Switch>
+        <Route path="/login">
+          <Login callback={restrictView} />
+        </Route>
+        <Route exact path="/">
+          {view}
+        </Route>
+        <Route exact path="/create_account">
+          <UserRegistration callback={restrictView} />
+        </Route>
+      </Switch>
+    </>
+  );
+};
+
+export default withRouter(App);
