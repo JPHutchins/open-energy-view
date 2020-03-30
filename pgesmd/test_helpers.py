@@ -12,6 +12,8 @@ from pgesmd.helpers import (
     parse_espi_data
 )
 from pgesmd.database import EnergyHistory
+from . import create_app
+
 
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,20 +46,31 @@ answers = [
            ]
 
 
+
 class TestHelpers(unittest.TestCase):
     """Test pgesmd.helpers."""
 
-    # def setUp(self):
-    #     self.pr = cProfile.Profile()
-    #     self.pr.enable()
-    #     print("\n<<<---")
+    @classmethod
+    def setUpClass(cls):
+        create_app()
+        
+
+
+    def setUp(self):
+        pass
+        # self.pr = cProfile.Profile()
+        # self.pr.enable()
+        # print("\n<<<---")
     
-    # def tearDown(self):
-    #     p = Stats(self.pr)
-    #     p.strip_dirs()
-    #     p.sort_stats('cumtime')
-    #     p.print_stats()
-    #     print("\n--->>>")
+    def tearDown(self):
+        db = EnergyHistory(path='/test/data/energy_history_test.db',
+                           json_path='/test/data/energy_history_test.json')
+        db.delete_data()
+        # p = Stats(self.pr)
+        # p.strip_dirs()
+        # p.sort_stats('cumtime')
+        # p.print_stats()
+        # print("\n--->>>")
 
     def test_get_auth_file(self):
         """Test get_auth_file()."""
@@ -100,7 +113,7 @@ class TestHelpers(unittest.TestCase):
     def test_database_write(self):
         """Verify integrity of data after SQL INSERT."""
         query = "SELECT value FROM hour WHERE start=?"
-
+        
         db = EnergyHistory(path='/test/data/energy_history_test.db',
                            json_path='/test/data/energy_history_test.json')
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
@@ -129,8 +142,8 @@ class TestHelpers(unittest.TestCase):
     
     def test_database_add(self):
         """Test adding new data to the DB."""
-        if os.path.exists(f'{PROJECT_PATH}/test/data/energy_history_test.db'):
-            os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        # if os.path.exists(f'{PROJECT_PATH}/test/data/energy_history_test.db'):
+        #     os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         query = "SELECT value FROM hour WHERE start=?"
 
@@ -141,7 +154,7 @@ class TestHelpers(unittest.TestCase):
         db.insert_espi_xml(xml, 13371337)
 
         last_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-17.xml'
-        db.insert_espi_xml(last_day_xml)
+        db.insert_espi_xml(last_day_xml, 13371337)
 
         cur = db.cursor
 
@@ -165,7 +178,7 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(7948, cur.fetchone()[0])
 
         next_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-16.xml'
-        db.insert_espi_xml(next_day_xml)
+        db.insert_espi_xml(next_day_xml, 13371337)
         starts = [(1508396400, 446800), (1571378400, 1643400)]
         for start, answer in starts:
             cur.execute(query, (start,))
@@ -180,7 +193,7 @@ class TestHelpers(unittest.TestCase):
 
         next_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-18.xml'
         self.assertTrue(db.is_sequential(next_day_xml))
-        db.insert_espi_xml(next_day_xml)
+        db.insert_espi_xml(next_day_xml, 13371337)
         starts = [(1508396400, 446800), (1571382000, 1089700)]
         for start, answer in starts:
             cur.execute(query, (start,))
@@ -194,7 +207,7 @@ class TestHelpers(unittest.TestCase):
         #  Cut that out, let's insert the rest of October!
         for day in range(19, 32):
             db.insert_espi_xml(
-                f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-{day}.xml')
+                f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-{day}.xml', 13371337)
 
         week_start = 1571036400
         week_end = week_start + 604800 - 3600
@@ -206,8 +219,8 @@ class TestHelpers(unittest.TestCase):
         self.assertAlmostEqual(week_summed_avg, week_avg)
 
     def test_database_json_export(self):
-        if os.path.exists(f'{PROJECT_PATH}/test/data/energy_history_test.db'):
-            os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
+        # if os.path.exists(f'{PROJECT_PATH}/test/data/energy_history_test.db'):
+        #     os.remove(f'{PROJECT_PATH}/test/data/energy_history_test.db')
 
         db = EnergyHistory(path='/test/data/energy_history_test.db',
                            json_path='/test/data/energy_history_test.json',
@@ -218,7 +231,7 @@ class TestHelpers(unittest.TestCase):
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
         db.insert_espi_xml(xml, 13371337)
 
-        db.save_json()
+        db.save_json(13371337)
         db_json = db.get_json()
         
         #  Check first and last entries
@@ -294,7 +307,7 @@ class TestHelpers(unittest.TestCase):
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
         db.insert_espi_xml(xml, 13371337)
 
-        db.save_json()
+        db.save_json(13371337)
         db_json = db.get_json()
         
         test_intvls = [
