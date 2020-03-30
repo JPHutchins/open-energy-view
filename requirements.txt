@@ -1,3 +1,4 @@
+aniso8601==8.0.0
 astroid==2.3.1
 bcrypt==3.1.7
 certifi==2019.9.11
@@ -9,7 +10,9 @@ flake8==3.7.8
 Flask==1.1.1
 Flask-Bcrypt==0.7.1
 Flask-JWT==0.3.2
+Flask-JWT-Extended==3.24.1
 Flask-Login==0.4.1
+Flask-RESTful==0.3.8
 Flask-SQLAlchemy==2.4.1
 idna==2.8
 isort==4.3.21
@@ -23,7 +26,7 @@ pandas==0.25.3
 pycodestyle==2.5.0
 pycparser==2.19
 pyflakes==2.1.1
-PyJWT==1.4.2
+PyJWT==1.7.1
 pylint==2.4.2
 python-dateutil==2.8.1
 pytz==2019.3
