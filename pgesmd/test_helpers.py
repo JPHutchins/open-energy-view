@@ -104,7 +104,7 @@ class TestHelpers(unittest.TestCase):
         db = EnergyHistory(path='/test/data/energy_history_test.db',
                            json_path='/test/data/energy_history_test.json')
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
-        db.insert_espi_xml(xml)
+        db.insert_espi_xml(xml, 13371337)
 
         cur = db.cursor
 
@@ -138,7 +138,7 @@ class TestHelpers(unittest.TestCase):
                            json_path='/test/data/energy_history_test.json')
 
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
-        db.insert_espi_xml(xml)
+        db.insert_espi_xml(xml, 13371337)
 
         last_day_xml = f'{PROJECT_PATH}/test/data/espi/Single Days/2019-10-17.xml'
         db.insert_espi_xml(last_day_xml)
@@ -216,7 +216,7 @@ class TestHelpers(unittest.TestCase):
                                (6, "Day"),
                                (17, "Evening")])
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
-        db.insert_espi_xml(xml)
+        db.insert_espi_xml(xml, 13371337)
 
         db.save_json()
         db_json = db.get_json()
@@ -292,7 +292,7 @@ class TestHelpers(unittest.TestCase):
                                (6, "Day"),
                                (17, "Evening")])
         xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
-        db.insert_espi_xml(xml)
+        db.insert_espi_xml(xml, 13371337)
 
         db.save_json()
         db_json = db.get_json()
