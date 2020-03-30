@@ -278,6 +278,25 @@ class EnergyHistory:
         if start == last_entry + 3600:
             return True
         return False
+    
+    def delete_data(self):
+        tables = [
+            "daily_passive",
+            "day",
+            "hour",
+            "incomplete",
+            "info",
+            "month",
+            "part",
+            "raw",
+            "week",
+            "year"
+        ]
+
+        for table in tables:
+            self.cursor.execute("DELETE FROM "+table+";")
+        self.cursor.execute("COMMIT;")
+        self.cursor.close()
 
     def get_next_start(self):
         """Return the value needed for API 'published-min'."""
