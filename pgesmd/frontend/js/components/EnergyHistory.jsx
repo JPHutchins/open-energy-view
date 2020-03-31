@@ -1,6 +1,6 @@
 import React from "react";
 import moment from "moment";
-import EnergyChart from "./energyChart";
+import EnergyChart from "./EnergyChart";
 import DataLoader from "./DataLoader";
 import { getCompleteData, makeOptions } from "../utils.js";
 import "../../css/App.css";
