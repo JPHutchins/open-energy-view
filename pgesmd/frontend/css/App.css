@@ -45,11 +45,32 @@
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
+.source-tabs {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding: 0px;
+  border: 1px solid black;
+}
+
+.tab-container {
+  display: flex;
+}
+
+.tab {
+  height: 30px;
+  width: 10vw;
+  border: 1px solid red;
+}
+
+.tab-selected {
+  border-bottom: none;
+}
+
 .energy-chart {
   margin-left: 0px;
   margin-right: 0px;
   padding: 10px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); */
 }
 
 .default-text {
