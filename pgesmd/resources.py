@@ -105,6 +105,8 @@ class GetDatabase(Resource):
     def post(self):
         data = get_data_parser.parse_args()
         print(data)
+        if not data['source'] or data['source'] == 'None':
+            return
         user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
         source = (
             db.session.query(models.PgeSmd)
@@ -114,7 +116,9 @@ class GetDatabase(Resource):
         )
         eh = EnergyHistory(path="/test/data/energy_history_test.db")
         if eh.save_json(source.id):
+            eh.cursor.close()
             return json.dumps(eh.json)
+        eh.cursor.close()
 
 
 class AddPgeAccount(Resource):
