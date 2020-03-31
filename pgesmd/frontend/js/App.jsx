@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import cookie from "react-cookies";
-import EnergyHistory from "./components/energyHistory";
+import SourceTabs from "./components/SourceTabs";
 import Login from "./components/Login";
 import NavigationBar from "./components/NavigationBar";
 import UserRegistration from "./components/UserRegistration";
@@ -14,7 +14,7 @@ const App = props => {
 
   const restrictView = () => {
     if (cookie.load("logged_in")) {
-      setView(<EnergyHistory />);
+      setView(<SourceTabs />);
     } else {
       setView(<Redirect to="/login" />);
     }
