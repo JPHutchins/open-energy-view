@@ -2,28 +2,30 @@ import React, { useState } from "react";
 import EnergyHistory from "./EnergyHistory";
 
 const SourceTabs = props => {
-  const [nTabs, setNTabs] = useState(0); // set to props.(length of tab list) after testing
+  const [nTabs, setNTabs] = useState(3); // set to props.(length of tab list) after testing
   const [selectedTab, setSelectedTab] = useState(0); // always preselect first tab
 
   const demoChart = <EnergyHistory source="PG&E" />; // test
   const blankChart = <EnergyHistory source="None" />; //test
 
   const testingList = [demoChart, blankChart]; // can remove after testing
-//   setNTabs(2); // can remove after testing
+  //   setNTabs(2); // can remove after testing
 
-  const handleClick = (e) => {
-      setSelectedTab(parseInt(e.currentTarget.getAttribute('value')))
-  }
+  const handleClick = e => {
+    setSelectedTab(parseInt(e.currentTarget.getAttribute("value")));
+  };
 
   const tab = tabIndex => {
-    if (tabIndex === selectedTab)
+    if (tabIndex === selectedTab) {
+      const last = tabIndex === nTabs ? "tab-selected-last" : "tab-selected";
       return (
         <div
-          className="tab tab-selected"
+          className={last}
           value={tabIndex}
           onClick={handleClick}
         />
       );
+    }
     return <div className="tab" value={tabIndex} onClick={handleClick} />;
   };
 

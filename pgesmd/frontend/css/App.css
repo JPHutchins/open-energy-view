@@ -50,7 +50,8 @@
   margin-right: 10px;
   margin-top: 20px;
   padding: 0px;
-  border: 1px solid black;
+  height:80%;
+  width: 95%;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
@@ -61,14 +62,28 @@
 .tab {
   height: 30px;
   width: 10vw;
-  border: 1px solid red;
+  border-right: 1px solid grey;
+  border-bottom: 1px solid gray;
+  border-top: none;
 }
 
-.tab-selected {
+.tab-selected  {
+  height: 30px;
+  width: 10vw;
   border-bottom: none;
+  border-right: 1px solid grey;
+}
+
+.tab-selected-last  {
+  height: 30px;
+  width: 10vw;
+  border-bottom: none;
+  border-right: none;
 }
 
 .energy-chart {
+  width: 95%;
+  height: 95%;
   margin-left: 0px;
   margin-right: 0px;
   padding: 10px;
