@@ -19,8 +19,8 @@ export default class EnergyChart extends React.Component {
           padding: "10px",
           position: "relative",
           margin: "auto",
-          width: "80vw",
-          height: "80vh"
+          height: "100%",
+          width: "100%"
         }}
       >
         <Bar
