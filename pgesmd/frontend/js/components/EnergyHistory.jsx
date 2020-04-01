@@ -861,7 +861,7 @@ export default class EnergyHistory extends React.Component {
           <DataLoader />
         ) : (
           <div className="energy-history">
-            <div style={{ display: "flex" }}>
+            <div style={{ display: "flex", height: "90%" }}>
               <div className="energy-chart">
                 <EnergyChart
                   ref="bargraph"
