@@ -12,6 +12,7 @@ const SourceTabs = props => {
 
   const demoChart = <EnergyHistory source="PG&E" />; // test
   const blankChart = <EnergyHistory source="None" />; //test
+  const sourceTitle = ["PG&E", "Office UPS", "Dryer", "IoTaWatt"];
 
   const testingList = [demoChart, blankChart]; // can remove after testing
   //   setNTabs(2); // can remove after testing
@@ -34,9 +35,15 @@ const SourceTabs = props => {
   const tab = tabIndex => {
     if (tabIndex === selectedTab) {
       const last = tabIndex === nTabs ? "tab-selected-last" : "tab-selected";
-      return <div className={last} value={tabIndex} onClick={handleClick} />;
+      return (
+        <div className={last} value={tabIndex} onClick={handleClick}>{sourceTitle[tabIndex]}</div>
+      );
     }
-    return <div className="tab" value={tabIndex} onClick={handleClick} />;
+    return (
+      <div className="tab" value={tabIndex} onClick={handleClick}>
+        {sourceTitle[tabIndex]}
+      </div>
+    );
   };
 
   return (
