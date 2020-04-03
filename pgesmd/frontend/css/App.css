@@ -65,6 +65,15 @@
   border-right: 1px solid grey;
   border-bottom: 1px solid gray;
   border-top: none;
+  text-align: center;
+  color: grey;
+  cursor: pointer;
+  
+      
+}
+
+.tab-container div.tab:hover {
+  color: black;
 }
 
 .tab-selected  {
@@ -72,6 +81,8 @@
   width: 10vw;
   border-bottom: none;
   border-right: 1px solid grey;
+  text-align: center;
+  color: black;
 }
 
 .tab-selected-last  {
@@ -79,6 +90,8 @@
   width: 10vw;
   border-bottom: none;
   border-right: none;
+  text-align: center;
+  color: black;
 }
 
 .energy-chart {
