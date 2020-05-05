@@ -1,12 +1,6 @@
 .container {
   display: flex;
-  padding: 5px;
-  margin-top: 20px;
   max-width: none;
-  height: 55px;
-  width: 100%;
-  min-width: 100px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .box {
@@ -30,29 +24,18 @@
 
 .right-bar {
   display: flex;
-  padding-left: 20px;
   flex-direction: column;
-  align-content: space-between;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  height: 777px;
+  padding: 5px;
 }
 
-.right-bar > div {
-  padding: 5px;
-  height: 100%;
-  width: 100%;
-  min-width: 100px;
+.right-bar > div, .right-bar>canvas, .right-bar>hr {
   max-width: 150px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .source-tabs {
-  margin-left: 10px;
-  margin-right: 10px;
-  margin-top: 20px;
   padding: 0px;
-  height:80%;
-  width: 95%;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .tab-container {
@@ -68,15 +51,13 @@
   text-align: center;
   color: grey;
   cursor: pointer;
-  
-      
 }
 
 .tab-container div.tab:hover {
   color: black;
 }
 
-.tab-selected  {
+.tab-selected {
   height: 30px;
   width: 10vw;
   border-bottom: none;
@@ -85,7 +66,7 @@
   color: black;
 }
 
-.tab-selected-last  {
+.tab-selected-last {
   height: 30px;
   width: 10vw;
   border-bottom: none;
@@ -95,12 +76,12 @@
 }
 
 .energy-chart {
-  width: 95%;
-  height: 95%;
+  width: 100vw;
+  min-width: 100px;
+  max-width: 1800px;
   margin-left: 0px;
   margin-right: 0px;
   padding: 10px;
-  /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); */
 }
 
 .default-text {
@@ -141,13 +122,13 @@
 }
 
 .energy-history {
-  display: block;
-  justify-content: center;
-  align-content: space-around;
-  padding: 10px;
-  padding-top: 20px;
-  max-height: 800px;
+  display: flex;
+  flex-direction: column;
   margin: auto;
+}
+
+.energy-history-main-div {
+    display: flex;
 }
 
 .btn {
