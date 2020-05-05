@@ -19,16 +19,16 @@ export default class EnergyHistory extends React.Component {
       data: {},
       description: {
         startDate: "",
-        endDate: ""
+        endDate: "",
       },
       disableScroll: {
         disableNext: false,
-        disablePrev: false
+        disablePrev: false,
       },
       hideChart: false,
       range: "day",
       partPieView: "baseline",
-      carbonMultiplier: 0.05 // PGE is actually 0.05
+      carbonMultiplier: 0.05, // PGE is actually 0.05
     };
     this.indexReference = {
       hour: "day",
@@ -36,7 +36,7 @@ export default class EnergyHistory extends React.Component {
       day: "month",
       week: "year",
       month: "year",
-      year: "all"
+      year: "all",
     };
     this.detailLookup = {
       hour: false,
@@ -44,14 +44,14 @@ export default class EnergyHistory extends React.Component {
       day: "part",
       week: "day",
       month: "week",
-      year: "week"
+      year: "week",
     };
     this.superTypeToType = {
       day: "hour",
       week: "part",
       month: "day",
       year: "week",
-      complete: "month"
+      complete: "month",
     };
     this.typeOrder = {
       data: 0,
@@ -61,12 +61,12 @@ export default class EnergyHistory extends React.Component {
       week: 4,
       month: 5,
       year: 6,
-      complete: 7
+      complete: 7,
     };
     this.zoom = ["hour", "part", "day", "week", "month", "year"];
     this.chartSettings = {
       barPercentage: 1,
-      barThickness: "flex"
+      barThickness: "flex",
     };
     this.database = undefined;
     this.loadingData = true;
@@ -74,8 +74,12 @@ export default class EnergyHistory extends React.Component {
 
   componentDidMount = () => {
     axios
-      .post("/api/data", {source: this.props.source}, AuthService.getAuthHeader())
-      .then(res => {
+      .post(
+        "/api/data",
+        { source: this.props.source },
+        AuthService.getAuthHeader()
+      )
+      .then((res) => {
         this.database = fromJS(JSON.parse(res.data));
         this.loadingData = false;
         console.log(this.database.toJS());
@@ -85,7 +89,7 @@ export default class EnergyHistory extends React.Component {
       });
   };
 
-  setMostRecent = type => {
+  setMostRecent = (type) => {
     const superType = this.database.get(this.indexReference[type]);
 
     const lo = superType.get(superType.size - 1).get("i_" + type + "_start");
@@ -119,11 +123,11 @@ export default class EnergyHistory extends React.Component {
 
     return {
       disableNext: disableNext,
-      disablePrev: disablePrev
+      disablePrev: disablePrev,
     };
   };
 
-  handleScroll = direction => {
+  handleScroll = (direction) => {
     this.scroll(direction, this.state.data.datasets[0].data, this.database);
   };
 
@@ -149,37 +153,28 @@ export default class EnergyHistory extends React.Component {
 
   getSlicePoints = (startDate, endDate, type, database) => {
     return {
-      lo: database
-        .get("lookup")
-        .get(type)
-        .get(startDate.toString()),
-      hi: database
-        .get("lookup")
-        .get(type)
-        .get(endDate.toString())
+      lo: database.get("lookup").get(type).get(startDate.toString()),
+      hi: database.get("lookup").get(type).get(endDate.toString()),
     };
   };
 
   getChartData = (lo, hi, type, database) => {
-    return database
-      .get(type)
-      .slice(lo, hi)
-      .toJS();
+    return database.get(type).slice(lo, hi).toJS();
   };
 
   getChartColors = (data, type, color) => {
     if (type === "part" || type === "hour") {
-      return data.map(item => color[item["part"]]);
+      return data.map((item) => color[item["part"]]);
     }
     return "#32b345";
   };
 
-  barClickEvent = index => {
+  barClickEvent = (index) => {
     const zoom = {
       part: "hour",
       day: "hour",
       week: "part",
-      month: "day"
+      month: "day",
     };
 
     const currentData = this.state.data.datasets[0].data;
@@ -213,7 +208,7 @@ export default class EnergyHistory extends React.Component {
     this.setChartData(data, zoom[type], color);
   };
 
-  tooltip = data => ({
+  tooltip = (data) => ({
     label: (tooltipItem, data) => {
       return tooltipItem.yLabel + " Watts used";
     },
@@ -233,7 +228,7 @@ export default class EnergyHistory extends React.Component {
         " - " +
         end.format("hA").toString();
       return interval;
-    }
+    },
   });
 
   getChartDataset = (data, color) => {
@@ -244,11 +239,11 @@ export default class EnergyHistory extends React.Component {
       barPercentage: this.chartSettings.barPercentage,
       barThickness: this.chartSettings.barThickness,
       order: 1,
-      hidden: this.state.hideChart
+      hidden: this.state.hideChart,
     };
   };
 
-  getBaselineDataset = data => {
+  getBaselineDataset = (data) => {
     let newData;
     if (data[0].type === "day") {
       newData = [];
@@ -256,36 +251,24 @@ export default class EnergyHistory extends React.Component {
       for (let i = 0; i < data.length; i++) {
         newData.push({
           x: data[i].interval_start,
-          y: data[i].baseline
+          y: data[i].baseline,
         });
         j = i;
       }
       newData.push({
         x: data[j].interval_end,
-        y: data[j].baseline
+        y: data[j].baseline,
       });
     } else if (data[0].type === "hour") {
       newData = [
         {
-          x: this.database
-            .get("day")
-            .get(data[0].i_day)
-            .get("interval_start"),
-          y: this.database
-            .get("day")
-            .get(data[0].i_day)
-            .get("baseline")
+          x: this.database.get("day").get(data[0].i_day).get("interval_start"),
+          y: this.database.get("day").get(data[0].i_day).get("baseline"),
         },
         {
-          x: this.database
-            .get("day")
-            .get(data[0].i_day)
-            .get("interval_end"),
-          y: this.database
-            .get("day")
-            .get(data[0].i_day)
-            .get("baseline")
-        }
+          x: this.database.get("day").get(data[0].i_day).get("interval_end"),
+          y: this.database.get("day").get(data[0].i_day).get("baseline"),
+        },
       ];
     } else if (data[0].type === "month") {
       const dailyData = this.database.get("day").toJS();
@@ -294,13 +277,13 @@ export default class EnergyHistory extends React.Component {
       for (let i = 0; i < dailyData.length; i++) {
         newData.push({
           x: dailyData[i].interval_start,
-          y: dailyData[i].baseline
+          y: dailyData[i].baseline,
         });
         j = i;
       }
       newData.push({
         x: dailyData[j].interval_end,
-        y: dailyData[j].baseline
+        y: dailyData[j].baseline,
       });
     } else {
       const superType = this.indexReference[data[0].type];
@@ -308,14 +291,8 @@ export default class EnergyHistory extends React.Component {
       const dailyData = this.database
         .get("day")
         .slice(
-          this.database
-            .get(superType)
-            .get(i_superType)
-            .get("i_day_start"),
-          this.database
-            .get(superType)
-            .get(i_superType)
-            .get("i_day_end")
+          this.database.get(superType).get(i_superType).get("i_day_start"),
+          this.database.get(superType).get(i_superType).get("i_day_end")
         )
         .toJS();
       newData = [];
@@ -323,13 +300,13 @@ export default class EnergyHistory extends React.Component {
       for (let i = 0; i < dailyData.length; i++) {
         newData.push({
           x: dailyData[i].interval_start,
-          y: dailyData[i].baseline
+          y: dailyData[i].baseline,
         });
         j = i;
       }
       newData.push({
         x: dailyData[j].interval_end,
-        y: dailyData[j].baseline
+        y: dailyData[j].baseline,
       });
     }
     return {
@@ -339,7 +316,7 @@ export default class EnergyHistory extends React.Component {
       hidden: this.state.hideChart,
       type: "line",
       backgroundColor: "#d1ddd2",
-      pointRadius: 0
+      pointRadius: 0,
     };
   };
 
@@ -349,8 +326,8 @@ export default class EnergyHistory extends React.Component {
         data: {
           datasets: [
             this.getChartDataset(data, color),
-            this.getBaselineDataset(data)
-          ]
+            this.getBaselineDataset(data),
+          ],
         },
         options: makeOptions(
           data,
@@ -359,7 +336,7 @@ export default class EnergyHistory extends React.Component {
           this.database
         ),
         description: this.createDescription(data, type),
-        disableScroll: this.checkDisableScroll(data, type, this.database)
+        disableScroll: this.checkDisableScroll(data, type, this.database),
       },
       () => {
         const chart = this.refs.bargraph.refs.bargraph.chartInstance;
@@ -370,13 +347,13 @@ export default class EnergyHistory extends React.Component {
             this.tooltip(data),
             this.database,
             chart
-          )
+          ),
         });
       }
     );
   };
 
-  getDetailData = barData => {
+  getDetailData = (barData) => {
     const type = barData[0].type;
     if (type === "hour") return barData;
     const superType = this.indexReference[type];
@@ -399,7 +376,7 @@ export default class EnergyHistory extends React.Component {
     return data;
   };
 
-  getDetailDataset = data => {
+  getDetailDataset = (data) => {
     return {
       data: this.getDetailData(data),
       backgroundColor: "#DFFFFA",
@@ -413,7 +390,7 @@ export default class EnergyHistory extends React.Component {
       hoverBorderColor: "#DFFFFA",
       hoverBorderWidth: 5,
       order: 0,
-      hidden: !this.state.hideChart
+      hidden: !this.state.hideChart,
     };
   };
 
@@ -426,7 +403,7 @@ export default class EnergyHistory extends React.Component {
     const zoom = getZoom(targetRange, currentRange);
   };
 
-  handleRangeSelect = event => {
+  handleRangeSelect = (event) => {
     const targetSuperType = event.toLowerCase();
     const targetType = this.superTypeToType[targetSuperType];
 
@@ -440,7 +417,7 @@ export default class EnergyHistory extends React.Component {
       );
 
       this.setState({
-        range: targetSuperType
+        range: targetSuperType,
       });
       return;
     }
@@ -471,10 +448,7 @@ export default class EnergyHistory extends React.Component {
     const lo = targetRange.get("i_" + targetType + "_start");
     const hi = targetRange.get("i_" + targetType + "_end");
 
-    const targetData = this.database
-      .get(targetType)
-      .slice(lo, hi)
-      .toJS();
+    const targetData = this.database.get(targetType).slice(lo, hi).toJS();
 
     this.setChartData(
       targetData,
@@ -483,14 +457,14 @@ export default class EnergyHistory extends React.Component {
     );
 
     this.setState({
-      range: targetSuperType
+      range: targetSuperType,
     });
   };
 
   handleEvening = () => {
     const userColors = ["#0000A0", "#add8e6", "#800080"];
     const newData = this.state.data.datasets[0].data.filter(
-      item => item.part === 0
+      (item) => item.part === 0
     );
     this.setState({
       data: {
@@ -499,15 +473,15 @@ export default class EnergyHistory extends React.Component {
             data: newData,
             backgroundColor: userColors[0],
             barPercentage: 1.1,
-            barThickness: "flex"
-          }
-        ]
+            barThickness: "flex",
+          },
+        ],
       },
-      i_intvl: "i_week"
+      i_intvl: "i_week",
     });
   };
 
-  createDescription = data => {
+  createDescription = (data) => {
     const type = data[0].type;
     const superType = this.indexReference[type];
 
@@ -569,7 +543,7 @@ export default class EnergyHistory extends React.Component {
       startDate: startDate,
       endDate: endDate,
       interval: interval,
-      intervalSum: intervalSum / 1000
+      intervalSum: intervalSum / 1000,
     };
   };
 
@@ -649,20 +623,12 @@ export default class EnergyHistory extends React.Component {
       case "day":
       case "month":
       case "year":
-        yoyStart = moment(curStartMoment)
-          .subtract(1, "year")
-          .valueOf();
-        yoyEnd = moment(curEndMoment)
-          .subtract(1, "year")
-          .valueOf();
+        yoyStart = moment(curStartMoment).subtract(1, "year").valueOf();
+        yoyEnd = moment(curEndMoment).subtract(1, "year").valueOf();
         break;
       case "week":
-        yoyStart = moment(curStartMoment)
-          .subtract(52, "week")
-          .valueOf();
-        yoyEnd = moment(curEndMoment)
-          .subtract(52, "week")
-          .valueOf();
+        yoyStart = moment(curStartMoment).subtract(52, "week").valueOf();
+        yoyEnd = moment(curEndMoment).subtract(52, "week").valueOf();
         break;
       default:
         console.error(`superType: ${superType} not found`);
@@ -760,7 +726,7 @@ export default class EnergyHistory extends React.Component {
       [0, 0, 0]
     );
 
-    const baselinesTotals = baselines.map(baseline => baseline.y * 24);
+    const baselinesTotals = baselines.map((baseline) => baseline.y * 24);
 
     const baselineTotal = baselinesTotals.reduce((acc, x) => x + acc, 0);
 
@@ -794,27 +760,27 @@ export default class EnergyHistory extends React.Component {
         {
           data: outputData(),
           backgroundColor: this.colors,
-          label: "Use"
-        }
+          label: "Use",
+        },
       ],
-      labels: ["Night", "Day", "Evening", "Background"]
+      labels: ["Night", "Day", "Evening", "Background"],
     };
   };
 
-  getPieOptions = data => {
-    const slices = data => {
+  getPieOptions = (data) => {
+    const slices = (data) => {
       if (data) {
         return data.datasets[0].data.reduce((acc, x) => acc + x, 0);
       }
     };
-    const percents = slices => {
+    const percents = (slices) => {
       const total = slices.reduce((acc, x) => acc + x, 0);
-      return slices.map(x => Math.round(x / total));
+      return slices.map((x) => Math.round(x / total));
     };
 
     const total = slices(data);
 
-    const readableWatts = watts => {
+    const readableWatts = (watts) => {
       if (watts < 1000) {
         return watts.toString() + "W";
       } else if (watts < 10000) {
@@ -828,14 +794,14 @@ export default class EnergyHistory extends React.Component {
       maintainAspectRatio: true,
       aspectRatio: 1,
       legend: {
-        display: false
+        display: false,
       },
       tooltips: {
         callbacks: {
-          title: tooltipItem => {
+          title: (tooltipItem) => {
             return data.labels[tooltipItem[0].index];
           },
-          label: tooltipItem => {
+          label: (tooltipItem) => {
             return (
               Math.round(
                 (data.datasets[0].data[tooltipItem.index] / total) * 100
@@ -844,24 +810,24 @@ export default class EnergyHistory extends React.Component {
               "\n" +
               readableWatts(data.datasets[0].data[tooltipItem.index])
             );
-          }
-        }
-      }
+          },
+        },
+      },
     };
   };
 
-  handlePartPieView = e => {
+  handlePartPieView = (e) => {
     this.setState({ partPieView: e });
   };
 
   render() {
     return (
-      <div>
+      <>
         {this.loadingData ? (
           <DataLoader />
         ) : (
           <div className="energy-history">
-            <div style={{ display: "flex", height: "90%" }}>
+            <div className="energy-history-main-div">
               <div className="energy-chart">
                 <EnergyChart
                   ref="bargraph"
@@ -899,7 +865,7 @@ export default class EnergyHistory extends React.Component {
             />
           </div>
         )}
-      </div>
+      </>
     );
   }
 }
