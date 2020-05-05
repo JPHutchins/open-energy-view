@@ -26,7 +26,7 @@ export default class RightBar extends React.PureComponent {
     for (let i = 0; i < data.length; i++) {
       output.push({
         x: data[i].x,
-        y: data[i].y - data[i].baseline
+        y: data[i].y - data[i].baseline,
       });
     }
 
@@ -36,40 +36,38 @@ export default class RightBar extends React.PureComponent {
   render() {
     return (
       <div className="right-bar">
-        <div>
-          <ViewTotal sum={this.props.sum} avg={this.props.avg} />
-          <hr />
-          <CarbonFootprint
-            sum={this.props.sum}
-            carbonMultiplier={this.props.carbonMultiplier}
-          />
-          <hr />
-          {this.props.yoy !== false && <SeasonalYoY yoy={this.props.yoy} />}
-          <hr />
-          <div className="kilowatt-hour">Activities</div>
-          <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
-          <PartDropdown
-            handleClick={this.props.handlePartPieView}
-            defaultValue={this.props.defaultValue}
-            selected={this.props.selectedPartPieView}
-          />
-          <hr />
-          <Trendline
-            data={this.getData(this.props.data, 0)}
-            database={this.props.database}
-            name="Active Use"
-            range={this.props.range}
-            baseline={false}
-          />
-          <hr />
-          <Trendline
-            data={this.getData(this.props.data, 0)}
-            database={this.props.database}
-            name="Background"
-            range={this.props.range}
-            baseline={true}
-          />
-        </div>
+        <ViewTotal sum={this.props.sum} avg={this.props.avg} />
+        <hr />
+        <CarbonFootprint
+          sum={this.props.sum}
+          carbonMultiplier={this.props.carbonMultiplier}
+        />
+        <hr />
+        {this.props.yoy !== false && <SeasonalYoY yoy={this.props.yoy} />}
+        <hr />
+        <div className="kilowatt-hour">Activities</div>
+        <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
+        <PartDropdown
+          handleClick={this.props.handlePartPieView}
+          defaultValue={this.props.defaultValue}
+          selected={this.props.selectedPartPieView}
+        />
+        <hr />
+        <Trendline
+          data={this.getData(this.props.data, 0)}
+          database={this.props.database}
+          name="Active Use"
+          range={this.props.range}
+          baseline={false}
+        />
+        <hr />
+        <Trendline
+          data={this.getData(this.props.data, 0)}
+          database={this.props.database}
+          name="Background"
+          range={this.props.range}
+          baseline={true}
+        />
       </div>
     );
   }
