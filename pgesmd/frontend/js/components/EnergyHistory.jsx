@@ -14,7 +14,7 @@ const { fromJS } = require("immutable");
 export default class EnergyHistory extends React.Component {
   constructor(props) {
     super(props);
-    this.colors = ["#0000A0", "#add8e6", "#800080"];
+    this.colors = ["#8100B8", "#84D2FA", "#FF4300"];
     this.state = {
       data: {},
       description: {
@@ -166,7 +166,7 @@ export default class EnergyHistory extends React.Component {
     if (type === "part" || type === "hour") {
       return data.map((item) => color[item["part"]]);
     }
-    return "#32b345";
+    return "#315659";
   };
 
   barClickEvent = (index) => {

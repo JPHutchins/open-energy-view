@@ -1,3 +1,15 @@
+html, #root {
+    background-color: #F6F8FF;
+}
+
+.bg-dark {
+    background-color: #315659 !important;
+}
+
+.btn-primary {
+    background-color: #315659;
+}
+
 .container {
   display: flex;
   max-width: none;
