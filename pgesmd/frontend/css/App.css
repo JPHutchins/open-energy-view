@@ -1,13 +1,27 @@
-html, #root {
-    background-color: #F6F8FF;
+html,
+#root {
+  background-color: #f6f8ff;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100vh;
+}
+
+footer {
+  text-align: center;
+  margin: 10px;
+  justify-self: flex-end;
 }
 
 .bg-dark {
-    background-color: #5F5566 !important;
+  background-color: #5f5566 !important;
 }
 
 .btn-primary {
-    background-color: #5F5566;
+  background-color: #5f5566;
 }
 
 .container {
@@ -38,16 +52,32 @@ html, #root {
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
-  height: 777px;
+  justify-content: space-between;
   padding: 5px;
 }
 
-.right-bar > div, .right-bar>canvas, .right-bar>hr {
-  max-width: 150px;
+.right-bar > div,
+.right-bar > canvas {
+  width: 150px;
+}
+
+@media screen and (max-height: 800px) {
+  .right-bar {
+    flex-direction: row;
+    flex-shrink: 0;
+    width: 310px;
+    height: 75%;
+  }
+  .right-bar > div {
+    align-self: center;
+  }
 }
 
 .source-tabs {
   padding: 0px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .tab-container {
@@ -88,7 +118,7 @@ html, #root {
 }
 
 .energy-chart {
-  width: 100vw;
+  width: 100%;
   min-width: 100px;
   max-width: 1800px;
   margin-left: 0px;
@@ -136,11 +166,13 @@ html, #root {
 .energy-history {
   display: flex;
   flex-direction: column;
-  margin: auto;
+  margin: 0;
+  height: 100%;
 }
 
 .energy-history-main-div {
-    display: flex;
+  display: flex;
+  height: 100%;
 }
 
 .btn {
