@@ -39,10 +39,11 @@ class AuthService {
   }
 
   logOut() {
+    const csrf_access_token = cookie.load("csrf_access_token");
     cookie.remove("csrf_access_token");
     cookie.remove("csrf_refresh_token");
     cookie.remove("logged_in");
-    return axios.post("/token/remove", this.getAuthHeader());
+    return axios.post("/token/remove", csrf_access_token);
   }
 }
 
