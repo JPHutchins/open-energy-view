@@ -145,16 +145,12 @@ footer {
   margin: auto;
   margin-top: 40px;
   padding: 10px;
-  max-width: 400px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .register-box {
   margin: auto;
   margin-top: 40px;
   padding: 10px;
-  max-width: 600px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .data-loader {
