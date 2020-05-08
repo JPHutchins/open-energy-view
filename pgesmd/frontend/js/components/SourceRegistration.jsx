@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from "react";
 import cookie from "react-cookies";
 import { Form, Button, DropdownButton, Dropdown } from "react-bootstrap";
+import addPgeSource from "../service/AddSourceService";
 
 const SourceRegistration = (props) => {
   const [form, setForm] = useState("");
-  const [name , setName] = useState("");
+  const [name, setName] = useState("");
   const [thirdPartyId, setThirdPartyId] = useState("");
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
 
-  function handleSubmit(e) {
+  const handleSubmit = (e) => {
     e.preventDefault();
-  }
+    const regInfo = {
+      name: name,
+      thirdPartyId: thirdPartyId,
+      clientId: clientId,
+      clientSecret: clientSecret,
+    };
+    console.log(addPgeSource(regInfo));
+  };
 
   const initialForm = (
     <div className="register-box">
@@ -27,13 +35,25 @@ const SourceRegistration = (props) => {
     </div>
   );
 
-  const pgeForm = (
+  useEffect(() => {
+    setForm(initialForm);
+  }, []);
+
+  const showPge = (e) => {
+    switch (e) {
+      case "pge":
+        setForm(pgeForm);
+        break;
+    }
+  };
+
+  return (
     <div className="register-box">
       <Form onSubmit={handleSubmit}>
-      <Form.Text className="form-title">PG&E Share My Data</Form.Text>
-      <Form.Text className="form-title">Self Access</Form.Text>
+        <Form.Text className="form-title">PG&E Share My Data</Form.Text>
+        <Form.Text className="form-title">Self Access</Form.Text>
         <Form.Group controlId="formPge">
-        <Form.Label>Name</Form.Label>
+          <Form.Label>Name</Form.Label>
           <Form.Control
             className="login-form"
             type="text"
@@ -69,20 +89,6 @@ const SourceRegistration = (props) => {
       </Form>
     </div>
   );
-
-  useEffect(() => {
-    setForm(initialForm);
-  }, []);
-
-  const showPge = (e) => {
-    switch (e) {
-      case "pge":
-        setForm(pgeForm);
-        break;
-    }
-  };
-
-  return form;
 };
 
 export default SourceRegistration;

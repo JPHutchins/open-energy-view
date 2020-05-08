@@ -24,6 +24,10 @@ auth_parser.add_argument("password", help="Cannot be blank", required=True)
 
 get_data_parser = reqparse.RequestParser()
 get_data_parser.add_argument("source", required=False)
+get_data_parser.add_argument("name", required=False)
+get_data_parser.add_argument("thirdPartyId", required=False)
+get_data_parser.add_argument("clientId", required=False)
+get_data_parser.add_argument("clientSecret", required=False)
 
 
 class AuthToken(Resource):
@@ -59,9 +63,10 @@ class Register(AuthToken):
 class AddPgeSource(AuthToken):
     @jwt_required
     def post(self):
+        print(get_data_parser.parse_args())
         user = db.session.query(models.User).filter_by(
             email=get_jwt_identity()).first()
-        data = auth_parser.parse_args()
+        data = get_data_parser.parse_args()
         new_account = models.PgeSmd(
             u_id=user.id,
             friendly_name=data["name"],
