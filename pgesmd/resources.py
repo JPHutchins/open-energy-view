@@ -8,7 +8,6 @@ from flask_jwt_extended import (
     jwt_required,
     jwt_refresh_token_required,
     get_jwt_identity,
-    get_raw_jwt,
     set_access_cookies,
     set_refresh_cookies,
     unset_jwt_cookies,
@@ -20,8 +19,8 @@ from . import db
 from .database import EnergyHistory
 
 auth_parser = reqparse.RequestParser()
-auth_parser.add_argument("email", help="This field cannot be blank", required=True)
-auth_parser.add_argument("password", help="This field cannot be blank", required=True)
+auth_parser.add_argument("email", help="Cannot be blank", required=True)
+auth_parser.add_argument("password", help="Cannot be blank", required=True)
 
 get_data_parser = reqparse.RequestParser()
 get_data_parser.add_argument("source", required=False)
@@ -45,7 +44,8 @@ class Register(AuthToken):
 
         new_user = models.User(
             email=data["email"],
-            password=bcrypt.generate_password_hash(data["password"]).decode("utf-8"),
+            password=bcrypt.generate_password_hash(
+                data["password"]).decode("utf-8"),
         )
         try:
             new_user.save_to_db()
@@ -54,6 +54,24 @@ class Register(AuthToken):
             return {"message": str(e)}, 500
         finally:
             pass
+
+
+class AddPgeSource(AuthToken):
+    @jwt_required
+    def post(self):
+        user = db.session.query(models.User).filter_by(
+            email=get_jwt_identity()).first()
+        data = auth_parser.parse_args()
+        new_account = models.PgeSmd(
+            u_id=user.id,
+            friendly_name=data["name"],
+            reg_type="self",
+            third_party_id=data["thirdPartyId"],
+            client_id=data["clientId"],
+            client_secret=data["clientSecret"]
+        )
+        new_account.save_to_db()
+        print(new_account.id)
 
 
 class UserLogin(AuthToken):
@@ -67,6 +85,7 @@ class UserLogin(AuthToken):
             return self.make_cookies(data["email"])
         else:
             return {"message": "Bad credentials"}, 401
+
 
 class UserLogout(Resource):
     def post(self):
@@ -107,7 +126,8 @@ class GetDatabase(Resource):
         print(data)
         if not data['source'] or data['source'] == 'None':
             return
-        user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
+        user = db.session.query(models.User).filter_by(
+            email=get_jwt_identity()).first()
         source = (
             db.session.query(models.PgeSmd)
             .filter_by(friendly_name=data["source"])
@@ -121,10 +141,11 @@ class GetDatabase(Resource):
         eh.cursor.close()
 
 
-class AddPgeAccount(Resource):
+class AddDemoPge(Resource):
     @jwt_required
     def post(self, friendly_name="PG&E", reg_type="Self Access"):
-        user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
+        user = db.session.query(models.User).filter_by(
+            email=get_jwt_identity()).first()
         new_account = models.PgeSmd(
             id=13371337, u_id=user.id, friendly_name=friendly_name
         )

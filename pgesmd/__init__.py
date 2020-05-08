@@ -30,7 +30,8 @@ def create_app() -> Flask:
     rest.add_resource(resources.TokenRefresh, "/token/refresh")
     rest.add_resource(resources.AllUsers, "/users")
     rest.add_resource(resources.SecretResource, "/api/secret")
-    rest.add_resource(resources.AddPgeAccount, "/api/addpge")
+    rest.add_resource(resources.AddDemoPge, "/api/addpge")
+    rest.add_resource(resources.AddPgeSource, "/api/add/pge")
     rest.add_resource(resources.GetDatabase, "/api/data")
 
     # Initialize extensions with the Flask app
