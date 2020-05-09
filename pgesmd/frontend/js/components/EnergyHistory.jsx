@@ -69,7 +69,7 @@ export default class EnergyHistory extends React.Component {
       barPercentage: 1,
       barThickness: "flex",
     };
-    this.database = undefined;
+    this.database = null;
     this.loadingData = true;
   }
 
