@@ -268,12 +268,12 @@ class EnergyHistory:
 
             self.part_desc.append(start + " - " + end)
 
-    def is_sequential(self, xml_file):
-        """Check if the xml_file is the next sequence of data."""
+    def is_sequential(self, xml):
+        """Check if the xml is the next sequence of data."""
         self.cursor.execute("SELECT last_entry FROM info WHERE id=0")
         last_entry = self.cursor.fetchone()[0]
 
-        start = next(parse_espi_data(xml_file))[0]
+        start = next(parse_espi_data(xml))[0]
 
         if start == last_entry + 3600:
             return True
@@ -306,8 +306,8 @@ class EnergyHistory:
         """Return the JSON representation of the database."""
         return self.json
 
-    def insert_espi_xml(self, xml_file, pge_id, overwrite=False):
-        """Insert an ESPI XML file into the database.
+    def insert_espi_xml(self, xml, pge_id, overwrite=False):
+        """Insert an ESPI XML string into the database.
 
         The TABLE "espi" is updated with the raw ESPI data as well as a field,
         watt_hours, that has converted the field, value, to Watt hours; and a
@@ -353,7 +353,7 @@ class EnergyHistory:
 
         if self.last_entry == 0:  # first import, initialize starting values
             # print("OVERWRITING")
-            first_item = next(parse_espi_data(xml_file))
+            first_item = next(parse_espi_data(xml))
             first_start = first_item[0]
 
             prev_start = first_start - 3600
@@ -422,7 +422,7 @@ class EnergyHistory:
 
         c = Crosses(self.partitions[(part_type + 1) % len(self.partitions)][0])
 
-        for entry in parse_espi_data(xml_file):
+        for entry in parse_espi_data(xml):
             start, duration, value, watt_hours, date = entry
 
             if start <= prev_start and overwrite is False:
