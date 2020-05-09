@@ -41,11 +41,11 @@ const SourceTabs = props => {
     if (tabIndex === selectedTab) {
       const last = tabIndex === nTabs ? "tab-selected-last" : "tab-selected";
       return (
-        <div className={last} value={tabIndex} onClick={handleClick}>{sourceTitle[tabIndex]}</div>
+        <div key={tabIndex} className={last} value={tabIndex} onClick={handleClick}>{sourceTitle[tabIndex]}</div>
       );
     }
     return (
-      <div className="tab" value={tabIndex} onClick={handleClick}>
+      <div key={tabIndex} className="tab" value={tabIndex} onClick={handleClick}>
         {sourceTitle[tabIndex]}
       </div>
     );
