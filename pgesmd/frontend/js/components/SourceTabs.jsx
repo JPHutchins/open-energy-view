@@ -65,5 +65,4 @@ const SourceTabs = props => {
     </div>
   );
 };
-
 export default SourceTabs;
