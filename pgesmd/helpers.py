@@ -65,6 +65,20 @@ def get_auth_file(auth_path=f'{PROJECT_PATH}/auth/auth.json'):
         return None
 
 
+def get_bulk_id_from_xml(xml,
+                         ns='{http://naesb.org/espi}',
+                         ns1="{http://www.w3.org/2005/Atom}"):
+    """Get the PGE Bulk ID from the incoming xml."""
+    root = ET.fromstring(xml)
+    for child in root.iter(f'{ns1}link'):
+        link = child.attrib['href']
+        break
+    for i in range(len(link) - 1, 0, -1):
+        if link[i] == '/':
+            break
+    return int(link[i+1:])
+
+
 def parse_espi_data(xml, ns='{http://naesb.org/espi}'):
     """Generate ESPI tuple from ESPI XML.
 

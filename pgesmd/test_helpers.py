@@ -9,6 +9,7 @@ import json
 
 from pgesmd.helpers import (
     get_auth_file,
+    get_bulk_id_from_xml,
     parse_espi_data
 )
 
@@ -57,6 +58,14 @@ class TestHelpers(unittest.TestCase):
                 'fake_client_secret',
                 '/home/jp/pgesmd/test/cert/cert.crt',
                 '/home/jp/pgesmd/test/cert/private.key'))
+
+    def test_get_bulk_id(self):
+        """Test the Bulk ID parse."""
+        xml_fp = open(f'{PROJECT_PATH}/test/data/espi/espi_1_day.xml', 'r')
+        xml = xml_fp.read()
+        xml_fp.close()
+
+        self.assertEqual(get_bulk_id_from_xml(xml), 50916)
 
     def test_parse_espi(self):
         """Test parse_espi_data()."""
