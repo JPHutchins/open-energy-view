@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from operator import itemgetter
 from xml.etree import cElementTree as ET
+from io import StringIO
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ def get_auth_file(auth_path=f'{PROJECT_PATH}/auth/auth.json'):
         return None
 
 
-def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
+def parse_espi_data(xml, ns='{http://naesb.org/espi}'):
     """Generate ESPI tuple from ESPI XML.
 
     Sequentially yields a tuple for each Interval Reading:
@@ -78,11 +79,10 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
         missing hour is filled with the average of the previous and following
         values in order to maintain 24 hours per day.
     """
-    _LOGGER.debug(f"Trying to parse {xml_file}.")
+    _LOGGER.debug(f"Trying to parse {xml}.")
 
     # Find initial values
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
+    root = ET.fromstring(xml)
     for child in root.iter(f'{ns}timePeriod'):
         first_start = int(child.find(f'{ns}start').text)
         duration = int(child.find(f'{ns}duration').text)
@@ -90,8 +90,10 @@ def parse_espi_data(xml_file, ns='{http://naesb.org/espi}'):
     previous = (first_start - duration, 0, 0, 0, 0)
     root.clear()
 
+    xml = StringIO(xml)
+
     # Find all values
-    it = map(itemgetter(1), iter(ET.iterparse(xml_file)))
+    it = map(itemgetter(1), iter(ET.iterparse(xml)))
     for data in it:
         if data.tag == f'{ns}powerOfTenMultiplier':
             mp = int(data.text)

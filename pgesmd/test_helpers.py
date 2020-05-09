@@ -60,15 +60,18 @@ class TestHelpers(unittest.TestCase):
 
     def test_parse_espi(self):
         """Test parse_espi_data()."""
-        xml = f'{PROJECT_PATH}/test/data/espi/espi_1_day.xml'
+        xml_fp = open(f'{PROJECT_PATH}/test/data/espi/espi_1_day.xml', 'r')
+        xml = xml_fp.read()
         for entry, answer in zip(parse_espi_data(xml), answers):
             self.assertEqual(entry, answer)
+        xml_fp.close()
 
-        xml = f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml'
+        xml_fp = open(f'{PROJECT_PATH}/test/data/espi/espi_2_years.xml', 'r')
+        xml = xml_fp.read()
         dump = []
         for entry in parse_espi_data(xml):
             dump.append(entry)
-
+        xml_fp.close()
         #  17,496 hours / 24 = 729 days of data
         self.assertEqual(len(dump), 17496)
 
