@@ -57,7 +57,7 @@ class PgePostHandler(BaseHTTPRequestHandler):
 
         if self.to_db:
             db = EnergyHistory()
-            db.cursor.executemany(db.insert_espi, parse_espi_data(xml_data))
+            db.cursor.executemany(db.insert_espi_xml, parse_espi_data(xml_data))
             db.cursor.execute("COMMIT")
 
 
