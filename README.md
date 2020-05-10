@@ -5,7 +5,7 @@ PG&E makes available an API for all customers to see their hourly energy usage d
 
 ## Design
 
-![PGESMD](/docs/PGESMD_sketch.png)
+![PGESMD](/docs/PGESMD_sketch_full.png)
 
 ## Resources
 Green Button and ESPI
