@@ -6,7 +6,7 @@ import ssl
 import logging
 import os
 
-from pgesmd.helpers import parse_espi_data
+from pgesmd.helpers import parse_espi_data, get_bulk_id_from_xml
 from pgesmd.database import EnergyHistory
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,6 +24,11 @@ class PgePostHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         """Download the ESPI XML and save to database."""
+        if self.path == '/test':
+            self.send_response(200)
+            self.end_headers()
+            return
+
         if not self.path == '/pgesmd':
             return
 
@@ -56,9 +61,8 @@ class PgePostHandler(BaseHTTPRequestHandler):
                 _LOGGER.error("File not saved.")
 
         if self.to_db:
-            db = EnergyHistory()
-            db.cursor.executemany(db.insert_espi_xml, parse_espi_data(xml_data))
-            db.cursor.execute("COMMIT")
+            db = EnergyHistory(path='/test/data/energy_history_test.db')
+            db.insert_espi_xml(xml_data, get_bulk_id_from_xml(xml_data))
 
 
 class SelfAccessServer:
