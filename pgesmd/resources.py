@@ -140,7 +140,7 @@ class GetDatabase(Resource):
             .first()
         )
         eh = EnergyHistory(path="/test/data/energy_history_test.db")
-        if eh.save_json(source.id):
+        if eh.save_json(source.third_party_id):
             eh.cursor.close()
             return json.dumps(eh.json)
         eh.cursor.close()
