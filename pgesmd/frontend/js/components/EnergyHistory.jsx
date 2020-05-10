@@ -9,13 +9,11 @@ import RightBar from "./RightBar";
 import axios from "axios";
 import AuthService from "../service/AuthService";
 
-const { fromJS } = require("immutable");
-
 export default class EnergyHistory extends React.Component {
   constructor(props) {
     super(props);
     this.colors = ["#393984", "#65BDB3", "#B765BD"];
-    this.themeColor = '#5F5566';
+    this.themeColor = "#5F5566";
     this.state = {
       data: {},
       description: {
@@ -69,36 +67,24 @@ export default class EnergyHistory extends React.Component {
       barPercentage: 1,
       barThickness: "flex",
     };
-    this.database = null;
+    this.database = this.props.database;
     this.loadingData = true;
   }
 
   componentDidMount = () => {
-    axios
-      .post(
-        "/api/data",
-        { source: this.props.source },
-        AuthService.getAuthHeader()
-      )
-      .then((res) => {
-        this.database = fromJS(JSON.parse(res.data));
-        this.loadingData = false;
-        console.log(this.database.toJS());
-      })
-      .then(() => {
-        this.setMostRecent(this.superTypeToType[this.state.range]);
-      });
+    this.setMostRecent(this.superTypeToType[this.state.range]);
+    this.loadingData = false;
   };
 
   setMostRecent = (type) => {
     const superType = this.database.get(this.indexReference[type]);
-
+  
     const lo = superType.get(superType.size - 1).get("i_" + type + "_start");
     const hi = superType.get(superType.size - 1).get("i_" + type + "_end");
-
+ 
     const data = this.getChartData(lo, hi, type, this.database);
     const color = this.getChartColors(data, type, this.colors);
-
+  
     this.setChartData(data, type, color);
   };
 
