@@ -1,3 +1,14 @@
+const { fromJS } = require("immutable");
+
+export const parseDataResponse = (res) => {
+  //TODO: error handling
+  return JSON.parse(res.data)
+};
+
+export const immutableDb = (data) => {
+  return fromJS(data);
+};
+
 export const checkDisableScroll = (data, database, direction) => {
   const type = data[0].type;
 
@@ -24,17 +35,11 @@ export const checkDisableScroll = (data, database, direction) => {
  * @param {number} startDate The date in seconds since Unix epoch.
  */
 export const getLo = (database, type, startDate) => {
-  return database
-    .get("lookup")
-    .get(type)
-    .get(startDate.toString());
+  return database.get("lookup").get(type).get(startDate.toString());
 };
 
 export const getHi = (database, type, endDate) => {
-  return database
-    .get("lookup")
-    .get(type)
-    .get(endDate.toString());
+  return database.get("lookup").get(type).get(endDate.toString());
 };
 
 /**
@@ -46,10 +51,7 @@ export const getHi = (database, type, endDate) => {
  * @param {number} hi The end index of the interval.
  */
 export const getChartData = (database, type, lo, hi) => {
-  return database
-    .get(type)
-    .slice(lo, hi)
-    .toJS();
+  return database.get(type).slice(lo, hi).toJS();
 };
 
 /**
@@ -60,7 +62,7 @@ export const getChartData = (database, type, lo, hi) => {
  */
 export const getChartColors = (data, color) => {
   if (data[0].type === "part" || data[0].type === "hour") {
-    return data.map(item => color[item["part"]]);
+    return data.map((item) => color[item["part"]]);
   }
   return "#32b345";
 };
