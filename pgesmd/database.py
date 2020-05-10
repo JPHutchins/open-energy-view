@@ -32,6 +32,7 @@ class EnergyHistory:
 
     def __init__(
         self,
+        pge_id=None,
         path="/data/energy_history.db",
         json_path="/data/energy_history_test.json",
         partitions=[(1, "Night"), (7, "Day"), (18, "Evening")],
@@ -39,6 +40,7 @@ class EnergyHistory:
         """Open the connection to database and create tables."""
         self.path = path
         self.partitions = partitions
+        self.pge_id = pge_id
 
         # try:
         #     with open(f'{PROJECT_PATH}{json_path}') as json_file:
@@ -300,13 +302,15 @@ class EnergyHistory:
 
     def get_next_start(self):
         """Return the value needed for API 'published-min'."""
-        return self.last_entry + 3600
+        self.cursor.execute(
+            "SELECT start FROM hour WHERE pge_id=? ORDER BY start DESC LIMIT 1", (self.pge_id,))
+        return self.cursor.fetchone()[0] + 3600
 
     def get_json(self):
         """Return the JSON representation of the database."""
         return self.json
 
-    def insert_espi_xml(self, xml, pge_id, overwrite=False):
+    def insert_espi_xml(self, xml, pge_id, overwrite=True):
         """Insert an ESPI XML string into the database.
 
         The TABLE "espi" is updated with the raw ESPI data as well as a field,
