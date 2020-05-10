@@ -8,6 +8,8 @@ import SourceRegistration from "./components/SourceRegistration";
 import EnergyHistory from "./components/EnergyHistory";
 import { withRouter, Route, Switch, Redirect } from "react-router-dom";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
+import { fetchData } from "./FunctionComps";
+import DataLoader from "./components/DataLoader";
 
 const testing = true;
 
@@ -16,17 +18,20 @@ const App = (props) => {
 
   const restrictView = () => {
     if (cookie.load("logged_in")) {
-      const sources = [
-        {
-          title: "PG&E",
-          component: <EnergyHistory source="PG&E" />,
-        },
-        {
+      setView(<DataLoader />);
+      fetchData("PG&E").then((data) => {
+        const sources = [
+          {
+            title: "PG&E",
+            component: <EnergyHistory database={data} />,
+          },
+          {
             title: "Add New Source",
             component: <SourceRegistration />,
           },
-      ];
-      setView(<SourceTabs sources={sources} />);
+        ];
+        setView(<SourceTabs sources={sources} />);
+      });
     } else {
       setView(<Redirect to="/login" />);
     }
