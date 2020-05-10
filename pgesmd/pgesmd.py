@@ -11,6 +11,7 @@ from pgesmd.helpers import (
     save_espi_xml,
     parse_espi_data
 )
+from pgesmd.database import EnergyHistory
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,7 +73,12 @@ if __name__ == '__main__':
 
     api = SelfAccessApi(*auth)
 
-    request_post = api.async_request_latest_data()
+    db = EnergyHistory(
+        path="/test/data/energy_history_test.db",
+        pge_id=50916)
+    next_start = db.get_next_start()
+    db.conn.close()
+    request_post = api.async_request_sequential_data(next_start)
     
     try:
         server = SelfAccessServer(api)
