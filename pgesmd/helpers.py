@@ -93,7 +93,7 @@ def parse_espi_data(xml, ns='{http://naesb.org/espi}'):
         missing hour is filled with the average of the previous and following
         values in order to maintain 24 hours per day.
     """
-    _LOGGER.debug(f"Trying to parse {xml}.")
+    _LOGGER.debug(f"Parsing the XML.")
 
     # Find initial values
     root = ET.fromstring(xml)
