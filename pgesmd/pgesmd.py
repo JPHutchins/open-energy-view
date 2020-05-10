@@ -73,8 +73,8 @@ if __name__ == '__main__':
     api = SelfAccessApi(*auth)
 
     request_post = api.async_request_latest_data()
-    if request_post:
-        try:
-            server = SelfAccessServer(api)
-        except KeyboardInterrupt:
-            pass
+    
+    try:
+        server = SelfAccessServer(api)
+    except KeyboardInterrupt:
+        pass
