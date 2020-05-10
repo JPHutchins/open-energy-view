@@ -35,18 +35,6 @@ const SourceRegistration = (props) => {
     </div>
   );
 
-  useEffect(() => {
-    setForm(initialForm);
-  }, []);
-
-  const showPge = (e) => {
-    switch (e) {
-      case "pge":
-        setForm(pgeForm);
-        break;
-    }
-  };
-
   return (
     <div className="register-box">
       <Form onSubmit={handleSubmit}>
