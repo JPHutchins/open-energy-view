@@ -152,7 +152,7 @@ class AddDemoPge(Resource):
         user = db.session.query(models.User).filter_by(
             email=get_jwt_identity()).first()
         new_account = models.PgeSmd(
-            id=13371337, u_id=user.id, friendly_name=friendly_name
+            id=50916, u_id=user.id, friendly_name=friendly_name
         )
         new_account.save_to_db()
         print(new_account.id)
