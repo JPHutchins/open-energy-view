@@ -12,7 +12,9 @@ def fill_database():
     """Fill database using the test data."""
     create_app()
     db = EnergyHistory(path="/test/data/energy_history_test.db")
-    xml = f"{PROJECT_PATH}/test/data/espi/espi_2_years.xml"
+    xml_fp = open(f"{PROJECT_PATH}/test/data/espi/espi_2_years.xml")
+    xml = xml_fp.read()
+    xml_fp.close()
     db.insert_espi_xml(xml, 13371337)
     print(f"Filled database with data from {xml}")
 
