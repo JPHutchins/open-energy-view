@@ -78,13 +78,13 @@ export default class EnergyHistory extends React.Component {
 
   setMostRecent = (type) => {
     const superType = this.database.get(this.indexReference[type]);
-  
+
     const lo = superType.get(superType.size - 1).get("i_" + type + "_start");
     const hi = superType.get(superType.size - 1).get("i_" + type + "_end");
- 
+
     const data = this.getChartData(lo, hi, type, this.database);
     const color = this.getChartColors(data, type, this.colors);
-  
+
     this.setChartData(data, type, color);
   };
 
@@ -197,23 +197,39 @@ export default class EnergyHistory extends React.Component {
 
   tooltip = (data) => ({
     label: (tooltipItem, data) => {
-      return tooltipItem.yLabel + " Watts used";
+      if (!tooltipItem) return;
+      const i = tooltipItem.index;
+      const bar = data.datasets[0].data[i];
+      if (bar.type === "hour") return tooltipItem.yLabel + " Watts used";
+      return tooltipItem.yLabel + "Wh average";
     },
     title: (tooltipItem, data) => {
-      let bar = moment(tooltipItem[0].xLabel);
-      let start = bar.add(-30, "m");
-      let date = start.format("MMMM Do YYYY");
-      let weekday = start.format("dddd");
-      let start_hour = start.format("hA").toString();
-      let end = bar.add(60, "m");
-      let interval =
-        weekday +
-        "\n" +
-        date +
-        "\n" +
-        start_hour +
-        " - " +
-        end.format("hA").toString();
+      const i = tooltipItem[0].index;
+      const bar = data.datasets[0].data[i];
+      const start = moment(bar.interval_start);
+      const end = moment(bar.interval_end);
+      const date = start.format("MMMM Do YYYY");
+      const shortStartDate = moment(start).format("M/D/YY");
+      const shortEndDate = moment(end).format("M/D/YY");
+      const weekday = moment(start).format("dddd");
+      const start_hour = moment(start).format("hA").toString();
+      const end_hour = moment(end).format("hA").toString();
+      let interval = "";
+      switch (bar.type) {
+        case "hour":
+        case "part":
+          interval =
+            weekday + "\n" + date + "\n" + start_hour + " - " + end_hour;
+          break;
+        case "day":
+          interval = weekday + "\n" + date;
+          break;
+        case "week":
+          interval = "Week of " + shortStartDate + " - " + shortEndDate;
+          break;
+        case "month":
+          interval = start.format("MMMM YYYY");
+      }
       return interval;
     },
   });
