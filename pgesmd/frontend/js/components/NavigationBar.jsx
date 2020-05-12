@@ -13,7 +13,7 @@ const NavigationBar = props => {
 
   return (
     <Navbar bg="dark" variant="dark">
-      <Navbar.Brand href="#home">Energy Monitor</Navbar.Brand>
+      <Navbar.Brand href="#home">Energy History</Navbar.Brand>
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="mr-auto">
