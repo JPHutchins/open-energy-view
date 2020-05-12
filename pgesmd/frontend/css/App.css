@@ -63,7 +63,10 @@ footer {
   flex: 1;
   display: flex;
   justify-content: left;
-  padding-left: 5px;
+}
+
+.box > button, .box > div {
+    margin-right: 5px;
 }
 
 .box:first-child > span {
@@ -123,6 +126,7 @@ footer {
   text-align: center;
   color: grey;
   cursor: pointer;
+  padding: 5px;
 }
 
 .tab-container div.tab:hover {
