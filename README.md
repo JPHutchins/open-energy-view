@@ -21,6 +21,7 @@ A partition is a time interval that recurs each day.  The default partitions are
 - Night: 1AM -> 7AM
 - Day: 7AM -> 6PM
 - Evening: 6PM -> 1AM
+
 These partitions allow the user to develop conclusions about what activities are using the most resources.
 
 ### Passive Consumption
