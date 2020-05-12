@@ -1,9 +1,8 @@
-
 export function getPromise() {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     const request = new XMLHttpRequest();
     request.open("GET", "/data/json");
-    request.onreadystatechange = function() {
+    request.onreadystatechange = function () {
       if (
         request.readyState === XMLHttpRequest.DONE &&
         request.status === 200
@@ -44,67 +43,75 @@ export function makeOptions(
     part: "day",
     day: "day",
     week: "month",
-    month: "month"
+    month: "month",
   };
   const displayFormats = {
     hour: {
-      hour: "hA"
+      hour: "hA",
     },
     part: {
-      day: "dddd"
+      day: "dddd",
     },
     day: {
-      day: "M/D"
+      day: "M/D",
     },
     week: {
-      month: "MMMM"
+      month: "MMMM",
     },
     month: {
-      month: "MMMM YYYY"
-    }
+      month: "MMMM YYYY",
+    },
   };
   const options = {
     maintainAspectRatio: false,
     responsiveness: true,
     onClick: (event, array) => clickCallback(array[0]._index),
     tooltips: {
-      callbacks: tooltipCallback
+      callbacks: tooltipCallback,
     },
     legend: {
-      display: false
+      display: false,
     },
     scales: {
       xAxes: [
         {
+          scaleLabel: {
+            display: true,
+            labelString: "Time Interval",
+          },
           type: "time",
           bounds: "ticks",
           ticks: {
             beginAtZero: true,
             labelOffset: xLabelOffset,
             min: data[0].interval_start,
-            max: data[data.length - 1].interval_end - 1000
+            max: data[data.length - 1].interval_end - 1000,
           },
           time: {
             unit: unit[type],
-            displayFormats: displayFormats[type]
+            displayFormats: displayFormats[type],
           },
           offset: false,
           gridLines: {
-            offsetGridLines: false
-          }
-        }
+            offsetGridLines: false,
+          },
+        },
       ],
       yAxes: [
         {
+          scaleLabel: {
+            display: true,
+            labelString: "Average Watts of Electricity",
+          },
           ticks: {
             beginAtZero: true,
             min: 0,
             // suggestedMax: database.get("info").get("max_watt_hour")
-            suggestedMax: 5000
-          }
-        }
-      ]
-    }
+            suggestedMax: 5000,
+          },
+        },
+      ],
+    },
   };
   return options;
 }
@@ -123,7 +130,7 @@ export function getDataNow() {
 }
 
 export async function getCompleteData() {
-  return axios.get("/api/data", AuthService.getAuthHeader())
+  return axios.get("/api/data", AuthService.getAuthHeader());
   // let response = await fetch("/data/json");
   // let data = await response.json();
   // return data;
@@ -131,10 +138,10 @@ export async function getCompleteData() {
 
 function getEnergyHistory(promise) {
   promise()
-    .then(function(text) {
+    .then(function (text) {
       return text;
     })
-    .catch(function(err) {
+    .catch(function (err) {
       console.log(err);
     });
 }
