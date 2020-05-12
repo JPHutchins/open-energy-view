@@ -1,7 +1,11 @@
 # pgesmd
 ## PG&amp;E Share My Data API for Self Access Users
 
-PG&E makes available an API for all customers to see their hourly energy usage data for free.  The goal of this project is to analyze and present the data to the user in a way that empowers them to conserve electricity and save money.  A detailed guide to registering for Share My Data with PG&E is coming soon.
+The goal of this project is to analyze and present resource consumption data to users, empowering them to conserve electricity and save money. 
+
+## User Interface
+
+![PGESMD](/docs/energy-history-screenshot.png)
 
 ## Design
 
