@@ -73,12 +73,12 @@ if __name__ == '__main__':
 
     api = SelfAccessApi(*auth)
 
-    db = EnergyHistory(
-        path="/test/data/energy_history_test.db",
-        pge_id=50916)
-    next_start = db.get_next_start()
-    db.conn.close()
-    request_post = api.async_request_sequential_data(next_start)
+    # db = EnergyHistory(
+    #     path="/test/data/energy_history_test.db",
+    #     pge_id=50916)
+    # next_start = db.get_next_start()
+    # db.conn.close()
+    request_post = api.async_request_latest_data()
     
     try:
         server = SelfAccessServer(api)
