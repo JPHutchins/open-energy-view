@@ -26,13 +26,21 @@ footer {
 
 .container {
   display: flex;
+  flex-direction: column;
   max-width: none;
+  margin-left: 50px;
+}
+
+#window-date {
+    font-size: large;
+    font-weight: bold;
+    padding-bottom: 20px;
 }
 
 .box {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: left;
 }
 
 .box:first-child > span {
