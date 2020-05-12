@@ -113,14 +113,13 @@ footer {
 
 .tab-container {
   display: flex;
+  background-color: #cdc5d3;
 }
 
 .tab {
   height: 30px;
-  width: 10vw;
-  border-right: 1px solid grey;
-  border-bottom: 1px solid gray;
-  border-top: none;
+  max-width: 20vw;
+  min-width: 10vw;
   text-align: center;
   color: grey;
   cursor: pointer;
@@ -132,22 +131,11 @@ footer {
 }
 
 .tab-selected {
-  height: 30px;
-  width: 10vw;
-  border-bottom: none;
-  border-right: 1px solid grey;
-  text-align: center;
+  font-weight: bold;
   color: black;
+  background-color: #f6f8ff;
 }
 
-.tab-selected-last {
-  height: 30px;
-  width: 10vw;
-  border-bottom: none;
-  border-right: none;
-  text-align: center;
-  color: black;
-}
 
 .energy-chart {
   width: 100%;

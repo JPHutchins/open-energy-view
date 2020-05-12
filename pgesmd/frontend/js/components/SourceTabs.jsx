@@ -28,11 +28,10 @@ const SourceTabs = (props) => {
    */
   const makeTab = (tabIndex) => {
     if (tabIndex === selectedTab) {
-      const last = tabIndex === nTabs ? "tab-selected-last" : "tab-selected";
       return (
         <div
           key={tabIndex}
-          className={last}
+          className="tab tab-selected"
           value={tabIndex}
           onClick={handleClick}
         >
