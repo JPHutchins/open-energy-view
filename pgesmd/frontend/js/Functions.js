@@ -2,7 +2,21 @@ const { fromJS } = require("immutable");
 
 export const parseDataResponse = (res) => {
   //TODO: error handling
-  return JSON.parse(res.data)
+  return JSON.parse(res.data);
+};
+
+export const parseHourResponse = (res) => {
+  const database = res.data.split(",");
+  return database.map((x) => makeChartJsDatabase(x));
+};
+
+const makeChartJsDatabase = (x) => {
+  const secondsInHour = 3600;
+  const msInSeconds = 1000;
+  return {
+    x: x.slice(0, 6) * secondsInHour * msInSeconds,
+    y: parseInt(x.slice(6)),
+  };
 };
 
 export const immutableDb = (data) => {

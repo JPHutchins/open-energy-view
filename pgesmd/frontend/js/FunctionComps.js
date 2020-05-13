@@ -1,5 +1,5 @@
-import { checkDisableScroll } from "./Functions";
-import { getData } from "./service/DatabaseService";
+import { checkDisableScroll, parseHourResponse } from "./Functions";
+import { getData, getHours } from "./service/DatabaseService";
 import { parseDataResponse, immutableDb } from "./Functions";
 
 const pipe = (...functions) => (x, ...args) =>
@@ -14,5 +14,11 @@ export const checkDisableNext = (data, database) =>
 export async function fetchData(source) {
   const data = await getData(source);
   const parse = pipe(parseDataResponse, immutableDb);
+  return parse(data);
+}
+
+export async function fetchHours(source) {
+  const data = await getHours(source);
+  const parse = pipe(parseHourResponse, immutableDb);
   return parse(data);
 }

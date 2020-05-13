@@ -12,3 +12,11 @@ export const getData = (source) => {
     AuthService.getAuthHeader()
   );
 };
+
+export const getHours = (source) => {
+  return axios.post(
+    "/api/hours",
+    { source: source },
+    AuthService.getAuthHeader()
+  );
+};
