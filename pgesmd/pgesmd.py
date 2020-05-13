@@ -81,6 +81,6 @@ if __name__ == '__main__':
     request_post = api.async_request_latest_data()
     
     try:
-        server = SelfAccessServer(api)
+        server = SelfAccessServer(api, save_file=save_espi_xml)
     except KeyboardInterrupt:
         pass

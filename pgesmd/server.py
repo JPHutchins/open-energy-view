@@ -24,6 +24,8 @@ class PgePostHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         """Download the ESPI XML and save to database."""
+        _LOGGER.debug(f'Received POST from {self.address_string()}')
+
         if self.path == '/test':
             self.send_response(200)
             self.end_headers()
@@ -35,6 +37,7 @@ class PgePostHandler(BaseHTTPRequestHandler):
         _LOGGER.info(f'Received POST from {self.address_string()}')
 
         body = self.rfile.read(int(self.headers.get('Content-Length')))
+        _LOGGER.debug(body)
         try:
             resource_uri = ET.fromstring(body)[0].text
         except ET.ParseError:
