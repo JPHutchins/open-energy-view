@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>\n<ns0:BatchList xmlns:ns0="http://naesb.org/espi">
+    <ns0:resources>https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/50916?correlationID=0b2479f3-eec7-4a15-b46b-8f90c647e21e</ns0:resources>
+    <ns0:resources>https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/50916?correlationID=20e3358c-457c-4cb3-ba99-57819d2145af</ns0:resources>
+</ns0:BatchList>

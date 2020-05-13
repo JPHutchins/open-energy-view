@@ -1,0 +1,230 @@
+<ns1:feed xmlns:ns0="http://naesb.org/espi" 
+    xmlns:ns1="http://www.w3.org/2005/Atom">
+    <ns1:id xmlns:ns1="http://www.w3.org/2005/Atom">6f178fb9-8f34-4918-86fc-22a3322ac172</ns1:id>
+    <ns1:title xmlns:ns1="http://www.w3.org/2005/Atom" type="text">Green Button Usage Feed</ns1:title>
+    <ns1:updated xmlns:ns1="http://www.w3.org/2005/Atom">2020-05-12T16:32:41.552Z</ns1:updated>
+    <ns1:link xmlns:ns1="http://www.w3.org/2005/Atom" href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Batch/Bulk/50916" rel="self"/>
+    <ns1:entry xmlns:ns1="http://www.w3.org/2005/Atom">
+        <ns1:id xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:idType">3227fb1e-003c-4758-a57f-a22ce0c1fc70</ns1:id>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/LocalTimeParameters" rel="up" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/LocalTimeParameters/1" rel="self" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:title type="text" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:textType">DST FOR PACIFIC TIMEZONE</ns1:title>
+        <ns1:published xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:31:49.032Z</ns1:published>
+        <ns1:updated xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:31:49.032Z</ns1:updated>
+        <ns1:content xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:contentType">
+            <ns0:LocalTimeParameters xmlns:ns0="http://naesb.org/espi">
+                <ns0:dstEndRule>B40E2000</ns0:dstEndRule>
+                <ns0:dstOffset>3600</ns0:dstOffset>
+                <ns0:dstStartRule>360E2000</ns0:dstStartRule>
+                <ns0:tzOffset>-28800</ns0:tzOffset>
+            </ns0:LocalTimeParameters>
+        </ns1:content>
+    </ns1:entry>
+    <ns1:entry xmlns:ns1="http://www.w3.org/2005/Atom">
+        <ns1:id xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:idType">9092985b-42a3-41bf-abad-dbcf97dea432</ns1:id>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ReadingType" rel="up" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ReadingType/MTY5Om51bGw6ODY0MDA6MQ==" rel="self" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:title type="text" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:textType">Type of Meter Reading Data</ns1:title>
+        <ns1:published xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.554Z</ns1:published>
+        <ns1:updated xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.554Z</ns1:updated>
+        <ns1:content xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:contentType">
+            <ns0:ReadingType xmlns:ns0="http://naesb.org/espi">
+                <ns0:accumulationBehaviour>4</ns0:accumulationBehaviour>
+                <ns0:commodity>7</ns0:commodity>
+                <ns0:dataQualifier>12</ns0:dataQualifier>
+                <ns0:defaultQuality>17</ns0:defaultQuality>
+                <ns0:flowDirection>1</ns0:flowDirection>
+                <ns0:intervalLength>86400</ns0:intervalLength>
+                <ns0:kind>12</ns0:kind>
+                <ns0:powerOfTenMultiplier>-8</ns0:powerOfTenMultiplier>
+                <ns0:timeAttribute>11</ns0:timeAttribute>
+                <ns0:uom>169</ns0:uom>
+                <ns0:measuringPeriod>4</ns0:measuringPeriod>
+            </ns0:ReadingType>
+        </ns1:content>
+    </ns1:entry>
+    <ns1:entry xmlns:ns1="http://www.w3.org/2005/Atom">
+        <ns1:id xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:idType">5838ff2e-59d9-4454-87d2-6b5edc80cd15</ns1:id>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint" rel="up" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint/7170720474" rel="self" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint/7170720474/MeterReading" rel="related" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint/7170720474/UsageSummary" rel="related" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/LocalTimeParameters/1" rel="related" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:title type="text" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:textType">Green Button Data File</ns1:title>
+        <ns1:published xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.558Z</ns1:published>
+        <ns1:updated xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.558Z</ns1:updated>
+        <ns1:content xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:contentType">
+            <ns0:UsagePoint xmlns:ns0="http://naesb.org/espi">
+                <ns0:ServiceCategory>
+                    <ns0:kind>1</ns0:kind>
+                </ns0:ServiceCategory>
+            </ns0:UsagePoint>
+        </ns1:content>
+    </ns1:entry>
+    <ns1:entry xmlns:ns1="http://www.w3.org/2005/Atom">
+        <ns1:id xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:idType">5bb21c91-64cc-4b6f-837c-9b3c7bba2ad5</ns1:id>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint/7170720474/MeterReading" rel="up" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint/7170720474/MeterReading/TVRZNU9tNTFiR3c2T0RZME1EQTZNUT09OjE=" rel="self" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint/7170720474/MeterReading/TVRZNU9tNTFiR3c2T0RZME1EQTZNUT09OjE=/IntervalBlock" rel="related" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ReadingType/MTY5Om51bGw6ODY0MDA6MQ==" rel="related" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/LocalTimeParameters/1" rel="related" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:title type="text" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:textType">Green Button Data File</ns1:title>
+        <ns1:published xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.56Z</ns1:published>
+        <ns1:updated xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.56Z</ns1:updated>
+        <ns1:content xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:contentType">
+            <ns0:MeterReading xmlns:ns0="http://naesb.org/espi"/>
+        </ns1:content>
+    </ns1:entry>
+    <ns1:entry xmlns:ns1="http://www.w3.org/2005/Atom">
+        <ns1:id xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:idType">b97009a8-e72b-4750-9172-6cf81dd318c6</ns1:id>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint/7170720474/MeterReading/TVRZNU9tNTFiR3c2T0RZME1EQTZNUT09OjE=/IntervalBlock" rel="up" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/Subscription/4095251/UsagePoint/7170720474/MeterReading/TVRZNU9tNTFiR3c2T0RZME1EQTZNUT09OjE=/IntervalBlock/1589007601" rel="self" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:title type="text" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:textType">IntervalBlock_1589007601</ns1:title>
+        <ns1:published xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.561Z</ns1:published>
+        <ns1:updated xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.561Z</ns1:updated>
+        <ns1:content xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:contentType">
+            <ns0:IntervalBlock xmlns:ns0="http://naesb.org/espi">
+                <ns0:interval>
+                    <ns0:duration>86400</ns0:duration>
+                    <ns0:start>1589007601</ns0:start>
+                </ns0:interval>
+                <ns0:IntervalReading>
+                    <ns0:ReadingQuality>
+                        <ns0:quality>17</ns0:quality>
+                    </ns0:ReadingQuality>
+                    <ns0:timePeriod>
+                        <ns0:duration>86400</ns0:duration>
+                        <ns0:start>1589007601</ns0:start>
+                    </ns0:timePeriod>
+                    <ns0:value>0</ns0:value>
+                </ns0:IntervalReading>
+            </ns0:IntervalBlock>
+        </ns1:content>
+    </ns1:entry>
+    <ns1:entry xmlns:ns1="http://www.w3.org/2005/Atom">
+        <ns1:id xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:idType">15918853-9515-46ee-9412-09a3add5ff3d</ns1:id>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ProgramIdMapping" rel="up" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:link href="https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ProgramIdMapping/1" rel="self" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:linkType"/>
+        <ns1:title type="text" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:textType">Time Of Use &amp; Consumption Tier Code Info</ns1:title>
+        <ns1:published xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.562Z</ns1:published>
+        <ns1:updated xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:dateTimeType">2020-05-12T16:32:41.562Z</ns1:updated>
+        <ns1:content xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns1:contentType">
+            <ns0:ProgramIdMappings xmlns:ns0="http://naesb.org/espi">
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">1</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">SPK</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Summer Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">2</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">SOP</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Summer Off Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">3</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">SPP</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Summer Partial Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">4</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">WPK</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Winter Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">5</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">WPP</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Winter Partial Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">6</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">WOP</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Winter Off Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">7</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">MPK</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Spring Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">8</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">MOP</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Spring Off Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">9</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">MXO</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Spring Super Off Peak</ns0:note>
+                </ns0:programIdMapping>
+                <ns0:programIdMapping>
+                    <ns0:tOUorCPPorConsumptionTier>tou</ns0:tOUorCPPorConsumptionTier>
+                    <ns0:code xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:int">10</ns0:code>
+                    <ns0:name xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">WSO</ns0:name>
+                    <ns0:note xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xsd:string">Winter Super Off Peak</ns0:note>
+                </ns0:programIdMapping>
+            </ns0:ProgramIdMappings>
+        </ns1:content>
+    </ns1:entry>
+</ns1:feed>
