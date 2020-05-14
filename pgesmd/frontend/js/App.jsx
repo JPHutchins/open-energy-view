@@ -21,24 +21,23 @@ const App = (props) => {
     if (cookie.load("logged_in")) {
       setView(<DataLoader />);
 
-      fetchData("PG&E").then((data) => {
-        fetchHours("PG&E").then((hours) => {
-          const sources = [
-            // {
-            //   title: "PG&E",
-            //   component: <EnergyHistory database={data} />,
-            // },
-            {
-                title: "Functional",
-                component: <EnergyDisplay database={hours} />,
-            },
-            {
-              title: "Add New Source",
-              component: <SourceRegistration />,
-            },
-          ];
-          setView(<SourceTabs sources={sources} />);
-        });
+      Promise.allSettled([fetchData("PG&E"), fetchHours("PG&E")]).then((p) => {
+        p = p.map((res) => res.value)
+        const sources = [
+          {
+            title: "PG&E",
+            component: <EnergyHistory database={p[0]} />,
+          },
+          {
+            title: "Functional",
+            component: <EnergyDisplay database={p[1]} />,
+          },
+          {
+            title: "Add New Source",
+            component: <SourceRegistration />,
+          },
+        ];
+        setView(<SourceTabs sources={sources} />);
       });
     } else {
       setView(<Redirect to="/login" />);
