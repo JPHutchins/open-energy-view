@@ -4,13 +4,15 @@ import moment from "moment";
 
 const EnergyDisplay = (props) => {
   const [past, setPast] = useState(0);
+  const [startDate, setStartDate] = useState(moment(props.database.get(-1).get("x")));
+  const [endDate, setEndDate] = useState(moment(props.database.get(-1).get("x")));
   const [intervalType, setIntervalType] = useState("month");
   const [data, setData] = useState(
     props.database.slice(-24 * past, -24 * (past - 1)).toJS()
   );
 
   const makeData = (past) => {
-    return props.database.slice(-24 * (past + 1), -24 * past + 1).toJS();
+    return props.database.slice(-24 * (past + 1), -24 * past).toJS();
   };
 
   const rMoment = (past) => {
@@ -28,8 +30,9 @@ const EnergyDisplay = (props) => {
   const pipe = (...functions) => (x, ...args) =>
     functions.reduce((v, f) => f(v, ...args), x);
 
-  const findIntervalBounds = (intervalType) => (start, end = null) => {
-    if (end) return { start, end };
+  const findIntervalBounds = (intervalType) => (start, end=null) => {
+      console.log(start, end)
+    if (end) return { start: start, end: end };
     return {
       start: moment(start.startOf(intervalType)),
       end: moment(start.endOf(intervalType)),
@@ -38,7 +41,7 @@ const EnergyDisplay = (props) => {
 
   const findMaxResolution = (intervalLength) => {
     const _dataPointLength = intervalLength / 52;
-    if (_dataPointLength >= 606538461 + 1) return "month";
+    if (_dataPointLength >= 609785000) return "month";
     if (_dataPointLength >= 52538461) return "week";
     if (_dataPointLength >= 11630769 + 1) return "day";
     if (_dataPointLength >= 1661538 + 1) return "part";
@@ -48,6 +51,7 @@ const EnergyDisplay = (props) => {
   const makeIntervalArray = (interval) => {
     const _intervalLength = Math.abs(interval.start.diff(interval.end));
     const _dataPointLength = findMaxResolution(_intervalLength);
+    console.log(interval.start, interval.end)
 
     const intervalArray = [];
     const { start, end } = interval;
@@ -56,11 +60,17 @@ const EnergyDisplay = (props) => {
       return [];
     }
     const _start = moment(start);
+    // TODO: fix this mess with add hour/take away hour - needs to work for finer datasets too!
+    const _end = (_start) => {
+        if (_intervalLength === "hour") return _start.add(1, "hour")
+        return _start.endOf(_dataPointLength).startOf('hour')
+    }
     while (_start.isBefore(end)) {
       intervalArray.push([
         moment(_start),
-        moment(_start.add(1, _dataPointLength)),
+        moment(_end(_start)),
       ]);
+      _start.add(1, "hour");
     }
     return intervalArray;
   };
@@ -86,18 +96,14 @@ const EnergyDisplay = (props) => {
       const [_startTime, _endTime] = point;
       const _startIndex = indexOf(_startTime.valueOf());
       const _endIndex = indexOf(_endTime.valueOf());
-      console.assert(
-        database.get(_startIndex).get("x") === _startTime.valueOf(),
-        "Index not found"
-      );
       const _slice = database.slice(_startIndex, _endIndex);
       const _sum = _slice.reduce((a, v) => a + v.get("y"), 0);
-      const _mean = _sum / (_endIndex - _startIndex);
-      return ({
-          x: _startTime.valueOf(),
-          y: _mean,
-          sum: _sum
-      })
+      const _mean = Math.round(_sum / (_endIndex - _startIndex));
+      return {
+        x: _startTime.valueOf(),
+        y: _mean,
+        sum: _sum,
+      };
     });
     return data;
   };
@@ -106,15 +112,21 @@ const EnergyDisplay = (props) => {
     findIntervalBounds(intervalType),
     makeIntervalArray,
     findData(props.database)
-  )(moment("2019-05-01", "YYYY-MM-DD"));
-  console.log(result);
+  );
 
   intervals(lMoment(past), rMoment(past));
+
+  const theData = (
+    intervalType !== "total"
+      ? result(startDate)
+      : result(moment(props.database.get(0).get("x")), endDate)
+  );
+  console.log(theData);
 
   const datasets = {
     datasets: [
       {
-        data: makeData(past),
+        data: theData,
       },
     ],
   };
@@ -141,13 +153,16 @@ const EnergyDisplay = (props) => {
             // max: data[data.length - 1].interval_end - 1000,
           },
           time: {
-            unit: "hour",
-            displayFormats: "hA",
+            displayFormats: {
+              hour: "hA",
+              day: "M/D",
+            },
           },
-          offset: false,
+          offset: intervalType === "day" ? true : true,
           gridLines: {
-            offsetGridLines: false,
+            offsetGridLines: intervalType === "day" ? true : true,
           },
+          barThickness: "flex",
         },
       ],
       yAxes: [
@@ -170,10 +185,23 @@ const EnergyDisplay = (props) => {
   return (
     <div style={{ height: "80%" }}>
       <EnergyChart data={datasets} options={options} />
-      <button onClick={() => setPast(past + 1)}>Previous</button>
-      <button onClick={() => setPast(past - 1)}>Next</button>
-      <button onClick={() => setInterval("hour")}>Hours</button>
-      <button onClick={() => setInterval("day")}>Days</button>
+      <button
+        onClick={() =>
+          setStartDate(moment(startDate.subtract(1, intervalType)))
+        }
+      >
+        Previous
+      </button>
+      <button
+        onClick={() => setStartDate(moment(startDate.add(1, intervalType)))}
+      >
+        Next
+      </button>
+      <button onClick={() => setIntervalType("day")}>Day</button>
+      <button onClick={() => setIntervalType("week")}>Week</button>
+      <button onClick={() => setIntervalType("month")}>Month</button>
+      <button onClick={() => setIntervalType("year")}>Year</button>
+      <button onClick={() => setIntervalType("total")}>total</button>
     </div>
   );
 };
