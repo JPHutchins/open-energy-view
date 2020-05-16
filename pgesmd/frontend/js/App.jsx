@@ -21,16 +21,16 @@ const App = (props) => {
     if (cookie.load("logged_in")) {
       setView(<DataLoader />);
 
-      Promise.allSettled([fetchData("PG&E"), fetchHours("PG&E")]).then((p) => {
+      Promise.allSettled([fetchHours("PG&E")]).then((p) => {
         p = p.map((res) => res.value)
         const sources = [
-          {
-            title: "PG&E",
-            component: <EnergyHistory database={p[0]} />,
-          },
+        //   {
+        //     title: "PG&E",
+        //     component: <EnergyHistory database={p[0]} />,
+        //   },
           {
             title: "Functional",
-            component: <EnergyDisplay database={p[1]} />,
+            component: <EnergyDisplay database={p[0]} />,
           },
           {
             title: "Add New Source",
