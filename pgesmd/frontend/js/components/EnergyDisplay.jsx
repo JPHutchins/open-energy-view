@@ -51,7 +51,6 @@ const EnergyDisplay = (props) => {
   const makeIntervalArray = (interval) => {
     const _intervalLength = Math.abs(interval.start.diff(interval.end));
     const _dataPointLength = findMaxResolution(_intervalLength);
-    console.log(interval.start, interval.end)
 
     const intervalArray = [];
     const { start, end } = interval;
@@ -60,22 +59,17 @@ const EnergyDisplay = (props) => {
       return [];
     }
     const _start = moment(start);
-    // TODO: fix this mess with add hour/take away hour - needs to work for finer datasets too!
-    const _end = (_start) => {
-        if (_intervalLength === "hour") return _start.add(1, "hour")
-        return _start.endOf(_dataPointLength).startOf('hour')
-    }
     while (_start.isBefore(end)) {
       intervalArray.push([
         moment(_start),
-        moment(_end(_start)),
+        moment(_start.endOf(_dataPointLength)),
       ]);
-      _start.add(1, "hour");
+      _start.add(1, "minute").startOf("hour")
     }
     return intervalArray;
   };
 
-  const indexOfStart = (database) => (start) => {
+  const indexOfTime = (database) => (time) => {
     let l = 0;
     let r = database.size - 1;
     let m = 0;
@@ -83,10 +77,10 @@ const EnergyDisplay = (props) => {
     while (l <= r) {
       m = Math.floor((l + r) / 2);
       const _current = database.get(m).get("x");
-      if (start === _current) return m;
-      start < _current ? (r = m - 1) : (l = m + 1);
+      if (time === _current) return m;
+      time < _current ? (r = m - 1) : (l = m + 1);
     }
-    return m;
+    return m + 1; //If not found return index for "insert"
   };
 
   const findData = (database) => (intervalArray) => {
