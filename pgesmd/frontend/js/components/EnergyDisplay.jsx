@@ -27,6 +27,10 @@ const EnergyDisplay = (props) => {
     console.log(Math.ceil((lastMoment - firstMoment) / 86400000));
   };
 
+  /**
+   * Pipe the output of each function to the input of the next, left to right.
+   * @param  {...any} functions The functions to be piped.
+   */
   const pipe = (...functions) => (x, ...args) =>
     functions.reduce((v, f) => f(v, ...args), x);
 
