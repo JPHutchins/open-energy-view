@@ -11,6 +11,8 @@ import { withRouter, Route, Switch, Redirect } from "react-router-dom";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import { fetchData, fetchHours } from "./FunctionComps";
 import DataLoader from "./components/DataLoader";
+import TestResults from "./components/TestResults";
+import { HashRouter as Router } from "react-router-dom";
 
 const testing = true;
 
@@ -22,12 +24,12 @@ const App = (props) => {
       setView(<DataLoader />);
 
       Promise.allSettled([fetchHours("PG&E")]).then((p) => {
-        p = p.map((res) => res.value)
+        p = p.map((res) => res.value);
         const sources = [
-        //   {
-        //     title: "PG&E",
-        //     component: <EnergyHistory database={p[0]} />,
-        //   },
+          //   {
+          //     title: "PG&E",
+          //     component: <EnergyHistory database={p[0]} />,
+          //   },
           {
             title: "Functional",
             component: <EnergyDisplay database={p[0]} />,
@@ -45,22 +47,25 @@ const App = (props) => {
   };
 
   return (
-    <>
-      <NavigationBar callback={restrictView} />
-      <Switch>
-        <Route path="/login">
-          <Login callback={restrictView} />
-        </Route>
-        <Route exact path="/">
-          {view}
-        </Route>
-        <Route exact path="/create_account">
-          <UserRegistration callback={restrictView} />
-        </Route>
-      </Switch>
-      <footer>Copyright 2020 J.P. Hutchins. All Rights Reserved.</footer>
-    </>
+    <Router>
+     
+        <NavigationBar callback={restrictView} />
+        <Switch>
+          <Route path="/test" component={TestResults} />
+          <Route path="/login">
+            <Login callback={restrictView} />
+          </Route>
+          <Route exact path="/">
+            {view}
+          </Route>
+          <Route exact path="/create_account">
+            <UserRegistration callback={restrictView} />
+          </Route>
+        </Switch>
+        <footer>Copyright 2020 J.P. Hutchins. All Rights Reserved.</footer>
+     
+    </Router>
   );
 };
 
-export default withRouter(App);
+export default App;
