@@ -54,6 +54,7 @@
     "babel-polyfill": "^6.26.0",
     "bootstrap": "^4.4.1",
     "chart.js": "^2.9.3",
+    "fs": "0.0.1-security",
     "immutable": "^4.0.0-rc.12",
     "moment": "^2.24.0",
     "ramda": "^0.27.0",
@@ -67,7 +68,8 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "regression": "^2.0.1",
-    "source-map-loader": "^0.2.4"
+    "source-map-loader": "^0.2.4",
+    "zebras": "0.0.18"
   },
   "babel": {
     "presets": [
