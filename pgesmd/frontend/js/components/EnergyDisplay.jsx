@@ -88,7 +88,7 @@ const EnergyDisplay = (props) => {
   };
 
   const findData = (database) => (intervalArray) => {
-    const indexOf = indexOfStart(database);
+    const indexOf = indexOfTime(database);
 
     const data = intervalArray.map((point) => {
       const [_startTime, _endTime] = point;
