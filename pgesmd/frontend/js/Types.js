@@ -21,6 +21,14 @@ import { Maybe, IO, Either, Identity } from "ramda-fantasy";
 import moment from "moment";
 const { Map, List, first } = require("immutable");
 
+// EnergyHistory :: f (a) -> f (a)
+export const EnergyHistory = database => ({
+    of: database => EnergyHistory(database),
+    map: f => EnergyHistory(data.map(f)),
+    database: database,
+    
+})
+
 // minZero :: Number -> Number
 export const minZero = (x) => Math.max(0, x);
 
