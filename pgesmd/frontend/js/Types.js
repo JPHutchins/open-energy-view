@@ -22,12 +22,11 @@ import moment from "moment";
 const { Map, List, first } = require("immutable");
 
 // EnergyHistory :: f (a) -> f (a)
-export const EnergyHistory = database => ({
-    of: database => EnergyHistory(database),
-    map: f => EnergyHistory(data.map(f)),
-    database: database,
-    
-})
+export const EnergySHistory = (database) => ({
+  of: (database) => EnergyHistory(database),
+  map: (f) => EnergyHistory(data.map(f)),
+  database: database,
+});
 
 // minZero :: Number -> Number
 export const minZero = (x) => Math.max(0, x);
@@ -113,18 +112,34 @@ const unwrap = (arr) => {
   return arr.map((x) => x.get("y"));
 };
 
-const groups = (list) => {
+const groupBy = (interval) => (list) => {
   if (list.size <= 0) {
     return [];
   }
-  const end = indexOfTime(list)(
-    moment(list.first().get("x")).startOf("day").add(1, "day").valueOf()
-  );
+  const guess = {
+    hour: 4,
+    day: 24,
+    week: 168,
+    month: 744,
+    year: 8760,
+  }[interval];
+  const endMoment = moment(list.first().get("x"))
+    .startOf(interval)
+    .add(1, interval)
+    .valueOf();
+  const endIndex =
+    list[guess] === endMoment ? guess : indexOfTime(list)(endMoment);
   return prepend(
-    minOf(unwrap(slice(0, end, list))),
-    groups(list.slice(end, list.size))
+    slice(0, endIndex, list),
+    groupBy(interval)(list.slice(endIndex, list.size))
   );
 };
+
+const groupByHour = groupBy("hour");
+const groupByDay = groupBy("day");
+const groupByWeek = groupBy("week");
+const groupByMonth = groupBy("month");
+const groupByYear = groupBy("year");
 
 const makeDays = (arr) => {};
 
@@ -191,7 +206,7 @@ export const testPerformance = (props) => {
   console.log(data);
 
   var t0 = performance.now();
-  result = groups(props.database);
+  result = groupByDay(props.database);
   var t1 = performance.now();
   console.log(
     "Took",
