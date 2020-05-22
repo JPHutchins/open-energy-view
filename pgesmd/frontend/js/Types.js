@@ -14,8 +14,11 @@ import {
   range,
   isEmpty,
   prepend,
+  reduce,
   drop,
   head,
+  zip,
+  zipObj,
 } from "ramda";
 import { Maybe, IO, Either, Identity } from "ramda-fantasy";
 import moment from "moment";
@@ -47,12 +50,36 @@ export const dayBounds = makeIntervalBounds("day");
 export const minOf = (A) => A.reduce((acc, x) => Math.min(acc, x), Infinity);
 
 // meanOf :: [Number] -> Number
-export const meanOf = (A) => A.reduce((acc, x) => acc + x, 0) / A.length;
+export const meanOf = (A) =>
+  (A.reduce((acc, x) => acc + x, 0) / A.length);
 
-export const standardDeviationOf = (A) => {
-  const _mean = meanOf(A);
+export const standardDeviationOf = (A, _mean = null) => {
+  _mean = _mean ? _mean : meanOf(A);
   const _deviations = A.map((x) => (x - _mean) * (x - _mean));
-  return Math.sqrt(meanOf(_deviations));
+  return (Math.sqrt(meanOf(_deviations)));
+};
+
+export const removeOutliers = (arr, window) => {
+  const _rMean = rolling(meanOf, window, arr).slice(window - 1);
+  const _rStd = rolling(standardDeviationOf, window, arr).slice(window - 1);
+  const _zipped = zip(arr, zip(_rMean, _rStd)).map((x) => ({
+    arr: x[0],
+    mean: x[1][0],
+    std: x[1][1],
+  }));
+  return _zipped.map((x) =>
+    x.arr < x.mean - x.std || x.arr > x.mean + x.std
+      ? (x.mean)
+      : (x.arr)
+  );
+};
+
+const zipArrMeanStd = (arr, mean, std) => {
+  return zip(arr, zip(_rMean, _rStd)).map((x) => ({
+    arr: x[0],
+    mean: x[1][0],
+    std: x[1][1],
+  }));
 };
 
 const EnergyHistory = (data) => ({
@@ -74,22 +101,22 @@ const indexOfTime = (database) => (time) => {
 };
 
 const fastRollingMean = (n, arr) => {
-  const iRange = range(0, arr.length);
-  let sum = 0;
-  let avg = 0;
+  const _iRange = range(0, arr.length);
+  let _sum = 0;
+  let _avg = 0;
 
   const result = map((i) => {
     if (i - n + 1 < 0) {
-      sum = sum + arr[i];
-      avg = sum / (i + 2);
+      _sum = _sum + arr[i];
+      _avg = _sum / (i + 2);
       return "NotANumber";
     } else if (i - n + 1 === 0) {
-      avg = avg + arr[i] / n;
-      return avg;
+      _avg = _avg + arr[i] / n;
+      return _avg;
     }
-    avg = avg + (arr[i] - arr[i - n]) / n;
-    return avg;
-  }, iRange);
+    _avg = _avg + (arr[i] - arr[i - n]) / n;
+    return _avg;
+  }, _iRange);
 
   return result;
 };
@@ -110,6 +137,26 @@ const getPlainList = (list) => {
 
 const unwrap = (arr) => {
   return arr.map((x) => x.get("y"));
+};
+
+const partitionScheme = [
+  { name: "Night", start: 1, sum: 0 },
+  { name: "Day", start: 7, sum: 0 },
+  { name: "Evening", start: 18, sum: 0 },
+];
+
+const sumPartitions = (partitions) => (data) => {
+  //partitions = partitions.map(x => x.sum = 0)
+  const result = data.reduce((acc, x) => {
+    const _hour = moment(x.get("x")).format("H");
+    const index = partitions.reduce((acc, x) => {
+      return _hour >= x.start ? acc + 1 : acc;
+    }, -1);
+    const _crossAM = (i) => (i < 0 ? partitions.length - 1 : i);
+    acc[_crossAM(index)].sum += x.get("y");
+    return acc;
+  }, partitions);
+  return result;
 };
 
 const groupBy = (interval) => (list) => {
@@ -171,20 +218,40 @@ export const testPerformance = (props) => {
   );
 
   var t0 = performance.now();
-  var result = fastRollingMean(30, input);
+  var result = sumPartitions(partitionScheme)(props.database);
   var t1 = performance.now();
   console.log(
-    "Took",
+    "sumPartitions() took",
     (t1 - t0).toFixed(4),
     "milliseconds to generate:",
     result
   );
 
   var t0 = performance.now();
-  var result = rolling(mean, 30, input);
+  var result = fastRollingMean(14, input);
   var t1 = performance.now();
   console.log(
-    "Took",
+    "fastRollingMean() took",
+    (t1 - t0).toFixed(4),
+    "milliseconds to generate:",
+    result
+  );
+
+  var t0 = performance.now();
+  var result = rolling(meanOf, 14, input);
+  var t1 = performance.now();
+  console.log(
+    "rolling(mean) took",
+    (t1 - t0).toFixed(4),
+    "milliseconds to generate:",
+    result
+  );
+
+  var t0 = performance.now();
+  var result = rolling(standardDeviationOf, 14, input).slice(13);
+  var t1 = performance.now();
+  console.log(
+    "rolling(standardDeviationOf) took",
     (t1 - t0).toFixed(4),
     "milliseconds to generate:",
     result
@@ -195,6 +262,28 @@ export const testPerformance = (props) => {
   var t1 = performance.now();
   console.log(
     "Took",
+    (t1 - t0).toFixed(4),
+    "milliseconds to generate:",
+    result
+  );
+
+  console.log(input);
+
+  var t0 = performance.now();
+  var result = fastRollingMean(14, removeOutliers(input, 14));
+  var t1 = performance.now();
+  console.log(
+    "removeOutliers() & average took",
+    (t1 - t0).toFixed(4),
+    "milliseconds to generate:",
+    result
+  );
+
+  var t0 = performance.now();
+  var result = removeOutliers(input, 14);
+  var t1 = performance.now();
+  console.log(
+    "removeOutliers() took",
     (t1 - t0).toFixed(4),
     "milliseconds to generate:",
     result
