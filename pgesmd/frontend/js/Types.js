@@ -50,16 +50,15 @@ export const dayBounds = makeIntervalBounds("day");
 export const minOf = (A) => A.reduce((acc, x) => Math.min(acc, x), Infinity);
 
 // meanOf :: [Number] -> Number
-export const meanOf = (A) =>
-  (A.reduce((acc, x) => acc + x, 0) / A.length);
+export const meanOf = (A) => A.reduce((acc, x) => acc + x, 0) / A.length;
 
 export const standardDeviationOf = (A, _mean = null) => {
   _mean = _mean ? _mean : meanOf(A);
   const _deviations = A.map((x) => (x - _mean) * (x - _mean));
-  return (Math.sqrt(meanOf(_deviations)));
+  return Math.sqrt(meanOf(_deviations));
 };
 
-export const removeOutliers = (arr, window) => {
+export const removeOutliers = (window) => (arr) => {
   const _rMean = rolling(meanOf, window, arr).slice(window - 1);
   const _rStd = rolling(standardDeviationOf, window, arr).slice(window - 1);
   const _zipped = zip(arr, zip(_rMean, _rStd)).map((x) => ({
@@ -67,11 +66,10 @@ export const removeOutliers = (arr, window) => {
     mean: x[1][0],
     std: x[1][1],
   }));
-  return _zipped.map((x) =>
-    x.arr < x.mean - x.std || x.arr > x.mean + x.std
-      ? (x.mean)
-      : (x.arr)
+  const output = _zipped.map((x) =>
+    x.arr < x.mean - x.std || x.arr > x.mean + x.std ? x.mean : x.arr
   );
+  return Either.Right(output);
 };
 
 const zipArrMeanStd = (arr, mean, std) => {
@@ -100,7 +98,7 @@ const indexOfTime = (database) => (time) => {
   return m + 1; //If not found return index for "insert"
 };
 
-const fastRollingMean = (n, arr) => {
+const fastRollingMean = (n) => (arr) => {
   const _iRange = range(0, arr.length);
   let _sum = 0;
   let _avg = 0;
@@ -139,24 +137,39 @@ const unwrap = (arr) => {
   return arr.map((x) => x.get("y"));
 };
 
-const partitionScheme = [
-  { name: "Night", start: 1, sum: 0 },
-  { name: "Day", start: 7, sum: 0 },
-  { name: "Evening", start: 18, sum: 0 },
-];
+const partitionScheme = Either.Left([
+  { name: "Night", start: 1 },
+  { name: "Day", start: 7 },
+  { name: "Evening", start: 18 },
+]);
 
 const sumPartitions = (partitions) => (data) => {
-  //partitions = partitions.map(x => x.sum = 0)
-  const result = data.reduce((acc, x) => {
-    const _hour = moment(x.get("x")).format("H");
-    const index = partitions.reduce((acc, x) => {
-      return _hour >= x.start ? acc + 1 : acc;
-    }, -1);
-    const _crossAM = (i) => (i < 0 ? partitions.length - 1 : i);
-    acc[_crossAM(index)].sum += x.get("y");
-    return acc;
-  }, partitions);
-  return result;
+  if (partitions.isLeft) return data;
+
+  partitions = partitions.map(
+    map((x) => ({
+      name: x.name,
+      start: x.start,
+      sum: 0,
+    }))
+  );
+  const _crossAM = (i) => (i < 0 ? partitions.value.length - 1 : i);
+  const result = (data) =>
+    reduce(
+      (acc, x) => {
+        const _hour = moment(x.get("x")).format("H");
+        const _index = partitions.chain(
+          reduce((acc, x) => {
+            return _hour >= x.start ? acc + 1 : acc;
+          }, -1)
+        );
+        acc[_crossAM(_index)].sum += x.get("y");
+        return acc;
+      },
+      partitions.value,
+      data
+    );
+  return result(data);
 };
 
 const groupBy = (interval) => (list) => {
@@ -270,7 +283,9 @@ export const testPerformance = (props) => {
   console.log(input);
 
   var t0 = performance.now();
-  var result = fastRollingMean(14, removeOutliers(input, 14));
+  var result = Either.Right(input)
+    .chain(removeOutliers(14))
+    .map(fastRollingMean(14));
   var t1 = performance.now();
   console.log(
     "removeOutliers() & average took",
