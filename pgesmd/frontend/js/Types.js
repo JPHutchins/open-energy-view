@@ -59,13 +59,9 @@ export const standardDeviationOf = (A, _mean = null) => {
 };
 
 export const removeOutliers = (window) => (arr) => {
-  const _rMean = rolling(meanOf, window, arr).slice(window - 1);
+  const _rMean = fastRollingMean(window)(arr);
   const _rStd = rolling(standardDeviationOf, window, arr).slice(window - 1);
-  const _zipped = zip(arr, zip(_rMean, _rStd)).map((x) => ({
-    arr: x[0],
-    mean: x[1][0],
-    std: x[1][1],
-  }));
+  const _zipped = zipArrMeanStd(arr, _rMean, _rStd);
   const output = _zipped.map((x) =>
     x.arr < x.mean - x.std || x.arr > x.mean + x.std ? x.mean : x.arr
   );
@@ -73,7 +69,7 @@ export const removeOutliers = (window) => (arr) => {
 };
 
 const zipArrMeanStd = (arr, mean, std) => {
-  return zip(arr, zip(_rMean, _rStd)).map((x) => ({
+  return zip(arr, zip(mean, std)).map((x) => ({
     arr: x[0],
     mean: x[1][0],
     std: x[1][1],
@@ -98,25 +94,25 @@ const indexOfTime = (database) => (time) => {
   return m + 1; //If not found return index for "insert"
 };
 
-const fastRollingMean = (n) => (arr) => {
+const fastRollingMean = (window) => (arr) => {
   const _iRange = range(0, arr.length);
   let _sum = 0;
   let _avg = 0;
 
   const result = map((i) => {
-    if (i - n + 1 < 0) {
+    if (i - window + 1 < 0) {
       _sum = _sum + arr[i];
       _avg = _sum / (i + 2);
       return "NotANumber";
-    } else if (i - n + 1 === 0) {
-      _avg = _avg + arr[i] / n;
+    } else if (i - window + 1 === 0) {
+      _avg = _avg + arr[i] / window;
       return _avg;
     }
-    _avg = _avg + (arr[i] - arr[i - n]) / n;
+    _avg = _avg + (arr[i] - arr[i - window]) / window;
     return _avg;
   }, _iRange);
 
-  return result;
+  return result.slice(window - 1);
 };
 
 const rolling = (func, n, arr) => {
@@ -137,11 +133,13 @@ const unwrap = (arr) => {
   return arr.map((x) => x.get("y"));
 };
 
-const partitionScheme = Either.Left([
+const partitionScheme = Either.Right([
   { name: "Night", start: 1 },
   { name: "Day", start: 7 },
   { name: "Evening", start: 18 },
 ]);
+
+const crossAM = (i, partitions) => (i < 0 ? partitions.value.length - 1 : i);
 
 const sumPartitions = (partitions) => (data) => {
   if (partitions.isLeft) return data;
@@ -153,7 +151,6 @@ const sumPartitions = (partitions) => (data) => {
       sum: 0,
     }))
   );
-  const _crossAM = (i) => (i < 0 ? partitions.value.length - 1 : i);
   const result = (data) =>
     reduce(
       (acc, x) => {
@@ -163,13 +160,30 @@ const sumPartitions = (partitions) => (data) => {
             return _hour >= x.start ? acc + 1 : acc;
           }, -1)
         );
-        acc[_crossAM(_index)].sum += x.get("y");
+        acc[crossAM(_index, partitions)].sum += x.get("y");
         return acc;
       },
       partitions.value,
       data
     );
   return result(data);
+};
+
+const makeColorsArray = (partitions) => (data) => {
+  const first = moment(data.first().get("x"));
+  const last = moment(data.last().get("x"));
+  if (Math.abs(last.diff(first)) > 86400000) return List();
+
+  const output = map((x) => {
+    const _hour = moment(x.get("x")).format("H");
+    const _index = partitions.chain(
+      reduce((acc, x) => {
+        return _hour >= x.start ? acc + 1 : acc;
+      }, -1)
+    );
+    return crossAM(_index, partitions);
+  }, data);
+  return output;
 };
 
 const groupBy = (interval) => (list) => {
@@ -203,8 +217,15 @@ const groupByYear = groupBy("year");
 
 const makeDays = (arr) => {};
 
-// minOfEach :: [Number] -> [Number]
-const minOfEach = (interval) => (arr) => {};
+// minOfEach :: [[Number]] -> [Number]
+const minOfEachDay = (arr) => {
+  return arr.map((x) =>
+    Map({
+      x: moment(x.get(0).get("x")).startOf("day").valueOf(),
+      y: minOf(unwrap(x)),
+    })
+  );
+};
 
 /*
 
@@ -226,7 +247,7 @@ rollingMean(removeOutliers(rollingMean(minOfEach(day)), rollingStd(minOfEach(day
 
 export const testPerformance = (props) => {
   console.log(props);
-  const input = Array.from({ length: 2000 }, () =>
+  let input = Array.from({ length: 2000 }, () =>
     Math.floor(Math.random() * 1000)
   );
 
@@ -280,10 +301,17 @@ export const testPerformance = (props) => {
     result
   );
 
+  const colors = makeColorsArray(partitionScheme)(
+    props.database.slice(-26)
+  );
+  console.log(colors.toArray())
+
   console.log(input);
+  input = minOfEachDay(groupByDay(props.database));
+  console.log(unwrap(input));
 
   var t0 = performance.now();
-  var result = Either.Right(input)
+  var result = Either.Right(unwrap(input))
     .chain(removeOutliers(14))
     .map(fastRollingMean(14));
   var t1 = performance.now();
