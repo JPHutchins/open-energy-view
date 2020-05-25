@@ -1,7 +1,9 @@
 import {
   curry,
   compose,
+  addIndex,
   map,
+  chain,
   join,
   chian,
   ap,
@@ -19,6 +21,8 @@ import {
   head,
   zip,
   zipObj,
+  zipWith,
+  __,
 } from "ramda";
 import { Maybe, IO, Either, Identity } from "ramda-fantasy";
 import moment from "moment";
@@ -54,17 +58,40 @@ export const meanOf = (A) => A.reduce((acc, x) => acc + x, 0) / A.length;
 
 export const standardDeviationOf = (A, _mean = null) => {
   _mean = _mean ? _mean : meanOf(A);
-  const _deviations = A.map((x) => (x - _mean) * (x - _mean));
-  return Math.sqrt(meanOf(_deviations));
+  const _variances = A.map((x) => (x - _mean) * (x - _mean));
+  return Math.sqrt(meanOf(_variances));
+};
+
+const makeFillWindow = (window) => (arrInput) => (f) => (arr) => {
+  const length = arr.length;
+  const middle = Math.floor(window / 2);
+  const output = addIndex(map)(
+    (x, i) => (i < window ? arr[window] : x),
+    arr
+  ).slice(middle);
+
+  const remainingWindow = length - output.length;
+  const windowRange = range(1, remainingWindow + 1).reverse();
+  for (let rWindow of windowRange) {
+      output.push(f(arrInput.slice(length - rWindow - middle)))
+  }
+  return Either.Right(output)
 };
 
 export const removeOutliers = (window) => (arr) => {
-  const _rMean = fastRollingMean(window)(arr);
-  const _rStd = rolling(standardDeviationOf, window, arr).slice(window - 1);
-  const _zipped = zipArrMeanStd(arr, _rMean, _rStd);
+  const fillWindow = makeFillWindow(window)(arr);
+
+  const _rMeanRaw = fastRollingMean(window)(arr);
+  const _rMean = chain(fillWindow(meanOf), _rMeanRaw);
+
+  const _rStdRaw = rolling(standardDeviationOf, window, arr);
+  const _rStd = fillWindow(standardDeviationOf)(_rStdRaw);
+
+  const _zipped = zipArrMeanStd(arr, _rMean.value, _rStd.value);
   const output = _zipped.map((x) =>
     x.arr < x.mean - x.std || x.arr > x.mean + x.std ? x.mean : x.arr
   );
+
   return Either.Right(output);
 };
 
@@ -112,7 +139,7 @@ const fastRollingMean = (window) => (arr) => {
     return _avg;
   }, _iRange);
 
-  return result.slice(window - 1);
+  return Either.Right(result);
 };
 
 const rolling = (func, n, arr) => {
@@ -301,19 +328,26 @@ export const testPerformance = (props) => {
     result
   );
 
-  const colors = makeColorsArray(partitionScheme)(
-    props.database.slice(-26)
-  );
-  console.log(colors.toArray())
+  const colors = makeColorsArray(partitionScheme)(props.database.slice(-26));
+  console.log(colors.toArray());
 
   console.log(input);
   input = minOfEachDay(groupByDay(props.database));
   console.log(unwrap(input));
 
+  const makeCalculateBackgroundMetric = (window, database) => {
+    return compose(
+        chain(makeFillWindow(window)(database)(meanOf)),
+        chain(fastRollingMean(window)),
+        chain(removeOutliers(window)))
+  }
+
   var t0 = performance.now();
   var result = Either.Right(unwrap(input))
     .chain(removeOutliers(14))
-    .map(fastRollingMean(14));
+    .chain(fastRollingMean(14))
+    .chain(makeFillWindow(14)(unwrap(input))(meanOf));
+
   var t1 = performance.now();
   console.log(
     "removeOutliers() & average took",
@@ -321,6 +355,10 @@ export const testPerformance = (props) => {
     "milliseconds to generate:",
     result
   );
+
+  const calculateBG = makeCalculateBackgroundMetric(14, unwrap(input));
+  console.log(calculateBG)
+  console.log(calculateBG(Either.Right(unwrap(input))))
 
   var t0 = performance.now();
   var result = removeOutliers(input, 14);
