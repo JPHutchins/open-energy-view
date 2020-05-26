@@ -1,15 +1,62 @@
 import React, { useState } from "react";
 import EnergyChart from "./EnergyChart";
 import moment from "moment";
+import { EnergyHistory } from "../Types";
+import {
+  curry,
+  compose,
+  addIndex,
+  map,
+  chain,
+  join,
+  chian,
+  ap,
+  indexOf,
+  lift,
+  either,
+  sum,
+  isNil,
+  slice,
+  mean,
+  range,
+  isEmpty,
+  prepend,
+  reduce,
+  drop,
+  head,
+  pipe,
+  zip,
+  zipObj,
+  zipWith,
+  __,
+} from "ramda";
+import { Maybe, IO, Either, Identity } from "ramda-fantasy";
 
 const EnergyDisplay = (props) => {
+    const partitionScheme = Either.Right([
+        { name: "Night", start: 1, color: "#FF0000" },
+        { name: "Day", start: 7, color: "#00FF00" },
+        { name: "Evening", start: 18, color: "#0000FF" },
+      ]);
+  const start = moment(props.database.last().get("x")).startOf("day");
+  const end = moment(start).endOf("day");
+  const tester = new EnergyHistory(props.database, partitionScheme, {
+    start: start,
+    end: end,
+  });
+
   const [past, setPast] = useState(0);
-  const [startDate, setStartDate] = useState(moment(props.database.get(-1).get("x")));
-  const [endDate, setEndDate] = useState(moment(props.database.get(-1).get("x")));
+  const [startDate, setStartDate] = useState(
+    moment(props.database.get(-1).get("x"))
+  );
+  const [endDate, setEndDate] = useState(
+    moment(props.database.get(-1).get("x"))
+  );
   const [intervalType, setIntervalType] = useState("month");
   const [data, setData] = useState(
     props.database.slice(-24 * past, -24 * (past - 1)).toJS()
   );
+  const [test, setTest] = useState(tester);
 
   const makeData = (past) => {
     return props.database.slice(-24 * (past + 1), -24 * past).toJS();
@@ -24,7 +71,6 @@ const EnergyDisplay = (props) => {
   };
 
   const intervals = (firstMoment, lastMoment) => {
-    console.log(Math.ceil((lastMoment - firstMoment) / 86400000));
   };
 
   /**
@@ -34,8 +80,7 @@ const EnergyDisplay = (props) => {
   const pipe = (...functions) => (x, ...args) =>
     functions.reduce((v, f) => f(v, ...args), x);
 
-  const findIntervalBounds = (intervalType) => (start, end=null) => {
-      console.log(start, end)
+  const findIntervalBounds = (intervalType) => (start, end = null) => {
     if (end) return { start: start, end: end };
     return {
       start: moment(start.startOf(intervalType)),
@@ -68,7 +113,7 @@ const EnergyDisplay = (props) => {
         moment(_start),
         moment(_start.endOf(_dataPointLength)),
       ]);
-      _start.add(1, "minute").startOf("hour")
+      _start.add(1, "minute").startOf("hour");
     }
     return intervalArray;
   };
@@ -114,12 +159,10 @@ const EnergyDisplay = (props) => {
 
   intervals(lMoment(past), rMoment(past));
 
-  const theData = (
+  const theData =
     intervalType !== "total"
       ? result(startDate)
-      : result(moment(props.database.get(0).get("x")), endDate)
-  );
-  console.log(theData);
+      : result(moment(props.database.get(0).get("x")), endDate);
 
   const datasets = {
     datasets: [
@@ -182,24 +225,18 @@ const EnergyDisplay = (props) => {
 
   return (
     <div style={{ height: "80%" }}>
-      <EnergyChart data={datasets} options={options} />
+      <EnergyChart data={test.data} options={options} />
+      <button onClick={() => setTest(test.prev())}>Previous</button>
       <button
-        onClick={() =>
-          setStartDate(moment(startDate.subtract(1, intervalType)))
-        }
-      >
-        Previous
-      </button>
-      <button
-        onClick={() => setStartDate(moment(startDate.add(1, intervalType)))}
+        onClick={() => setTest(test.next())}
       >
         Next
       </button>
-      <button onClick={() => setIntervalType("day")}>Day</button>
-      <button onClick={() => setIntervalType("week")}>Week</button>
-      <button onClick={() => setIntervalType("month")}>Month</button>
-      <button onClick={() => setIntervalType("year")}>Year</button>
-      <button onClick={() => setIntervalType("total")}>total</button>
+      <button onClick={() => setTest(test.setWindow("day"))}>Day</button>
+      <button onClick={() => setTest(test.setWindow("week"))}>Week</button>
+      <button onClick={() => setTest(test.setWindow("month"))}>Month</button>
+      <button onClick={() => setTest(test.setWindow("year"))}>Year</button>
+      <button onClick={() => setTest(test.setWindow("total"))}>total</button>
     </div>
   );
 };

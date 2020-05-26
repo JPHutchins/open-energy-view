@@ -10,6 +10,7 @@ import {
   indexOf,
   lift,
   either,
+  sum,
   isNil,
   slice,
   mean,
@@ -19,6 +20,7 @@ import {
   reduce,
   drop,
   head,
+  pipe,
   zip,
   zipObj,
   zipWith,
@@ -26,14 +28,75 @@ import {
 } from "ramda";
 import { Maybe, IO, Either, Identity } from "ramda-fantasy";
 import moment from "moment";
-const { Map, List, first } = require("immutable");
+const { Map, List, first, toJS } = require("immutable");
 
-// EnergyHistory :: f (a) -> f (a)
-export const EnergySHistory = (database) => ({
-  of: (database) => EnergyHistory(database),
-  map: (f) => EnergyHistory(data.map(f)),
-  database: database,
-});
+const findMaxResolution = (intervalLength) => {
+  const _dataPointLength = Math.abs(intervalLength) / 52;
+  if (_dataPointLength >= 609785000) return "month";
+  if (_dataPointLength >= 52538461) return "week";
+  if (_dataPointLength >= 11630769 + 1) return "day";
+  if (_dataPointLength >= 1661538 + 1) return "part";
+  return "hour";
+};
+
+const intervalToWindow = (intervalType) => {
+  return {
+    hour: "day",
+    part: "week",
+    day: "month",
+    week: "year",
+    month: "complete",
+  }[intervalType];
+};
+
+const findData = (database) => (intervalArray) => {
+  const indexOf = indexOfTime(database);
+
+  const data = intervalArray.map((point) => {
+    const [_startTime, _endTime] = point;
+    const _startIndex = indexOf(_startTime.valueOf());
+    const _endIndex = indexOf(_endTime.valueOf());
+    const _slice = database.slice(_startIndex, _endIndex);
+    const _sum = _slice.reduce((a, v) => a + v.get("y"), 0);
+    const _mean = Math.round(_sum / (_endIndex - _startIndex));
+    return Map({
+      x: _startTime.valueOf(),
+      y: _mean,
+      sum: _sum,
+    });
+  });
+  return List(data);
+};
+
+const makeIntervalArray = (interval) => {
+  const _intervalLength = Math.abs(interval.start.diff(interval.end));
+  const _dataPointLength = findMaxResolution(_intervalLength);
+
+  const intervalArray = [];
+  const { start, end } = interval;
+  if (_dataPointLength === "part") {
+    console.error("Partitions not implemented");
+    return [];
+  }
+  const _start = moment(start);
+  while (_start.isBefore(end)) {
+    intervalArray.push([
+      moment(_start),
+      moment(_start.endOf(_dataPointLength)),
+    ]);
+    _start.add(1, "minute").startOf("hour");
+  }
+  return intervalArray;
+};
+
+const findIntervalBounds = (intervalType) => (start, end = null) => {
+  console.log(start, end);
+  if (end) return { start: start, end: end };
+  return {
+    start: moment(start.startOf(intervalType)),
+    end: moment(start.endOf(intervalType)),
+  };
+};
 
 // minZero :: Number -> Number
 export const minZero = (x) => Math.max(0, x);
@@ -73,21 +136,29 @@ const makeFillWindow = (window) => (arrInput) => (f) => (arr) => {
   const remainingWindow = length - output.length;
   const windowRange = range(1, remainingWindow + 1).reverse();
   for (let rWindow of windowRange) {
-      output.push(f(arrInput.slice(length - rWindow - middle)))
+    output.push(f(arrInput.slice(length - rWindow - middle)));
   }
-  return Either.Right(output)
+  return Either.Right(output);
 };
 
 export const removeOutliers = (window) => (arr) => {
   const fillWindow = makeFillWindow(window)(arr);
 
   const _rMeanRaw = fastRollingMean(window)(arr);
-  const _rMean = chain(fillWindow(meanOf), _rMeanRaw);
+  const _rMeanEither = chain(fillWindow(meanOf), _rMeanRaw);
+  if (_rMeanEither.isLeft) return Either.Left(arr);
+  const _rMean = _rMeanEither.value;
 
   const _rStdRaw = rolling(standardDeviationOf, window, arr);
-  const _rStd = fillWindow(standardDeviationOf)(_rStdRaw);
+  const _rStdEither = fillWindow(standardDeviationOf)(_rStdRaw);
+  if (_rStdEither.isLeft) return Either.Left(arr);
+  const _rStd = _rStdEither.value;
 
-  const _zipped = zipArrMeanStd(arr, _rMean.value, _rStd.value);
+  if (arr.length != _rMean.length && arr.length != _rStd.length) {
+    return Either.Left(arr);
+  }
+
+  const _zipped = zipArrMeanStd(arr, _rMean, _rStd);
   const output = _zipped.map((x) =>
     x.arr < x.mean - x.std || x.arr > x.mean + x.std ? x.mean : x.arr
   );
@@ -103,10 +174,6 @@ const zipArrMeanStd = (arr, mean, std) => {
   }));
 };
 
-const EnergyHistory = (data) => ({
-  map: (x) => x.map((x) => x.get("y")),
-});
-
 const indexOfTime = (database) => (time) => {
   let l = 0;
   let r = database.size - 1;
@@ -118,7 +185,8 @@ const indexOfTime = (database) => (time) => {
     if (time === _current) return m;
     time < _current ? (r = m - 1) : (l = m + 1);
   }
-  return m + 1; //If not found return index for "insert"
+
+  return time < database.get(m).get("x") ? m : m + 1;
 };
 
 const fastRollingMean = (window) => (arr) => {
@@ -156,19 +224,25 @@ const getPlainList = (list) => {
   return list.map((x) => ({ x: x.get("x"), y: x.get("y") }));
 };
 
-const unwrap = (arr) => {
-  return arr.map((x) => x.get("y"));
+// extract :: [{k: v}] -> [v]
+const extract = (key) => (arr) => {
+  return arr.map((x) => x.get(key));
 };
 
 const partitionScheme = Either.Right([
-  { name: "Night", start: 1 },
-  { name: "Day", start: 7 },
-  { name: "Evening", start: 18 },
+  { name: "Night", start: 1, color: "#FF0000" },
+  { name: "Day", start: 7, color: "#00FF00" },
+  { name: "Evening", start: 18, color: "#0000FF" },
 ]);
 
 const crossAM = (i, partitions) => (i < 0 ? partitions.value.length - 1 : i);
 
 const sumPartitions = (partitions) => (data) => {
+  // TODO: implement memoized DP for subset of already calculated sums
+  // Store tabulation [obj (first sum), ..., obj (result)]
+  // Subset: sum(i, j) -> dp[j] - dp[i - 1]
+  // This would be cleared if user changes partition boundaries!
+  // O(1) for subsequent calls - call it on every initial load in/ part update?
   if (partitions.isLeft) return data;
 
   partitions = partitions.map(
@@ -208,7 +282,7 @@ const makeColorsArray = (partitions) => (data) => {
         return _hour >= x.start ? acc + 1 : acc;
       }, -1)
     );
-    return crossAM(_index, partitions);
+    return partitions.value[crossAM(_index, partitions)].color;
   }, data);
   return output;
 };
@@ -249,7 +323,7 @@ const minOfEachDay = (arr) => {
   return arr.map((x) =>
     Map({
       x: moment(x.get(0).get("x")).startOf("day").valueOf(),
-      y: minOf(unwrap(x)),
+      y: minOf(extract("y")(x)),
     })
   );
 };
@@ -272,7 +346,114 @@ rollingMean(removeOutliers(rollingMean(minOfEach(day)), rollingStd(minOfEach(day
 
 */
 
+const calculatePassiveUse = (database) => {
+  const WINDOW = 14; // global config variable?
+
+  const dailyMinimums = minOfEachDay(groupByDay(database));
+  const values = Either.Right(extract("y")(dailyMinimums));
+  const time = Either.Right(extract("x")(dailyMinimums));
+
+  const passiveValues = values
+    .chain(removeOutliers(WINDOW))
+    .chain(fastRollingMean(WINDOW))
+    .chain(makeFillWindow(WINDOW)(values.value)(meanOf));
+
+  if (passiveValues.isLeft) return Either.Left(database);
+
+  return List(
+    zipWith((x, y) => Map({ x: x, y: y }), time.value, passiveValues.value)
+  );
+};
+
+const getDataset = (database) => pipe(makeIntervalArray, findData(database));
+
+// EnergyHistory :: f (a) -> f (b)
+export class EnergyHistory {
+  constructor(database, partitionOptions, interval, passiveUse = null) {
+    this.database = database;
+    this.partitionOptions = partitionOptions;
+    this.passiveUse = passiveUse ? passiveUse : calculatePassiveUse(database);
+    this._graphData = getDataset(database)({
+      start: interval.start,
+      end: interval.end,
+    });
+    this.data = {
+      start: interval.start,
+      end: interval.end,
+      intervalSize: findMaxResolution(interval.end.diff(interval.start)),
+      datasets: [
+        {
+          label: "Energy Consumption",
+          type: "bar",
+          data: this._graphData.toJS(),
+          backgroundColor: makeColorsArray(partitionOptions)(
+            this._graphData
+          ).toArray(),
+        },
+        {
+          label: "Passive Consumption",
+          type: "line",
+          data: this.passiveUse,
+        },
+      ],
+    };
+    this.windowData = {
+      windowSize: intervalToWindow(this.data.intervalSize),
+      windowSum: sum(extract("y")(this._graphData)),
+      partitionSums: sumPartitions(partitionOptions)(this._graphData),
+    };
+  }
+
+  prev() {
+    return new EnergyHistory(
+      this.database,
+      this.partitionOptions,
+      {
+        start: moment(this.data.start).subtract(1, this.windowData.windowSize),
+        end: moment(this.data.end).subtract(1, this.windowData.windowSize),
+      },
+      (this.passiveUse = this.passiveUse)
+    );
+  }
+
+  next() {
+    return new EnergyHistory(
+      this.database,
+      this.partitionOptions,
+      {
+        start: moment(this.data.start).add(1, this.windowData.windowSize),
+        end: moment(this.data.end).add(1, this.windowData.windowSize),
+      },
+      (this.passiveUse = this.passiveUse)
+    );
+  }
+
+  setWindow(interval) {
+    return new EnergyHistory(
+        this.database,
+        this.partitionOptions,
+        {
+          start: moment(this.data.start).startOf(interval),
+          end: moment(this.data.start).endOf(interval),
+        },
+        (this.passiveUse = this.passiveUse)
+      );
+  }
+}
+
 export const testPerformance = (props) => {
+  console.log(partitionScheme);
+  console.log(props.database.last());
+  const start = moment(props.database.last().get("x")).startOf("day");
+  const end = moment(start).endOf("day");
+  const test = new EnergyHistory(props.database, partitionScheme, {
+    start: start,
+    end: end,
+  });
+  console.log(test);
+  console.log(test.prev());
+  console.log(test.prev().prev());
+
   console.log(props);
   let input = Array.from({ length: 2000 }, () =>
     Math.floor(Math.random() * 1000)
@@ -328,25 +509,33 @@ export const testPerformance = (props) => {
     result
   );
 
-  const colors = makeColorsArray(partitionScheme)(props.database.slice(-26));
+  const colors = makeColorsArray(partitionScheme)(props.database.slice(-24));
   console.log(colors.toArray());
-
+  //.slice(-720, -696)
   console.log(input);
   input = minOfEachDay(groupByDay(props.database));
-  console.log(unwrap(input));
+  console.log(extract("y")(input));
 
   const makeCalculateBackgroundMetric = (window, database) => {
     return compose(
-        chain(makeFillWindow(window)(database)(meanOf)),
-        chain(fastRollingMean(window)),
-        chain(removeOutliers(window)))
-  }
+      chain(makeFillWindow(window)(database)(meanOf)),
+      chain(fastRollingMean(window)),
+      chain(removeOutliers(window))
+    );
+  };
+
+  var time = Either.Right(extract("x")(input));
 
   var t0 = performance.now();
-  var result = Either.Right(unwrap(input))
-    .chain(removeOutliers(14))
-    .chain(fastRollingMean(14))
-    .chain(makeFillWindow(14)(unwrap(input))(meanOf));
+  //   var result = Either.Right(extract('y')(input))
+  //     .chain(removeOutliers(14))
+  //     .chain(fastRollingMean(14))
+  //     .chain(makeFillWindow(14)(extract('y')(input))(meanOf));
+
+  //   var result = zipWith((x, y) => ({x: x, y: y}), time.value, result.value)
+  var result = calculatePassiveUse(props.database);
+  console.log(result[result.length - 30]); // {x: 1586761200000, y: 1204.923469387756}
+  console.log(result);
 
   var t1 = performance.now();
   console.log(
@@ -356,9 +545,9 @@ export const testPerformance = (props) => {
     result
   );
 
-  const calculateBG = makeCalculateBackgroundMetric(14, unwrap(input));
-  console.log(calculateBG)
-  console.log(calculateBG(Either.Right(unwrap(input))))
+  const calculateBG = makeCalculateBackgroundMetric(14, extract("y")(input));
+  console.log(calculateBG);
+  console.log(calculateBG(Either.Right(extract("y")(input))));
 
   var t0 = performance.now();
   var result = removeOutliers(input, 14);
@@ -371,9 +560,6 @@ export const testPerformance = (props) => {
   );
 
   console.log(getPlainList(props.database));
-
-  const data = EnergyHistory(props.database);
-  console.log(data);
 
   var t0 = performance.now();
   result = groupByDay(props.database);
