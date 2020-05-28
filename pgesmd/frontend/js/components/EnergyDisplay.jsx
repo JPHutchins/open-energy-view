@@ -31,15 +31,16 @@ import {
   __,
 } from "ramda";
 import { Maybe, IO, Either, Identity } from "ramda-fantasy";
+import { startOfDay, endOfDay } from "date-fns";
 
 const EnergyDisplay = (props) => {
-    const partitionScheme = Either.Right([
-        { name: "Night", start: 1, color: "#FF0000" },
-        { name: "Day", start: 7, color: "#00FF00" },
-        { name: "Evening", start: 18, color: "#0000FF" },
-      ]);
-  const start = moment(props.database.last().get("x")).startOf("day");
-  const end = moment(start).endOf("day");
+  const partitionScheme = Either.Right([
+    { name: "Night", start: 1, color: "#FF0000" },
+    { name: "Day", start: 7, color: "#00FF00" },
+    { name: "Evening", start: 18, color: "#0000FF" },
+  ]);
+  const start = startOfDay(new Date(props.database.last().get("x")));
+  const end = endOfDay(start)
   const tester = new EnergyHistory(props.database, partitionScheme, {
     start: start,
     end: end,
@@ -70,8 +71,7 @@ const EnergyDisplay = (props) => {
     return moment(props.database.get(-(24 * past) - 730).get("x"));
   };
 
-  const intervals = (firstMoment, lastMoment) => {
-  };
+  const intervals = (firstMoment, lastMoment) => {};
 
   /**
    * Pipe the output of each function to the input of the next, left to right.
@@ -227,11 +227,7 @@ const EnergyDisplay = (props) => {
     <div style={{ height: "80%" }}>
       <EnergyChart data={test.data} options={options} />
       <button onClick={() => setTest(test.prev())}>Previous</button>
-      <button
-        onClick={() => setTest(test.next())}
-      >
-        Next
-      </button>
+      <button onClick={() => setTest(test.next())}>Next</button>
       <button onClick={() => setTest(test.setWindow("day"))}>Day</button>
       <button onClick={() => setTest(test.setWindow("week"))}>Week</button>
       <button onClick={() => setTest(test.setWindow("month"))}>Month</button>

@@ -26,6 +26,25 @@ import {
   zipWith,
   __,
 } from "ramda";
+import {
+  differenceInMilliseconds,
+  getTime,
+  isBefore,
+  endOfHour,
+  endOfDay,
+  endOfWeek,
+  endOfMonth,
+  endOfYear,
+  startOfHour,
+  startOfDay,
+  startOfWeek,
+  startOfMonth,
+  startOfYear,
+  format,
+  add,
+  sub,
+  parse,
+} from "date-fns";
 import { Maybe, IO, Either, Identity } from "ramda-fantasy";
 import moment from "moment";
 const { Map, List, first, toJS } = require("immutable");
@@ -37,6 +56,26 @@ const findMaxResolution = (intervalLength) => {
   if (_dataPointLength >= 11630769 + 1) return "day";
   if (_dataPointLength >= 1661538 + 1) return "part";
   return "hour";
+};
+
+export const endOf = (interval) => {
+  return {
+    hour: endOfHour,
+    day: endOfDay,
+    week: endOfWeek,
+    month: endOfMonth,
+    year: endOfYear,
+  }[interval];
+};
+
+export const startOf = (interval) => {
+  return {
+    hour: startOfHour,
+    day: startOfDay,
+    week: startOfWeek,
+    month: startOfMonth,
+    year: startOfYear,
+  }[interval];
 };
 
 const intervalToWindow = (intervalType) => {
@@ -54,13 +93,13 @@ const findData = (database) => (intervalArray) => {
 
   const data = intervalArray.map((point) => {
     const [_startTime, _endTime] = point;
-    const _startIndex = indexOf(_startTime.valueOf());
-    const _endIndex = indexOf(_endTime.valueOf());
+    const _startIndex = indexOf(getTime(_startTime));
+    const _endIndex = indexOf(getTime(_endTime));
     const _slice = database.slice(_startIndex, _endIndex);
     const _sum = _slice.reduce((a, v) => a + v.get("y"), 0);
     const _mean = Math.round(_sum / (_endIndex - _startIndex));
     return Map({
-      x: _startTime.valueOf(),
+      x: getTime(_startTime),
       y: _mean,
       sum: _sum,
     });
@@ -69,22 +108,22 @@ const findData = (database) => (intervalArray) => {
 };
 
 const makeIntervalArray = (interval) => {
-  const _intervalLength = Math.abs(interval.start.diff(interval.end));
+  const _intervalLength = Math.abs(
+    differenceInMilliseconds(interval.start, interval.end)
+  );
   const _dataPointLength = findMaxResolution(_intervalLength);
 
   const intervalArray = [];
   const { start, end } = interval;
   if (_dataPointLength === "part") {
     console.error("Partitions not implemented");
-    return [];
+    return Either.Left("Partitions not implemented");
   }
-  const _start = moment(start);
-  while (_start.isBefore(end)) {
-    intervalArray.push([
-      moment(_start),
-      moment(_start.endOf(_dataPointLength)),
-    ]);
-    _start.add(1, "minute").startOf("hour");
+  const _dateAddFormat = { [`${_dataPointLength}s`]: 1 };
+  let _start = new Date(start);
+  while (isBefore(_start, end)) {
+    intervalArray.push([_start, endOf(_dataPointLength)(_start)]);
+    _start = add(_start, _dateAddFormat);
   }
   return intervalArray;
 };
@@ -93,8 +132,8 @@ const findIntervalBounds = (intervalType) => (start, end = null) => {
   console.log(start, end);
   if (end) return { start: start, end: end };
   return {
-    start: moment(start.startOf(intervalType)),
-    end: moment(start.endOf(intervalType)),
+    start: startOf(intervalType)(start),
+    end: endOf(intervalType)(start),
   };
 };
 
@@ -105,8 +144,8 @@ export const minZero = (x) => Math.max(0, x);
 export const makeIntervalBounds = (intervalType) => (start, end = null) => {
   if (end) return { start: start, end: end };
   return {
-    start: moment(moment(start).startOf(intervalType)),
-    end: moment(moment(start).endOf(intervalType)),
+    start: startOf(intervalType)(start),
+    end: endOf(intervalType)(start),
   };
 };
 
@@ -255,7 +294,7 @@ const sumPartitions = (partitions) => (data) => {
   const result = (data) =>
     reduce(
       (acc, x) => {
-        const _hour = moment(x.get("x")).format("H");
+        const _hour = format(new Date(x.get("x")), "H");
         const _index = partitions.chain(
           reduce((acc, x) => {
             return _hour >= x.start ? acc + 1 : acc;
@@ -271,12 +310,12 @@ const sumPartitions = (partitions) => (data) => {
 };
 
 const makeColorsArray = (partitions) => (data) => {
-  const first = moment(data.first().get("x"));
-  const last = moment(data.last().get("x"));
-  if (Math.abs(last.diff(first)) > 86400000) return List();
+  const first = new Date(data.first().get("x"));
+  const last = new Date(data.last().get("x"));
+  if (Math.abs(differenceInMilliseconds(first, last)) > 86400000) return List();
 
   const output = map((x) => {
-    const _hour = moment(x.get("x")).format("H");
+    const _hour = format(new Date(x.get("x")), "H");
     const _index = partitions.chain(
       reduce((acc, x) => {
         return _hour >= x.start ? acc + 1 : acc;
@@ -285,6 +324,16 @@ const makeColorsArray = (partitions) => (data) => {
     return partitions.value[crossAM(_index, partitions)].color;
   }, data);
   return output;
+};
+
+const one = (interval) => {
+  return {
+    hour: { hours: 1 },
+    day: { days: 1 },
+    week: { weeks: 1 },
+    month: { months: 1 },
+    year: { years: 1 },
+  }[interval];
 };
 
 const groupBy = (interval) => (list) => {
@@ -298,10 +347,8 @@ const groupBy = (interval) => (list) => {
     month: 744,
     year: 8760,
   }[interval];
-  const endMoment = moment(list.first().get("x"))
-    .startOf(interval)
-    .add(1, interval)
-    .valueOf();
+  const start = new Date(list.first().get("x"));
+  const endMoment = getTime(add(start, one(interval)));
   const endIndex =
     list[guess] === endMoment ? guess : indexOfTime(list)(endMoment);
   return prepend(
@@ -322,7 +369,7 @@ const makeDays = (arr) => {};
 const minOfEachDay = (arr) => {
   return arr.map((x) =>
     Map({
-      x: moment(x.get(0).get("x")).startOf("day").valueOf(),
+      x: getTime(startOf("day")(x.get(0).get("x"))),
       y: minOf(extract("y")(x)),
     })
   );
@@ -380,7 +427,9 @@ export class EnergyHistory {
     this.data = {
       start: interval.start,
       end: interval.end,
-      intervalSize: findMaxResolution(interval.end.diff(interval.start)),
+      intervalSize: findMaxResolution(
+        differenceInMilliseconds(interval.start, interval.end)
+      ),
       datasets: [
         {
           label: "Energy Consumption",
@@ -409,8 +458,8 @@ export class EnergyHistory {
       this.database,
       this.partitionOptions,
       {
-        start: moment(this.data.start).subtract(1, this.windowData.windowSize),
-        end: moment(this.data.end).subtract(1, this.windowData.windowSize),
+        start: sub(this.data.start, one(this.windowData.windowSize)),
+        end: sub(this.data.end, one(this.windowData.windowSize)),
       },
       (this.passiveUse = this.passiveUse)
     );
@@ -421,8 +470,8 @@ export class EnergyHistory {
       this.database,
       this.partitionOptions,
       {
-        start: moment(this.data.start).add(1, this.windowData.windowSize),
-        end: moment(this.data.end).add(1, this.windowData.windowSize),
+        start: add(this.data.start, one(this.windowData.windowSize)),
+        end: add(this.data.end, one(this.windowData.windowSize)),
       },
       (this.passiveUse = this.passiveUse)
     );
@@ -430,22 +479,22 @@ export class EnergyHistory {
 
   setWindow(interval) {
     return new EnergyHistory(
-        this.database,
-        this.partitionOptions,
-        {
-          start: moment(this.data.start).startOf(interval),
-          end: moment(this.data.start).endOf(interval),
-        },
-        (this.passiveUse = this.passiveUse)
-      );
+      this.database,
+      this.partitionOptions,
+      {
+        start: startOf(interval)(this.data.start),
+        end: endOf(interval)(this.data.start),
+      },
+      (this.passiveUse = this.passiveUse)
+    );
   }
 }
 
 export const testPerformance = (props) => {
   console.log(partitionScheme);
   console.log(props.database.last());
-  const start = moment(props.database.last().get("x")).startOf("day");
-  const end = moment(start).endOf("day");
+  const start = startOf("day")(new Date(props.database.last().get("x")));
+  const end = endOf("day")(start);
   const test = new EnergyHistory(props.database, partitionScheme, {
     start: start,
     end: end,
