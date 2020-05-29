@@ -1,92 +1,27 @@
 import {
-  curry,
   compose,
   addIndex,
   map,
   chain,
-  join,
-  chian,
-  ap,
-  indexOf,
-  lift,
-  either,
   sum,
-  isNil,
   slice,
-  mean,
   range,
-  isEmpty,
   prepend,
   reduce,
-  drop,
-  head,
   pipe,
-  zip,
-  zipObj,
   zipWith,
   __,
 } from "ramda";
 import {
   differenceInMilliseconds,
   getTime,
-  isBefore,
-  endOfHour,
-  endOfDay,
-  endOfWeek,
-  endOfMonth,
-  endOfYear,
-  startOfHour,
-  startOfDay,
-  startOfWeek,
-  startOfMonth,
-  startOfYear,
   format,
   add,
   sub,
-  parse,
 } from "date-fns";
 import { Maybe, IO, Either, Identity } from "ramda-fantasy";
-import moment from "moment";
+import findMaxResolution from "./functions/findMaxResolution";
 const { Map, List, first, toJS } = require("immutable");
-
-const findMaxResolution = (intervalLength) => {
-  const _dataPointLength = Math.abs(intervalLength) / 52;
-  if (_dataPointLength >= 609785000) return "month";
-  if (_dataPointLength >= 52538461) return "week";
-  if (_dataPointLength >= 11630769 + 1) return "day";
-  if (_dataPointLength >= 1661538 + 1) return "part";
-  return "hour";
-};
-
-export const endOf = (interval) => {
-  return {
-    hour: endOfHour,
-    day: endOfDay,
-    week: endOfWeek,
-    month: endOfMonth,
-    year: endOfYear,
-  }[interval];
-};
-
-export const startOf = (interval) => {
-  return {
-    hour: startOfHour,
-    day: startOfDay,
-    week: startOfWeek,
-    month: startOfMonth,
-    year: startOfYear,
-  }[interval];
-};
-
-const intervalToWindow = (intervalType) => {
-  return {
-    hour: "day",
-    part: "week",
-    day: "month",
-    week: "year",
-    month: "complete",
-  }[intervalType];
-};
 
 const findData = (database) => (intervalArray) => {
   const indexOf = indexOfTime(database);
@@ -105,27 +40,6 @@ const findData = (database) => (intervalArray) => {
     });
   });
   return List(data);
-};
-
-const makeIntervalArray = (interval) => {
-  const _intervalLength = Math.abs(
-    differenceInMilliseconds(interval.start, interval.end)
-  );
-  const _dataPointLength = findMaxResolution(_intervalLength);
-
-  const intervalArray = [];
-  const { start, end } = interval;
-  if (_dataPointLength === "part") {
-    console.error("Partitions not implemented");
-    return Either.Left("Partitions not implemented");
-  }
-  const _dateAddFormat = { [`${_dataPointLength}s`]: 1 };
-  let _start = new Date(start);
-  while (isBefore(_start, end)) {
-    intervalArray.push([_start, endOf(_dataPointLength)(_start)]);
-    _start = add(_start, _dateAddFormat);
-  }
-  return intervalArray;
 };
 
 const findIntervalBounds = (intervalType) => (start, end = null) => {
@@ -151,18 +65,6 @@ export const makeIntervalBounds = (intervalType) => (start, end = null) => {
 
 // dayBounds :: Moment -> {k: v}
 export const dayBounds = makeIntervalBounds("day");
-
-// minOf :: [Number] -> Number
-export const minOf = (A) => A.reduce((acc, x) => Math.min(acc, x), Infinity);
-
-// meanOf :: [Number] -> Number
-export const meanOf = (A) => A.reduce((acc, x) => acc + x, 0) / A.length;
-
-export const standardDeviationOf = (A, _mean = null) => {
-  _mean = _mean ? _mean : meanOf(A);
-  const _variances = A.map((x) => (x - _mean) * (x - _mean));
-  return Math.sqrt(meanOf(_variances));
-};
 
 const makeFillWindow = (window) => (arrInput) => (f) => (arr) => {
   const length = arr.length;
@@ -197,7 +99,11 @@ export const removeOutliers = (window) => (arr) => {
     return Either.Left(arr);
   }
 
-  const _zipped = zipArrMeanStd(arr, _rMean, _rStd);
+  const _zipped = zip3(arr, _rMean, _rStd).map(x => ({
+      arr: x[0],
+      mean: x[1],
+      std: x[2]
+  }));
   const output = _zipped.map((x) =>
     x.arr < x.mean - x.std || x.arr > x.mean + x.std ? x.mean : x.arr
   );
@@ -205,13 +111,6 @@ export const removeOutliers = (window) => (arr) => {
   return Either.Right(output);
 };
 
-const zipArrMeanStd = (arr, mean, std) => {
-  return zip(arr, zip(mean, std)).map((x) => ({
-    arr: x[0],
-    mean: x[1][0],
-    std: x[1][1],
-  }));
-};
 
 const indexOfTime = (database) => (time) => {
   let l = 0;
