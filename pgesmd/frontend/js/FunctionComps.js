@@ -1,5 +1,5 @@
 import { checkDisableScroll, parseHourResponse } from "./Functions";
-import { getData, getHours } from "./service/DatabaseService";
+import { getData, getHours } from "./api/DatabaseService";
 import { parseDataResponse, immutableDb } from "./Functions";
 
 const pipe = (...functions) => (x, ...args) =>

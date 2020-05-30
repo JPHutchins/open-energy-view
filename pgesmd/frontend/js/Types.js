@@ -12,13 +12,7 @@ import {
   zipWith,
   __,
 } from "ramda";
-import {
-  differenceInMilliseconds,
-  getTime,
-  format,
-  add,
-  sub,
-} from "date-fns";
+import { differenceInMilliseconds, getTime, format, add, sub } from "date-fns";
 import { Maybe, IO, Either, Identity } from "ramda-fantasy";
 import findMaxResolution from "./functions/findMaxResolution";
 const { Map, List, first, toJS } = require("immutable");
@@ -50,9 +44,6 @@ const findIntervalBounds = (intervalType) => (start, end = null) => {
     end: endOf(intervalType)(start),
   };
 };
-
-// minZero :: Number -> Number
-export const minZero = (x) => Math.max(0, x);
 
 // makeIntervalBounds :: String -> Moment -> {k: v}
 export const makeIntervalBounds = (intervalType) => (start, end = null) => {
@@ -99,10 +90,10 @@ export const removeOutliers = (window) => (arr) => {
     return Either.Left(arr);
   }
 
-  const _zipped = zip3(arr, _rMean, _rStd).map(x => ({
-      arr: x[0],
-      mean: x[1],
-      std: x[2]
+  const _zipped = zip3(arr, _rMean, _rStd).map((x) => ({
+    arr: x[0],
+    mean: x[1],
+    std: x[2],
   }));
   const output = _zipped.map((x) =>
     x.arr < x.mean - x.std || x.arr > x.mean + x.std ? x.mean : x.arr
@@ -110,7 +101,6 @@ export const removeOutliers = (window) => (arr) => {
 
   return Either.Right(output);
 };
-
 
 const indexOfTime = (database) => (time) => {
   let l = 0;
@@ -127,53 +117,11 @@ const indexOfTime = (database) => (time) => {
   return time < database.get(m).get("x") ? m : m + 1;
 };
 
-const fastRollingMean = (window) => (arr) => {
-  const _iRange = range(0, arr.length);
-  let _sum = 0;
-  let _avg = 0;
-
-  const result = map((i) => {
-    if (i - window + 1 < 0) {
-      _sum = _sum + arr[i];
-      _avg = _sum / (i + 2);
-      return "NotANumber";
-    } else if (i - window + 1 === 0) {
-      _avg = _avg + arr[i] / window;
-      return _avg;
-    }
-    _avg = _avg + (arr[i] - arr[i - window]) / window;
-    return _avg;
-  }, _iRange);
-
-  return Either.Right(result);
-};
-
-const rolling = (func, n, arr) => {
-  const iRange = range(0, arr.length);
-  const result = map((i) => {
-    if (i + 1 < n) return "NotANumber";
-    const truncated = slice(i - n + 1, i + 1, arr);
-    return func(truncated);
-  }, iRange);
-  return result;
-};
-
-const getPlainList = (list) => {
-  return list.map((x) => ({ x: x.get("x"), y: x.get("y") }));
-};
-
-// extract :: [{k: v}] -> [v]
-const extract = (key) => (arr) => {
-  return arr.map((x) => x.get(key));
-};
-
 const partitionScheme = Either.Right([
   { name: "Night", start: 1, color: "#FF0000" },
   { name: "Day", start: 7, color: "#00FF00" },
   { name: "Evening", start: 18, color: "#0000FF" },
 ]);
-
-const crossAM = (i, partitions) => (i < 0 ? partitions.value.length - 1 : i);
 
 const sumPartitions = (partitions) => (data) => {
   // TODO: implement memoized DP for subset of already calculated sums
@@ -199,7 +147,8 @@ const sumPartitions = (partitions) => (data) => {
             return _hour >= x.start ? acc + 1 : acc;
           }, -1)
         );
-        acc[crossAM(_index, partitions)].sum += x.get("y");
+        const _i = _index < 0 ? partitions.value.length - 1 : _index;
+        acc[i].sum += x.get("y");
         return acc;
       },
       partitions.value,
@@ -220,7 +169,8 @@ const makeColorsArray = (partitions) => (data) => {
         return _hour >= x.start ? acc + 1 : acc;
       }, -1)
     );
-    return partitions.value[crossAM(_index, partitions)].color;
+    const _i = _index < 0 ? partitions.value.length - 1 : _index;
+    return partitions.value[_i].color;
   }, data);
   return output;
 };
@@ -256,23 +206,9 @@ const groupBy = (interval) => (list) => {
   );
 };
 
-const groupByHour = groupBy("hour");
-const groupByDay = groupBy("day");
-const groupByWeek = groupBy("week");
-const groupByMonth = groupBy("month");
-const groupByYear = groupBy("year");
 
-const makeDays = (arr) => {};
 
-// minOfEach :: [[Number]] -> [Number]
-const minOfEachDay = (arr) => {
-  return arr.map((x) =>
-    Map({
-      x: getTime(startOf("day")(x.get(0).get("x"))),
-      y: minOf(extract("y")(x)),
-    })
-  );
-};
+
 
 /*
 
@@ -292,237 +228,9 @@ rollingMean(removeOutliers(rollingMean(minOfEach(day)), rollingStd(minOfEach(day
 
 */
 
-const calculatePassiveUse = (database) => {
-  const WINDOW = 14; // global config variable?
 
-  const dailyMinimums = minOfEachDay(groupByDay(database));
-  const values = Either.Right(extract("y")(dailyMinimums));
-  const time = Either.Right(extract("x")(dailyMinimums));
-
-  const passiveValues = values
-    .chain(removeOutliers(WINDOW))
-    .chain(fastRollingMean(WINDOW))
-    .chain(makeFillWindow(WINDOW)(values.value)(meanOf));
-
-  if (passiveValues.isLeft) return Either.Left(database);
-
-  return List(
-    zipWith((x, y) => Map({ x: x, y: y }), time.value, passiveValues.value)
-  );
-};
 
 const getDataset = (database) => pipe(makeIntervalArray, findData(database));
 
-// EnergyHistory :: f (a) -> f (b)
-export class EnergyHistory {
-  constructor(database, partitionOptions, interval, passiveUse = null) {
-    this.database = database;
-    this.partitionOptions = partitionOptions;
-    this.passiveUse = passiveUse ? passiveUse : calculatePassiveUse(database);
-    this._graphData = getDataset(database)({
-      start: interval.start,
-      end: interval.end,
-    });
-    this.data = {
-      start: interval.start,
-      end: interval.end,
-      intervalSize: findMaxResolution(
-        differenceInMilliseconds(interval.start, interval.end)
-      ),
-      datasets: [
-        {
-          label: "Energy Consumption",
-          type: "bar",
-          data: this._graphData.toJS(),
-          backgroundColor: makeColorsArray(partitionOptions)(
-            this._graphData
-          ).toArray(),
-        },
-        {
-          label: "Passive Consumption",
-          type: "line",
-          data: this.passiveUse,
-        },
-      ],
-    };
-    this.windowData = {
-      windowSize: intervalToWindow(this.data.intervalSize),
-      windowSum: sum(extract("y")(this._graphData)),
-      partitionSums: sumPartitions(partitionOptions)(this._graphData),
-    };
-  }
 
-  prev() {
-    return new EnergyHistory(
-      this.database,
-      this.partitionOptions,
-      {
-        start: sub(this.data.start, one(this.windowData.windowSize)),
-        end: sub(this.data.end, one(this.windowData.windowSize)),
-      },
-      (this.passiveUse = this.passiveUse)
-    );
-  }
 
-  next() {
-    return new EnergyHistory(
-      this.database,
-      this.partitionOptions,
-      {
-        start: add(this.data.start, one(this.windowData.windowSize)),
-        end: add(this.data.end, one(this.windowData.windowSize)),
-      },
-      (this.passiveUse = this.passiveUse)
-    );
-  }
-
-  setWindow(interval) {
-    return new EnergyHistory(
-      this.database,
-      this.partitionOptions,
-      {
-        start: startOf(interval)(this.data.start),
-        end: endOf(interval)(this.data.start),
-      },
-      (this.passiveUse = this.passiveUse)
-    );
-  }
-}
-
-export const testPerformance = (props) => {
-  console.log(partitionScheme);
-  console.log(props.database.last());
-  const start = startOf("day")(new Date(props.database.last().get("x")));
-  const end = endOf("day")(start);
-  const test = new EnergyHistory(props.database, partitionScheme, {
-    start: start,
-    end: end,
-  });
-  console.log(test);
-  console.log(test.prev());
-  console.log(test.prev().prev());
-
-  console.log(props);
-  let input = Array.from({ length: 2000 }, () =>
-    Math.floor(Math.random() * 1000)
-  );
-
-  var t0 = performance.now();
-  var result = sumPartitions(partitionScheme)(props.database);
-  var t1 = performance.now();
-  console.log(
-    "sumPartitions() took",
-    (t1 - t0).toFixed(4),
-    "milliseconds to generate:",
-    result
-  );
-
-  var t0 = performance.now();
-  var result = fastRollingMean(14, input);
-  var t1 = performance.now();
-  console.log(
-    "fastRollingMean() took",
-    (t1 - t0).toFixed(4),
-    "milliseconds to generate:",
-    result
-  );
-
-  var t0 = performance.now();
-  var result = rolling(meanOf, 14, input);
-  var t1 = performance.now();
-  console.log(
-    "rolling(mean) took",
-    (t1 - t0).toFixed(4),
-    "milliseconds to generate:",
-    result
-  );
-
-  var t0 = performance.now();
-  var result = rolling(standardDeviationOf, 14, input).slice(13);
-  var t1 = performance.now();
-  console.log(
-    "rolling(standardDeviationOf) took",
-    (t1 - t0).toFixed(4),
-    "milliseconds to generate:",
-    result
-  );
-
-  var t0 = performance.now();
-  var result = standardDeviationOf(input);
-  var t1 = performance.now();
-  console.log(
-    "Took",
-    (t1 - t0).toFixed(4),
-    "milliseconds to generate:",
-    result
-  );
-
-  const colors = makeColorsArray(partitionScheme)(props.database.slice(-24));
-  console.log(colors.toArray());
-  //.slice(-720, -696)
-  console.log(input);
-  input = minOfEachDay(groupByDay(props.database));
-  console.log(extract("y")(input));
-
-  const makeCalculateBackgroundMetric = (window, database) => {
-    return compose(
-      chain(makeFillWindow(window)(database)(meanOf)),
-      chain(fastRollingMean(window)),
-      chain(removeOutliers(window))
-    );
-  };
-
-  var time = Either.Right(extract("x")(input));
-
-  var t0 = performance.now();
-  //   var result = Either.Right(extract('y')(input))
-  //     .chain(removeOutliers(14))
-  //     .chain(fastRollingMean(14))
-  //     .chain(makeFillWindow(14)(extract('y')(input))(meanOf));
-
-  //   var result = zipWith((x, y) => ({x: x, y: y}), time.value, result.value)
-  var result = calculatePassiveUse(props.database);
-  console.log(result[result.length - 30]); // {x: 1586761200000, y: 1204.923469387756}
-  console.log(result);
-
-  var t1 = performance.now();
-  console.log(
-    "removeOutliers() & average took",
-    (t1 - t0).toFixed(4),
-    "milliseconds to generate:",
-    result
-  );
-
-  const calculateBG = makeCalculateBackgroundMetric(14, extract("y")(input));
-  console.log(calculateBG);
-  console.log(calculateBG(Either.Right(extract("y")(input))));
-
-  var t0 = performance.now();
-  var result = removeOutliers(input, 14);
-  var t1 = performance.now();
-  console.log(
-    "removeOutliers() took",
-    (t1 - t0).toFixed(4),
-    "milliseconds to generate:",
-    result
-  );
-
-  console.log(getPlainList(props.database));
-
-  var t0 = performance.now();
-  result = groupByDay(props.database);
-  var t1 = performance.now();
-  console.log(
-    "Took",
-    (t1 - t0).toFixed(4),
-    "milliseconds to generate:",
-    result
-  );
-
-  //   for (const day of result) {
-  //     console.log("------------------------------------");
-  //     for (const hour of day) {
-  //       console.log(moment(hour.get("x")).toString(), hour.get("y"));
-  //     }
-  //   }
-};
