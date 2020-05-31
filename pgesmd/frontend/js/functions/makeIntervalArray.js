@@ -1,11 +1,11 @@
 import { Either } from "ramda-fantasy";
 import { add, isBefore, differenceInMilliseconds } from "date-fns";
-import endOf from "./endOf";
-import findMaxResolution from "./findMaxResolution";
+import { endOf } from "./endOf";
+import { findMaxResolution } from "./findMaxResolution";
 
 // Refactor to composition
 
-export default function makeIntervalArray(window) {
+export function makeIntervalArray(window) {
   const _intervalLength = Math.abs(
     differenceInMilliseconds(window.start, window.end)
   );

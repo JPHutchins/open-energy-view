@@ -2,13 +2,13 @@ import { List, Map } from "immutable";
 import { zipWith } from "ramda";
 import { Either } from "ramda-fantasy";
 import { getTime } from "data-fns";
-import groupBy from "../functions/groupBy";
-import extract from "../functions/extract";
-import removeOutliers from "../functions/removeOutliers";
-import fastRollingMean from "../functions/fastRollingMean";
-import makeFillWindow from "../functions/makeFillWindow";
+import { groupBy } from "../functions/groupBy";
+import { extract } from "../../functions/extract";
+import { removeOutliers } from "../functions/removeOutliers";
+import { fastRollingMean } from "../../functions/fastRollingMean";
+import { makeFillWindow } from "../functions/makeFillWindow";
 
-export default function calculatePassiveUse(database) {
+export function calculatePassiveUse(database) {
   const WINDOW = 14; // global config variable?
 
   const dailyMinimums = minOfEachDay(groupByDay(database));

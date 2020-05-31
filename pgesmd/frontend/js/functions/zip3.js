@@ -8,7 +8,7 @@ import { zip } from "ramda";
  * @param {Array} second
  * @param {Array} third
  */
-export default function zip3(first, second, third) {
+export function zip3(first, second, third) {
   // Refactor to avoid zip import and triple iteration
   return zip(first, zip(second, third)).map((x) => [x[0], x[1][0], x[1][1]]);
 }

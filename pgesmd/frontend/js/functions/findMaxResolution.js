@@ -5,7 +5,7 @@
  * resolution no greater than 52 intervals per window.
  * @param {Number} windowSize The window size in milliseconds.
  */
-export default function findMaxResolution(windowSize) {
+export function findMaxResolution(windowSize) {
   const _dataPointLength = Math.abs(windowSize) / 52;
   if (_dataPointLength >= 609785000) return "month";
   if (_dataPointLength >= 52538461) return "week";

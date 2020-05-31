@@ -12,7 +12,7 @@ import {
  * Return the date-fns function corresponding to the interval.
  * @param {String} interval The interval: hour, day, week, month, or year.
  */
-export default function startOf(interval) {
+export function startOf(interval) {
   return {
     hour: startOfHour,
     day: startOfDay,

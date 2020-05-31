@@ -6,7 +6,7 @@
  * @param {String} key The key to the desired values.
  * @param {List} list The ImmutableJS List from which to extract the values.
  */
-export default function extract(key) {
+export function extract(key) {
   return function (list) {
     return list.map((x) => x.get(key));
   };

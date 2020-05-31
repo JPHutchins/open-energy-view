@@ -10,7 +10,7 @@ import { range, map } from "ramda";
  * @param {Number} window The window size for the rolling calculation.
  * @param {Array} arr The input array.
  */
-export default function rolling(f, window, arr) {
+export function rolling(f, window, arr) {
   const _range = range(0, arr.length);
   const result = map((i) => {
     if (i + 1 < window) return "NotANumber";

@@ -4,7 +4,7 @@
  * Return the window size that corresponds to the input interval.
  * @param {String} interval The interval.
  */
-export default function intervalToWindow(interval) {
+export function intervalToWindow(interval) {
   return {
     hour: "day",
     part: "week",

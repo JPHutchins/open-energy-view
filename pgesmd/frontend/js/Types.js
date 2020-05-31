@@ -17,6 +17,7 @@ import { Maybe, IO, Either, Identity } from "ramda-fantasy";
 import findMaxResolution from "./functions/findMaxResolution";
 const { Map, List, first, toJS } = require("immutable");
 
+
 const findData = (database) => (intervalArray) => {
   const indexOf = indexOfTime(database);
 
@@ -36,6 +37,7 @@ const findData = (database) => (intervalArray) => {
   return List(data);
 };
 
+//unneeded
 const findIntervalBounds = (intervalType) => (start, end = null) => {
   console.log(start, end);
   if (end) return { start: start, end: end };
@@ -45,6 +47,7 @@ const findIntervalBounds = (intervalType) => (start, end = null) => {
   };
 };
 
+//unneeded
 // makeIntervalBounds :: String -> Moment -> {k: v}
 export const makeIntervalBounds = (intervalType) => (start, end = null) => {
   if (end) return { start: start, end: end };
@@ -57,65 +60,10 @@ export const makeIntervalBounds = (intervalType) => (start, end = null) => {
 // dayBounds :: Moment -> {k: v}
 export const dayBounds = makeIntervalBounds("day");
 
-const makeFillWindow = (window) => (arrInput) => (f) => (arr) => {
-  const length = arr.length;
-  const middle = Math.floor(window / 2);
-  const output = addIndex(map)(
-    (x, i) => (i < window ? arr[window] : x),
-    arr
-  ).slice(middle);
 
-  const remainingWindow = length - output.length;
-  const windowRange = range(1, remainingWindow + 1).reverse();
-  for (let rWindow of windowRange) {
-    output.push(f(arrInput.slice(length - rWindow - middle)));
-  }
-  return Either.Right(output);
-};
 
-export const removeOutliers = (window) => (arr) => {
-  const fillWindow = makeFillWindow(window)(arr);
 
-  const _rMeanRaw = fastRollingMean(window)(arr);
-  const _rMeanEither = chain(fillWindow(meanOf), _rMeanRaw);
-  if (_rMeanEither.isLeft) return Either.Left(arr);
-  const _rMean = _rMeanEither.value;
 
-  const _rStdRaw = rolling(standardDeviationOf, window, arr);
-  const _rStdEither = fillWindow(standardDeviationOf)(_rStdRaw);
-  if (_rStdEither.isLeft) return Either.Left(arr);
-  const _rStd = _rStdEither.value;
-
-  if (arr.length != _rMean.length && arr.length != _rStd.length) {
-    return Either.Left(arr);
-  }
-
-  const _zipped = zip3(arr, _rMean, _rStd).map((x) => ({
-    arr: x[0],
-    mean: x[1],
-    std: x[2],
-  }));
-  const output = _zipped.map((x) =>
-    x.arr < x.mean - x.std || x.arr > x.mean + x.std ? x.mean : x.arr
-  );
-
-  return Either.Right(output);
-};
-
-const indexOfTime = (database) => (time) => {
-  let l = 0;
-  let r = database.size - 1;
-  let m = 0;
-
-  while (l <= r) {
-    m = Math.floor((l + r) / 2);
-    const _current = database.get(m).get("x");
-    if (time === _current) return m;
-    time < _current ? (r = m - 1) : (l = m + 1);
-  }
-
-  return time < database.get(m).get("x") ? m : m + 1;
-};
 
 const partitionScheme = Either.Right([
   { name: "Night", start: 1, color: "#FF0000" },

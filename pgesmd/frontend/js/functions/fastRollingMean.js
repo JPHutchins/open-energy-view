@@ -8,7 +8,7 @@ import { range, map } from "ramda";
  * @param {Number} window The window size for the rolling mean.
  * @param {Array} arr The input array.
  */
-export default function fastRollingMean(window) {
+export function fastRollingMean(window) {
   // Re factor to not wrap output in Either - but should return Left if fail.
   return function (arr) {
     const _range = range(0, arr.length);
