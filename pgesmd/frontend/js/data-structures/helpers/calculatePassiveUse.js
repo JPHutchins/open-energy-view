@@ -2,11 +2,11 @@ import { List, Map } from "immutable";
 import { zipWith } from "ramda";
 import { Either } from "ramda-fantasy";
 import { getTime } from "data-fns";
-import { groupBy } from "../functions/groupBy";
+import { groupBy } from "../../functions/groupBy";
 import { extract } from "../../functions/extract";
-import { removeOutliers } from "../functions/removeOutliers";
+import { removeOutliers } from "../../functions/removeOutliers";
 import { fastRollingMean } from "../../functions/fastRollingMean";
-import { makeFillWindow } from "../functions/makeFillWindow";
+import { makeFillWindow } from "../../functions/makeFillWindow";
 
 export function calculatePassiveUse(database) {
   const WINDOW = 14; // global config variable?
@@ -20,7 +20,7 @@ export function calculatePassiveUse(database) {
     .chain(fastRollingMean(WINDOW))
     .chain(makeFillWindow(WINDOW)(values.value)(meanOf));
 
-  if (passiveValues.isLeft) return Either.Left(database);
+  if (passiveValues.isLeft) return passiveValues;
 
   return List(
     zipWith((x, y) => Map({ x: x, y: y }), time.value, passiveValues.value)
@@ -35,7 +35,7 @@ function groupByDay(database) {
 }
 
 /**
- * List (Map) -> List (Map)
+ * List[ Map ] -> List[ Map ]
  *
  * @param {List} list The ImmutableJS EnergyDatabase.
  */
@@ -47,3 +47,24 @@ function minOfEachDay(list) {
     })
   );
 }
+
+/*
+
+Statistic methodology
+
+Get rolling mean of minOfEach(day)
+Get rolling std of minOfEach(day)
+
+Get removeOutliers - throwout values from minOfEach(day) that deviate from the
+rolling mean by more than the standard deviation - replace with the mean.
+
+Get rolling mean after removingOutliers
+
+Composition:
+[Number] -> [Number] -> [Number]
+rollingMean(
+    removeOutliers(rollingMean(minOfEach(day)),
+    rollingStd(minOfEach(day)))
+)
+
+*/

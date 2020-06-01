@@ -1,4 +1,16 @@
-// EnergyHistory :: f (a) -> f (b)
+import { calculatePassiveUse } from "./helpers/calculatePassiveUse";
+import { findMaxResolution } from "../functions/findMaxResolution";
+import { differenceInMilliseconds, add, sub } from "date-fns";
+import { makeColorsArray } from "./helpers/makeColorsArray";
+import { sum } from "ramda";
+import { intervalToWindow } from "../functions/intervalToWindow";
+import { sumPartitions } from "./helpers/sumPartitions";
+import { extract } from "../functions/extract";
+import { toDateInterval } from "../functions/toDateInterval";
+import { startOf } from "../functions/startOf";
+import { endOf } from "../functions/endOf";
+import { getDataset } from "./helpers/getDataset";
+
 export class EnergyHistory {
   constructor(database, partitionOptions, interval, passiveUse = null) {
     this.database = database;
@@ -42,8 +54,8 @@ export class EnergyHistory {
       this.database,
       this.partitionOptions,
       {
-        start: sub(this.data.start, one(this.windowData.windowSize)),
-        end: sub(this.data.end, one(this.windowData.windowSize)),
+        start: sub(this.data.start, toDateInterval(this.windowData.windowSize)),
+        end: sub(this.data.end, toDateInterval(this.windowData.windowSize)),
       },
       (this.passiveUse = this.passiveUse)
     );
@@ -54,8 +66,8 @@ export class EnergyHistory {
       this.database,
       this.partitionOptions,
       {
-        start: add(this.data.start, one(this.windowData.windowSize)),
-        end: add(this.data.end, one(this.windowData.windowSize)),
+        start: add(this.data.start, toDateInterval(this.windowData.windowSize)),
+        end: add(this.data.end, toDateInterval(this.windowData.windowSize)),
       },
       (this.passiveUse = this.passiveUse)
     );

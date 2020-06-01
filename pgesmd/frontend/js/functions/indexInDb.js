@@ -1,8 +1,8 @@
 /**
- * List ( Map ) -> Number
+ * List ( Map ) -> ( Number -> Number )
  *
- * Return the index of the time if found in the database, else return the
- * correct insert index.
+ * Return the index of the time if found in the database, else return the insert
+ * index.
  * @param {EnergyHistoryDB} database The EnergyHistory DB Immutable JS object.
  * @param {Number} msEpochTime The time in milliseconds since Linux epoch.
  */
