@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import cookie from "react-cookies";
-import AuthService from "../service/AuthService";
+import AuthService from "../api/AuthService";
 import { withRouter, Link } from "react-router-dom";
 
 const Login = props => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import cookie from "react-cookies";
 import { Form, Button, DropdownButton, Dropdown } from "react-bootstrap";
-import { addPgeSource } from "../service/DatabaseService";
+import { addPgeSource } from "../api/DatabaseService";
 
 const SourceRegistration = (props) => {
   const [form, setForm] = useState("");

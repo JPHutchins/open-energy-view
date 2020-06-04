@@ -10,6 +10,7 @@ import { toDateInterval } from "../functions/toDateInterval";
 import { startOf } from "../functions/startOf";
 import { endOf } from "../functions/endOf";
 import { getDataset } from "./helpers/getDataset";
+import { indexInDb } from "../functions/indexInDb";
 
 export class EnergyHistory {
   constructor(database, partitionOptions, interval, passiveUse = null) {
@@ -45,7 +46,12 @@ export class EnergyHistory {
     this.windowData = {
       windowSize: intervalToWindow(this.data.intervalSize),
       windowSum: sum(extract("y")(this._graphData)),
-      partitionSums: sumPartitions(partitionOptions)(this._graphData),
+      partitionSums: sumPartitions(partitionOptions)(
+        this.database.slice(
+          indexInDb(database)(interval.start),
+          indexInDb(database)(interval.end)
+        )
+      ),
     };
   }
 
@@ -57,7 +63,7 @@ export class EnergyHistory {
         start: sub(this.data.start, toDateInterval(this.windowData.windowSize)),
         end: sub(this.data.end, toDateInterval(this.windowData.windowSize)),
       },
-      (this.passiveUse = this.passiveUse)
+      this.passiveUse
     );
   }
 
@@ -69,7 +75,7 @@ export class EnergyHistory {
         start: add(this.data.start, toDateInterval(this.windowData.windowSize)),
         end: add(this.data.end, toDateInterval(this.windowData.windowSize)),
       },
-      (this.passiveUse = this.passiveUse)
+      this.passiveUse
     );
   }
 
@@ -81,7 +87,7 @@ export class EnergyHistory {
         start: startOf(interval)(this.data.start),
         end: endOf(interval)(this.data.start),
       },
-      (this.passiveUse = this.passiveUse)
+      this.passiveUse
     );
   }
 }

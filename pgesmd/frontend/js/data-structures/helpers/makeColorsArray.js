@@ -1,9 +1,10 @@
 import { differenceInMilliseconds, format } from "date-fns";
 import { reduce, map } from "ramda";
+import { List } from "immutable";
 
 /**
  * Object -> ( List -> [String] )
- * 
+ *
  * @param {Object} partitions The user's partitions preferences.
  * @param {List} data The EnergyHistory data of the current window.
  */

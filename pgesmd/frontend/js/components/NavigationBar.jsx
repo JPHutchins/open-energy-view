@@ -1,7 +1,7 @@
 import React from "react";
 import { withRouter } from "react-router-dom";
 import { Navbar, Nav, NavDropdown } from "react-bootstrap";
-import AuthService from "../service/AuthService";
+import AuthService from "../api/AuthService";
 import DataRegistrationModal from "./DataRegistrationModal";
 
 const NavigationBar = props => {

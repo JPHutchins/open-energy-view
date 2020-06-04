@@ -7,7 +7,7 @@ import "../../css/App.css";
 import LowerBar from "./LowerBar";
 import RightBar from "./RightBar";
 import axios from "axios";
-import AuthService from "../service/AuthService";
+import AuthService from "../api/AuthService";
 
 export default class EnergyHistory extends React.Component {
   constructor(props) {

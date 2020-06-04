@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { withRouter, Link } from "react-router-dom";
 import cookie from "react-cookies"
 import { Form, Button } from "react-bootstrap";
-import AuthService from "../service/AuthService";
+import AuthService from "../api/AuthService";
 
 const UserRegistration = props => {
   const [email, setEmail] = useState("");

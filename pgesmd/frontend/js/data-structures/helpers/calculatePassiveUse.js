@@ -1,12 +1,15 @@
 import { List, Map } from "immutable";
 import { zipWith } from "ramda";
 import { Either } from "ramda-fantasy";
-import { getTime } from "data-fns";
+import { getTime } from "date-fns";
 import { groupBy } from "../../functions/groupBy";
 import { extract } from "../../functions/extract";
 import { removeOutliers } from "../../functions/removeOutliers";
 import { fastRollingMean } from "../../functions/fastRollingMean";
 import { makeFillWindow } from "../../functions/makeFillWindow";
+import { startOf } from "../../functions/startOf";
+import { minOf } from "../../functions/minOf";
+import { meanOf } from "../../functions/meanOf";
 
 export function calculatePassiveUse(database) {
   const WINDOW = 14; // global config variable?

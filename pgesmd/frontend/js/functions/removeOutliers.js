@@ -4,10 +4,12 @@ import { makeFillWindow } from "./makeFillWindow";
 import { fastRollingMean } from "./fastRollingMean";
 import { rolling } from "./rolling";
 import { zip3 } from "./zip3";
+import { meanOf } from "./meanOf";
+import { standardDeviationOf } from "./standardDeviationOf";
 
 /**
  * Number -> ( [Number] -> [Number] )
- * 
+ *
  * Replace data points that are outside one standard deviation from their mean
  * with the mean.  The beginning of the array gets filled with the first mean
  * from the rolling window and the end of the array is filled by shrinking the
@@ -17,7 +19,7 @@ import { zip3 } from "./zip3";
  * @param {Array} arr The input array.
  */
 export function removeOutliers(window) {
-    // Refactor to NOT return a Right but do return a Left on any error
+  // Refactor to NOT return a Right but do return a Left on any error
   return function (arr) {
     const fillWindow = makeFillWindow(window)(arr);
 
