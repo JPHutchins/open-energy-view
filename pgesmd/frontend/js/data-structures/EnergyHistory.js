@@ -14,20 +14,29 @@ import { indexInDb } from "../functions/indexInDb";
 import { chartOptions } from "./helpers/chartOptions";
 
 export class EnergyHistory {
-  constructor(database, partitionOptions, interval, passiveUse = null) {
+  constructor(database, partitionOptions, interval=null, passiveUse=null) {
     this.database = database;
     this.partitionOptions = partitionOptions;
     this.chartOptions = chartOptions;
     this.passiveUse = passiveUse ? passiveUse : calculatePassiveUse(database);
+
+    if (interval) {
+        this.startDate = interval.start
+        this.endDate = interval.end
+    } else {
+        this.startDate = startOf("day")(new Date(database.last().get("x")))
+        this.endDate = endOf("day")(this.startDate)
+    }
+
     this._graphData = getDataset(database)({
-      start: interval.start,
-      end: interval.end,
+      start: this.startDate,
+      end: this.endDate,
     });
     this.data = {
-      start: interval.start,
-      end: interval.end,
+      start: this.startDate,
+      end: this.endDate,
       intervalSize: findMaxResolution(
-        differenceInMilliseconds(interval.start, interval.end)
+        differenceInMilliseconds(this.startDate, this.endDate)
       ),
       datasets: [
         {
@@ -50,8 +59,8 @@ export class EnergyHistory {
       windowSum: sum(extract("y")(this._graphData)),
       partitionSums: sumPartitions(partitionOptions)(
         this.database.slice(
-          indexInDb(database)(interval.start),
-          indexInDb(database)(interval.end)
+          indexInDb(database)(this.startDate),
+          indexInDb(database)(this.endDate)
         )
       ),
     };

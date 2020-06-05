@@ -34,13 +34,8 @@ const App = (props) => {
           { name: "Day", start: 7, color: "#00FF00" },
           { name: "Evening", start: 18, color: "#0000FF" },
         ]);
-        const start = startOfDay(new Date(p[0].last().get("x")));
-        const end = endOfDay(start);
 
-        const tester = new EnergyHistory(p[0], partitionScheme, {
-          start: start,
-          end: end,
-        });
+        const tester = new EnergyHistory(p[0], partitionScheme);
 
         const sources = [
           //   {
