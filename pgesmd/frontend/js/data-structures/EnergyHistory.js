@@ -28,10 +28,7 @@ export class EnergyHistory {
         this.endDate = endOf("day")(this.startDate)
     }
 
-    this._graphData = getDataset(database)({
-      start: this.startDate,
-      end: this.endDate,
-    });
+    this._graphData = getDataset(database)(this);
     this.data = {
       start: this.startDate,
       end: this.endDate,
