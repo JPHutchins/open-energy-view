@@ -16,7 +16,6 @@ export const sumPartitions = (partitions) => (data) => {
       sum: 0,
     }))
   );
-  console.log(data)
   const result = (data) =>
     reduce(
       (acc, x) => {
