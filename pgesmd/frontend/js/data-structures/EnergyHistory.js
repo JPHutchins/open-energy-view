@@ -11,11 +11,13 @@ import { startOf } from "../functions/startOf";
 import { endOf } from "../functions/endOf";
 import { getDataset } from "./helpers/getDataset";
 import { indexInDb } from "../functions/indexInDb";
+import { chartOptions } from "./helpers/chartOptions";
 
 export class EnergyHistory {
   constructor(database, partitionOptions, interval, passiveUse = null) {
     this.database = database;
     this.partitionOptions = partitionOptions;
+    this.chartOptions = chartOptions;
     this.passiveUse = passiveUse ? passiveUse : calculatePassiveUse(database);
     this._graphData = getDataset(database)({
       start: interval.start,
