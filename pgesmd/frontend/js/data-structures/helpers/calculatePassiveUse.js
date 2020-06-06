@@ -21,9 +21,7 @@ export function calculatePassiveUse(database) {
   const passiveValues = values
     .chain(removeOutliers(WINDOW))
     .map(fastRollingMean(WINDOW))
-    .chain(makeFillWindow(WINDOW)(values.value)(meanOf));
-
-  if (passiveValues.isLeft) return passiveValues;
+    .map(makeFillWindow(WINDOW)(values.value)(meanOf));
 
   return List(
     zipWith((x, y) => Map({ x: x, y: y }), time.value, passiveValues.value)

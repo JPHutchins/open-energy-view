@@ -52,5 +52,5 @@ function fillEndOfArray(window, originalArr, f, arr, output) {
       const newWindow = originalArr.slice(length - rWindow - middle);
       output.push(f(newWindow));
     }
-    return Either.Right(output);
+    return output;
   }

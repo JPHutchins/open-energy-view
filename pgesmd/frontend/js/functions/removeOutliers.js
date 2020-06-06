@@ -1,4 +1,4 @@
-import { chain } from "ramda";
+import { chain, map } from "ramda";
 import { Either } from "ramda-fantasy";
 import { makeFillWindow } from "./makeFillWindow";
 import { fastRollingMean } from "./fastRollingMean";
@@ -24,15 +24,13 @@ export function removeOutliers(window) {
     const fillWindow = makeFillWindow(window)(arr);
 
     const _rMeanRaw = fastRollingMean(window)(arr);
-    const _rMean = chain(fillWindow(meanOf), _rMeanRaw);
+    const _rMean = fillWindow(meanOf)(_rMeanRaw);
 
     const _rStdRaw = rolling(standardDeviationOf, window, arr);
-    const _rStdEither = fillWindow(standardDeviationOf)(_rStdRaw);
-    if (_rStdEither.isLeft) return Either.Left(arr);
-    const _rStd = _rStdEither.value;
+    const _rStd = fillWindow(standardDeviationOf)(_rStdRaw);
 
-    if (arr.length != _rMean.length && arr.length != _rStd.length) {
-      return Either.Left(arr);
+    if (arr.length != _rMean.length || arr.length != _rStd.length) {
+      return Either.Left("Array lengths must match after rolling functions.");
     }
 
     const _zipped = zip3(arr, _rMean, _rStd).map((x) => ({
