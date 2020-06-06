@@ -1,4 +1,3 @@
-import { chain, map } from "ramda";
 import { Either } from "ramda-fantasy";
 import { makeFillWindow } from "./makeFillWindow";
 import { fastRollingMean } from "./fastRollingMean";
@@ -19,7 +18,6 @@ import { standardDeviationOf } from "./standardDeviationOf";
  * @param {Array} arr The input array.
  */
 export function removeOutliers(window) {
-  // Refactor to NOT return a Right but do return a Left on any error
   return function (arr) {
     const fillWindow = makeFillWindow(window)(arr);
 
@@ -42,6 +40,6 @@ export function removeOutliers(window) {
       x.arr < x.mean - x.std || x.arr > x.mean + x.std ? x.mean : x.arr
     );
 
-    return Either.Right(output);
+    return output;
   };
 }

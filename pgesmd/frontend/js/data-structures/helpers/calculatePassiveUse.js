@@ -19,7 +19,7 @@ export function calculatePassiveUse(database) {
   const time = Either.Right(extract("x")(dailyMinimums));
 
   const passiveValues = values
-    .chain(removeOutliers(WINDOW))
+    .map(removeOutliers(WINDOW))
     .map(fastRollingMean(WINDOW))
     .map(makeFillWindow(WINDOW)(values.value)(meanOf));
 
