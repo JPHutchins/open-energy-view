@@ -5,5 +5,5 @@
  * @param {Array} arr The array of numbers.
  */
 export function minOf(arr) {
-  arr.reduce((acc, x) => Math.min(acc, x), Infinity);
+  return arr.reduce((acc, x) => Math.min(acc, x), Infinity);
 }
