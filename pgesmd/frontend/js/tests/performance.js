@@ -76,7 +76,7 @@ export const testPerformance = (props) => {
   const makeCalculateBackgroundMetric = (window, database) => {
     return compose(
       chain(makeFillWindow(window)(database)(meanOf)),
-      chain(fastRollingMean(window)),
+      map(fastRollingMean(window)),
       chain(removeOutliers(window))
     );
   };

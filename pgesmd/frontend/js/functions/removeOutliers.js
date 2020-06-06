@@ -24,9 +24,7 @@ export function removeOutliers(window) {
     const fillWindow = makeFillWindow(window)(arr);
 
     const _rMeanRaw = fastRollingMean(window)(arr);
-    const _rMeanEither = chain(fillWindow(meanOf), _rMeanRaw);
-    if (_rMeanEither.isLeft) return Either.Left(arr);
-    const _rMean = _rMeanEither.value;
+    const _rMean = chain(fillWindow(meanOf), _rMeanRaw);
 
     const _rStdRaw = rolling(standardDeviationOf, window, arr);
     const _rStdEither = fillWindow(standardDeviationOf)(_rStdRaw);
