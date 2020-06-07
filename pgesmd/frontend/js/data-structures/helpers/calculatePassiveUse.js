@@ -23,8 +23,12 @@ export function calculatePassiveUse(database) {
     .map(fastRollingMean(WINDOW))
     .map(makeFillWindow(WINDOW)(values.value)(meanOf));
 
-  return List(
-    zipWith((x, y) => Map({ x: x, y: y }), time.value, passiveValues.value)
+  if (passiveValues.isLeft) return passiveValues;
+
+  return Either.Right(
+    List(
+      zipWith((x, y) => Map({ x: x, y: y }), time.value, passiveValues.value)
+    )
   );
 }
 
