@@ -55,6 +55,7 @@
     "bootstrap": "^4.4.1",
     "chart.js": "^2.9.3",
     "date-fns": "^2.14.0",
+    "fluture": "^12.2.1",
     "fs": "0.0.1-security",
     "immutable": "^4.0.0-rc.12",
     "moment": "^2.24.0",
