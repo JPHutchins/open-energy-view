@@ -124,6 +124,20 @@ class SecretResource(Resource):
         return jsonify({"hello": "from {}".format(username)})
 
 
+class GetSources(Resource):
+    @jwt_required
+    def post(self):
+        user = db.session.query(models.User).filter_by(
+            email=get_jwt_identity()).first()
+        sources_entries = (
+            db.session.query(models.PgeSmd)
+            .with_parent(user)
+            .all()
+        )
+        sources = list(map(lambda x: x.friendly_name, sources_entries))
+        return(sources)
+
+
 class GetHours(Resource):
     @jwt_required
     def post(self):
@@ -138,7 +152,6 @@ class GetHours(Resource):
             .with_parent(user)
             .first()
         )
-        print(source)
         hours = db.session.query(models.Hour).filter_by(
             pge_id=source.third_party_id).all()
         return ','.join([
