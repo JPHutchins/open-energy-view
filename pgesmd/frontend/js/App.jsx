@@ -16,6 +16,9 @@ import TestResults from "./components/TestResults";
 import { HashRouter as Router } from "react-router-dom";
 import { startOfDay, endOfDay } from "date-fns";
 import { Either } from "ramda-fantasy";
+import { future } from "./api/DatabaseService";
+import { fork, value } from "fluture";
+import { getSources, getDatabase, theFuture } from "./api/DatabaseService";
 
 const testing = true;
 
@@ -25,34 +28,37 @@ const App = (props) => {
   const restrictView = () => {
     if (cookie.load("logged_in")) {
       setView(<DataLoader />);
+      theFuture.pipe(value((x) => setView(<SourceTabs sources={x} />)));
+      //getSources().then(console.log);
+      //getDatabase.pipe(fork(console.log)(console.log))
 
-      Promise.allSettled([fetchHours("PG&E")]).then((p) => {
-        p = p.map((res) => res.value);
+      //   Promise.allSettled([fetchHours("PG&E")]).then((p) => {
+      //     p = p.map((res) => res.value);
 
-        const partitionScheme = Either.Right([
-          { name: "Night", start: 1, color: "#FF0000" },
-          { name: "Day", start: 7, color: "#00FF00" },
-          { name: "Evening", start: 18, color: "#0000FF" },
-        ]);
+      //     const partitionScheme = Either.Right([
+      //       { name: "Night", start: 1, color: "#FF0000" },
+      //       { name: "Day", start: 7, color: "#00FF00" },
+      //       { name: "Evening", start: 18, color: "#0000FF" },
+      //     ]);
 
-        const tester = new EnergyHistory(p[0], partitionScheme);
+      //     const tester = new EnergyHistory(p[0], partitionScheme);
 
-        const sources = [
-          //   {
-          //     title: "PG&E",
-          //     component: <EnergyHistory database={p[0]} />,
-          //   },
-          {
-            title: "Functional",
-            component: <EnergyDisplay tester={tester} />,
-          },
-          {
-            title: "Add New Source",
-            component: <SourceRegistration />,
-          },
-        ];
-        setView(<SourceTabs sources={sources} />);
-      });
+      //     const sources = [
+      //       //   {
+      //       //     title: "PG&E",
+      //       //     component: <EnergyHistory database={p[0]} />,
+      //       //   },
+      //       {
+      //         title: "Functional",
+      //         component: <EnergyDisplay tester={tester} />,
+      //       },
+      //       {
+      //         title: "Add New Source",
+      //         component: <SourceRegistration />,
+      //       },
+      //     ];
+      //     setView(<SourceTabs sources={sources} />);
+      //   });
     } else {
       setView(<Redirect to="/login" />);
     }
