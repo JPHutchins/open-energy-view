@@ -138,6 +138,23 @@ class GetSources(Resource):
         return(sources)
 
 
+class GetPartitionOptions(Resource):
+    @jwt_required
+    def post(self):
+        data = get_data_parser.parse_args()
+        if not data['source'] or data['source'] == 'None':
+            return
+        user = db.session.query(models.User).filter_by(
+            email=get_jwt_identity()).first()
+        source = (
+            db.session.query(models.PgeSmd)
+            .filter_by(friendly_name=data["source"])
+            .with_parent(user)
+            .first()
+        )
+        return source.partition_options
+        
+
 class GetHours(Resource):
     @jwt_required
     def post(self):

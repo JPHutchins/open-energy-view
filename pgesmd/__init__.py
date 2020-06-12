@@ -35,6 +35,7 @@ def create_app() -> Flask:
     rest.add_resource(resources.GetDatabase, "/api/data")
     rest.add_resource(resources.GetHours, "/api/hours")
     rest.add_resource(resources.GetSources, "/api/sources")
+    rest.add_resource(resources.GetPartitionOptions, "/api/partitionOptions")
 
     # Initialize extensions with the Flask app
     db.init_app(app)

@@ -34,6 +34,14 @@ export const getHours = (source) => {
   );
 };
 
+export const getPartitionOptions = (source) => {
+    return axios.post(
+      "/api/partitionOptions",
+      { source: source },
+      AuthService.getAuthHeader()
+    );
+  };
+
 export const parseHourResponse = (res) => {
   const database = res.data.split(",");
   return database.map((x) => makeChartJsDatabase(x));

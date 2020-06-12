@@ -62,6 +62,8 @@ class PgeSmd(db.Model):
     n_parts = db.Column(db.Integer, nullable=True)
     part_values = db.Column(db.Integer, nullable=True)
     last_update = db.Column(db.Integer, default=0)
+    # Options
+    partition_options = db.Column(db.String(1000), nullable=True)
     # Relationship to data tables
     raw = db.relationship("Raw", backref="pgesmd", lazy=True)
     hour = db.relationship("Hour", backref="pgesmd", lazy=True)
@@ -71,6 +73,8 @@ class PgeSmd(db.Model):
     month = db.relationship("Month", backref="pgesmd", lazy=True)
     year = db.relationship("Year", backref="pgesmd", lazy=True)
     daily_passive = db.relationship("DailyPassive", backref="pgesmd", lazy=True)
+    __table_args__ = (db.UniqueConstraint(
+        "friendly_name", "partition_options",),)
 
     def save_to_db(self) -> None:
         """Add the account to the TABLE pgesmd."""
