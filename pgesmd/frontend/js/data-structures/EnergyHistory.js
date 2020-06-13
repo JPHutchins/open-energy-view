@@ -21,7 +21,6 @@ export class EnergyHistory {
     this.passiveUse = passiveUse // TODO: Either forking
       ? passiveUse
       : calculatePassiveUse(database).value;
-
     if (interval) {
       this.startDate = interval.start;
       this.endDate = interval.end;
@@ -49,7 +48,12 @@ export class EnergyHistory {
         {
           label: "Passive Consumption",
           type: "line",
-          data: this.passiveUse,
+          data: this.passiveUse
+            .slice(
+              indexInDb(this.passiveUse)(this.startDate - 1),
+              indexInDb(this.passiveUse)(this.endDate)
+            )
+            .toJS(),
         },
       ],
     };
