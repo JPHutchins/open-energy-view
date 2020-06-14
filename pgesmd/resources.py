@@ -153,7 +153,36 @@ class GetPartitionOptions(Resource):
             .first()
         )
         return source.partition_options
-        
+
+
+class GetEnergyHistory(Resource):
+    @jwt_required
+    def post(self):
+        data = get_data_parser.parse_args()
+        if not data['source'] or data['source'] == 'None':
+            return
+        user = db.session.query(models.User).filter_by(
+            email=get_jwt_identity()).first()
+        source = (
+            db.session.query(models.PgeSmd)
+            .filter_by(friendly_name=data["source"])
+            .with_parent(user)
+            .first()
+        )
+        hours = db.session.query(models.Hour).filter_by(
+            pge_id=source.third_party_id).all()
+        database = ','.join([
+            f'{entry.start//3600}{entry.watt_hours}' for entry in hours
+            ]
+        )
+        response = {
+            "friendlyName": data['source'],
+            "lastUpdate": None,
+            "partitionOptions": source.partition_options,
+            "database": database
+        }
+        return response
+
 
 class GetHours(Resource):
     @jwt_required

@@ -3,7 +3,7 @@ import React from "react";
 import { Either } from "ramda-fantasy";
 import { attemptP, fork, and, value, chain, parallel } from "fluture";
 import AuthService from "./AuthService";
-import { map } from "ramda";
+import { map, compose } from "ramda";
 import { fromJS as toImmutableJSfromJS } from "immutable";
 import EnergyDisplay from "../components/EnergyDisplay";
 import { EnergyHistory } from "../data-structures/EnergyHistory";
@@ -35,16 +35,22 @@ export const getHours = (source) => {
 };
 
 export const getPartitionOptions = (source) => {
-    return axios.post(
-      "/api/partitionOptions",
-      { source: source },
-      AuthService.getAuthHeader()
-    );
-  };
+  return axios.post(
+    "/api/partitionOptions",
+    { source: source },
+    AuthService.getAuthHeader()
+  );
+};
 
 export const parseHourResponse = (res) => {
-  const database = res.data.split(",");
-  return database.map((x) => makeChartJsDatabase(x));
+  const database = res.data.database.split(",");
+  console.log(res)
+  return {
+    friendlyName: res.data.friendlyName,
+    lastUpdate: res.data.lastUpdate,
+    partitionOptions: res.data.partitionOptions,
+    database: database.map((x) => makeChartJsDatabase(x)),
+  };
 };
 
 const makeChartJsDatabase = (x) => {
@@ -56,10 +62,10 @@ const makeChartJsDatabase = (x) => {
   };
 };
 
-const makeSources = (database) => {
+const makeSources = (energyHistoryInstance) => {
   return {
-    title: "YEP",
-    component: <EnergyDisplay tester={database} />,
+    title: energyHistoryInstance.friendlyName,
+    component: <EnergyDisplay tester={energyHistoryInstance} />,
   };
 };
 
@@ -72,16 +78,25 @@ const partitionScheme = Either.Right([
 ]);
 
 export const theFuture = sourcesF
-  .pipe(map((x) => x.map(getHoursF)))
+  .pipe(map((x) => x.map(getEnergyHistory)))
   .pipe(chain(parallel(10)))
   .pipe(map(map(parseHourResponse)))
-  .pipe(map(map(toImmutableJSfromJS)))
-  .pipe(map(map((x) => new EnergyHistory(x, partitionScheme))))
+  .pipe(map(map((x) => new EnergyHistory(x))))
   .pipe(map(map(makeSources)));
 
 export const getHoursF = (source) => {
   return attemptP(() =>
     axios.post("/api/hours", { source: source }, AuthService.getAuthHeader())
+  );
+};
+
+export const getEnergyHistory = (source) => {
+  return attemptP(() =>
+    axios.post(
+      "/api/energyHistory",
+      { source: source },
+      AuthService.getAuthHeader()
+    )
   );
 };
 

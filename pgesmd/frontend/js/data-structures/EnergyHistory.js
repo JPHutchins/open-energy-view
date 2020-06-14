@@ -3,6 +3,8 @@ import { findMaxResolution } from "../functions/findMaxResolution";
 import { differenceInMilliseconds, add, sub } from "date-fns";
 import { makeColorsArray } from "./helpers/makeColorsArray";
 import { sum } from "ramda";
+import { fromJS as toImmutableJSfromJS, isImmutable } from "immutable";
+import { Either } from "ramda-fantasy";
 import { intervalToWindow } from "../functions/intervalToWindow";
 import { sumPartitions } from "./helpers/sumPartitions";
 import { extract } from "../functions/extract";
@@ -12,24 +14,32 @@ import { endOf } from "../functions/endOf";
 import { getDataset } from "./helpers/getDataset";
 import { indexInDb } from "../functions/indexInDb";
 import { chartOptions } from "./helpers/chartOptions";
+import { defaultPartitions } from "./helpers/defaultPartitions";
 
 export class EnergyHistory {
-  constructor(database, partitionOptions, interval = null, passiveUse = null) {
-    this.database = database;
-    this.partitionOptions = partitionOptions;
+  constructor(response, interval = null, passiveUse = null, immutableDB = null) {
+    this.response = response;
+    this.friendlyName = response.friendlyName;
+    this.lastUpdate = response.lastUpdate;
+    this.database = immutableDB
+      ? immutableDB
+      : toImmutableJSfromJS(response.database);
+    this.partitionOptions = response.partitionOptions
+      ? Either.Right(response.partitionOptions)
+      : Either.Right(defaultPartitions);
     this.chartOptions = chartOptions;
     this.passiveUse = passiveUse // TODO: Either forking
       ? passiveUse
-      : calculatePassiveUse(database).value;
+      : calculatePassiveUse(this.database).value;
     if (interval) {
       this.startDate = interval.start;
       this.endDate = interval.end;
     } else {
-      this.startDate = startOf("day")(new Date(database.last().get("x")));
+      this.startDate = startOf("day")(new Date(this.database.last().get("x")));
       this.endDate = endOf("day")(this.startDate);
     }
 
-    this._graphData = getDataset(database)(this);
+    this._graphData = getDataset(this.database)(this);
     this.data = {
       start: this.startDate,
       end: this.endDate,
@@ -41,7 +51,7 @@ export class EnergyHistory {
           label: "Energy Consumption",
           type: "bar",
           data: this._graphData.toJS(),
-          backgroundColor: makeColorsArray(partitionOptions)(
+          backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
           ).toArray(),
         },
@@ -60,10 +70,10 @@ export class EnergyHistory {
     this.windowData = {
       windowSize: intervalToWindow(this.data.intervalSize),
       windowSum: sum(extract("y")(this._graphData)),
-      partitionSums: sumPartitions(partitionOptions)(
+      partitionSums: sumPartitions(this.partitionOptions)(
         this.database.slice(
-          indexInDb(database)(this.startDate),
-          indexInDb(database)(this.endDate)
+          indexInDb(this.database)(this.startDate),
+          indexInDb(this.database)(this.endDate)
         )
       ),
     };
@@ -71,37 +81,37 @@ export class EnergyHistory {
 
   prev() {
     return new EnergyHistory(
-      this.database,
-      this.partitionOptions,
+      this.response,
       {
         start: sub(this.data.start, toDateInterval(this.windowData.windowSize)),
         end: sub(this.data.end, toDateInterval(this.windowData.windowSize)),
       },
-      this.passiveUse
+      this.passiveUse,
+      this.database
     );
   }
 
   next() {
     return new EnergyHistory(
-      this.database,
-      this.partitionOptions,
+      this.response,
       {
         start: add(this.data.start, toDateInterval(this.windowData.windowSize)),
         end: add(this.data.end, toDateInterval(this.windowData.windowSize)),
       },
-      this.passiveUse
+      this.passiveUse,
+      this.database
     );
   }
 
   setWindow(interval) {
     return new EnergyHistory(
-      this.database,
-      this.partitionOptions,
+      this.response,
       {
         start: startOf(interval)(this.data.start),
         end: endOf(interval)(this.data.start),
       },
-      this.passiveUse
+      this.passiveUse,
+      this.database
     );
   }
 }
