@@ -5,19 +5,26 @@ import { makeColorsArray } from "./helpers/makeColorsArray";
 import { sum } from "ramda";
 import { fromJS as toImmutableJSfromJS, isImmutable } from "immutable";
 import { Either } from "ramda-fantasy";
+import { getTime } from "date-fns";
 import { intervalToWindow } from "../functions/intervalToWindow";
 import { sumPartitions } from "./helpers/sumPartitions";
 import { extract } from "../functions/extract";
 import { toDateInterval } from "../functions/toDateInterval";
 import { startOf } from "../functions/startOf";
 import { endOf } from "../functions/endOf";
+import { slicePassive } from "../functions/slicePassive";
 import { getDataset } from "./helpers/getDataset";
 import { indexInDb } from "../functions/indexInDb";
 import { chartOptions } from "./helpers/chartOptions";
 import { defaultPartitions } from "./helpers/defaultPartitions";
 
 export class EnergyHistory {
-  constructor(response, interval = null, passiveUse = null, immutableDB = null) {
+  constructor(
+    response,
+    interval = null,
+    passiveUse = null,
+    immutableDB = null
+  ) {
     this.response = response;
     this.friendlyName = response.friendlyName;
     this.lastUpdate = response.lastUpdate;
@@ -38,6 +45,8 @@ export class EnergyHistory {
       this.startDate = startOf("day")(new Date(this.database.last().get("x")));
       this.endDate = endOf("day")(this.startDate);
     }
+    this.startDateMs = getTime(this.startDate);
+    this.endDateMs = getTime(this.endDate) + 1;
 
     this._graphData = getDataset(this.database)(this);
     this.data = {
@@ -58,12 +67,10 @@ export class EnergyHistory {
         {
           label: "Passive Consumption",
           type: "line",
-          data: this.passiveUse
-            .slice(
-              indexInDb(this.passiveUse)(this.startDate - 1),
-              indexInDb(this.passiveUse)(this.endDate)
-            )
-            .toJS(),
+          data: slicePassive(this.passiveUse, this.startDateMs, this.endDateMs),
+          // options
+          borderColor: "red",
+          pointRadius: 0,
         },
       ],
     };
@@ -72,8 +79,8 @@ export class EnergyHistory {
       windowSum: sum(extract("y")(this._graphData)),
       partitionSums: sumPartitions(this.partitionOptions)(
         this.database.slice(
-          indexInDb(this.database)(this.startDate),
-          indexInDb(this.database)(this.endDate)
+          indexInDb(this.database)(this.startDateMs),
+          indexInDb(this.database)(this.endDateMs)
         )
       ),
     };

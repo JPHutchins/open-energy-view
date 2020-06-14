@@ -8,7 +8,7 @@ export const makeChartData = (database) => (intervalArray) => {
   const data = intervalArray.map((point) => {
     const [_startTime, _endTime] = point;
     const _startIndex = indexOf(getTime(_startTime));
-    const _endIndex = indexOf(getTime(_endTime));
+    const _endIndex = indexOf(getTime(_endTime) + 1);
     const _slice = database.slice(_startIndex, _endIndex);
     const _sum = _slice.reduce((a, v) => a + v.get("y"), 0);
     const _mean = Math.round(_sum / (_endIndex - _startIndex));
