@@ -1,12 +1,11 @@
 import axios from "axios";
 import React from "react";
-import { Either } from "ramda-fantasy";
 import { attemptP, fork, and, value, chain, parallel } from "fluture";
 import AuthService from "./AuthService";
-import { map, compose } from "ramda";
-import { fromJS as toImmutableJSfromJS } from "immutable";
+import { map } from "ramda";
 import EnergyDisplay from "../components/EnergyDisplay";
 import { EnergyHistory } from "../data-structures/EnergyHistory";
+import SourceRegistration from "../components/SourceRegistration";
 
 export const addPgeSource = (regInfo) => {
   return axios.post("/api/add/pge", regInfo, AuthService.getAuthHeader());
@@ -44,7 +43,6 @@ export const getPartitionOptions = (source) => {
 
 export const parseHourResponse = (res) => {
   const database = res.data.database.split(",");
-  console.log(res)
   return {
     friendlyName: res.data.friendlyName,
     lastUpdate: res.data.lastUpdate,
@@ -69,20 +67,20 @@ const makeSources = (energyHistoryInstance) => {
   };
 };
 
-const sourcesF = getSourcesF().pipe(map((x) => x.data));
+const addNewSourceTab = (x) => {
+  x.push({ title: "Add New Source", component: <SourceRegistration /> });
+  return x;
+};
 
-const partitionScheme = Either.Right([
-  { name: "Night", start: 1, color: "#FF0000" },
-  { name: "Day", start: 7, color: "#00FF00" },
-  { name: "Evening", start: 18, color: "#0000FF" },
-]);
+const sourcesF = getSourcesF().pipe(map((x) => x.data));
 
 export const theFuture = sourcesF
   .pipe(map((x) => x.map(getEnergyHistory)))
   .pipe(chain(parallel(10)))
   .pipe(map(map(parseHourResponse)))
   .pipe(map(map((x) => new EnergyHistory(x))))
-  .pipe(map(map(makeSources)));
+  .pipe(map(map(makeSources)))
+  .pipe(map(addNewSourceTab));
 
 export const getHoursF = (source) => {
   return attemptP(() =>
