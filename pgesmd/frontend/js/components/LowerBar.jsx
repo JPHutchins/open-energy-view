@@ -36,14 +36,17 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
         <button
           onClick={() => setEnergyHistory(energyHistory.prev())}
           className="btn btn-primary"
-          disabled={isBefore(subMilliseconds(energyHistory.startDate, 1), energyHistory.firstDate )}
+          disabled={isBefore(
+            subMilliseconds(energyHistory.startDate, 1),
+            energyHistory.firstDate
+          )}
         >
           Previous
         </button>
         <button
           onClick={() => setEnergyHistory(energyHistory.next())}
           className="btn btn-primary"
-          disabled={isAfter(energyHistory.endDate, energyHistory.lastDate )}
+          disabled={isAfter(energyHistory.endDate, energyHistory.lastDate)}
         >
           Next
         </button>
