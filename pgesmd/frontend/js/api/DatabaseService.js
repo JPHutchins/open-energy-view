@@ -63,7 +63,7 @@ const makeChartJsDatabase = (x) => {
 const makeSources = (energyHistoryInstance) => {
   return {
     title: energyHistoryInstance.friendlyName,
-    component: <EnergyDisplay tester={energyHistoryInstance} />,
+    component: <EnergyDisplay energyHistoryInstance={energyHistoryInstance} />,
   };
 };
 
