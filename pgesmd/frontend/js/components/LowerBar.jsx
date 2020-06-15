@@ -1,6 +1,5 @@
 import React from "react";
-import CenterDate from "./CenterDate";
-import { format } from "date-fns";
+import { format, isBefore, isAfter, subMilliseconds } from "date-fns";
 import { DropdownButton, Dropdown } from "react-bootstrap";
 
 /**
@@ -37,19 +36,22 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
         <button
           onClick={() => setEnergyHistory(energyHistory.prev())}
           className="btn btn-primary"
-          //disabled={disablePrev}
+          disabled={isBefore(subMilliseconds(energyHistory.startDate, 1), energyHistory.firstDate )}
         >
           Previous
         </button>
         <button
           onClick={() => setEnergyHistory(energyHistory.next())}
           className="btn btn-primary"
-          //disabled={disableNext}
+          disabled={isAfter(energyHistory.endDate, energyHistory.lastDate )}
         >
           Next
         </button>
         <DropdownButton
-          title={energyHistory.windowData.windowSize}
+          title={
+            energyHistory.windowData.windowSize.charAt(0).toUpperCase() +
+            energyHistory.windowData.windowSize.slice(1)
+          }
           onSelect={(e) => setEnergyHistory(energyHistory.setWindow(e))}
         >
           <Dropdown.Item eventKey="day">Day</Dropdown.Item>
