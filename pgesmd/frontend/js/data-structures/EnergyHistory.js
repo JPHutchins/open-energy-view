@@ -3,7 +3,7 @@ import { findMaxResolution } from "../functions/findMaxResolution";
 import { differenceInMilliseconds, add, sub } from "date-fns";
 import { makeColorsArray } from "./helpers/makeColorsArray";
 import { sum } from "ramda";
-import { fromJS as toImmutableJSfromJS, isImmutable } from "immutable";
+import { fromJS as toImmutableJSfromJS} from "immutable";
 import { Either } from "ramda-fantasy";
 import { getTime } from "date-fns";
 import { intervalToWindow } from "../functions/intervalToWindow";
