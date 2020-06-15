@@ -1,35 +1,62 @@
 import React from "react";
 import CenterDate from "./CenterDate";
+import { format } from "date-fns";
 import { DropdownButton, Dropdown } from "react-bootstrap";
 
 /**
  * The component to provide navigation of the data window.
  */
-const LowerBar = (props) => {
+const LowerBar = ({ energyHistory, setEnergyHistory }) => {
+  const formatDate = (energyHistory) => {
+    switch (energyHistory.windowData.windowSize) {
+      case "day":
+        return format(energyHistory.startDate, "EEEE, MMMM do, yyyy");
+      case "week":
+        return `Week of ${format(energyHistory.startDate, "MMMM do, yyyy")}`;
+      case "month":
+        return format(energyHistory.startDate, "MMMM yyyy");
+      case "year":
+        return format(energyHistory.startDate, "yyyy");
+      case "complete":
+        return `${format(energyHistory.startDate, "MMM do, yy")} - ${format(
+          energyHistory.endDate,
+          "MMM do, yy"
+        )}`;
+      default:
+        return `${format(energyHistory.startDate, "MMM do, yy")} - ${format(
+          energyHistory.endDate,
+          "MMM do, yy"
+        )}`;
+    }
+  };
+
   return (
     <div className="container">
-    <div id="window-date">{props.startDate}</div>
+      <div id="window-date">{formatDate(energyHistory)}</div>
       <div className="box">
         <button
-          onClick={() => props.onClick(-1)}
+          onClick={() => setEnergyHistory(energyHistory.prev())}
           className="btn btn-primary"
-          disabled={props.disablePrev}
+          //disabled={disablePrev}
         >
           Previous
         </button>
         <button
-          onClick={() => props.onClick(1)}
+          onClick={() => setEnergyHistory(energyHistory.next())}
           className="btn btn-primary"
-          disabled={props.disableNext}
+          //disabled={disableNext}
         >
           Next
         </button>
-        <DropdownButton title={props.range} onSelect={props.onChange}>
-          <Dropdown.Item eventKey="Day">Day</Dropdown.Item>
-          <Dropdown.Item eventKey="Week">Week</Dropdown.Item>
-          <Dropdown.Item eventKey="Month">Month</Dropdown.Item>
-          <Dropdown.Item eventKey="Year">Year</Dropdown.Item>
-          <Dropdown.Item eventKey="Complete">Complete</Dropdown.Item>
+        <DropdownButton
+          title={energyHistory.windowData.windowSize}
+          onSelect={(e) => setEnergyHistory(energyHistory.setWindow(e))}
+        >
+          <Dropdown.Item eventKey="day">Day</Dropdown.Item>
+          <Dropdown.Item eventKey="week">Week</Dropdown.Item>
+          <Dropdown.Item eventKey="month">Month</Dropdown.Item>
+          <Dropdown.Item eventKey="year">Year</Dropdown.Item>
+          <Dropdown.Item eventKey="complete">Complete</Dropdown.Item>
         </DropdownButton>
       </div>
     </div>
