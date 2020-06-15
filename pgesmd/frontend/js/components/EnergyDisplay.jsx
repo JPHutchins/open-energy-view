@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import EnergyChart from "./EnergyChart";
 import LowerBar from "./LowerBar";
+import RightBar from "./RightBar"
 
 const EnergyDisplay = ({ energyHistoryInstance }) => {
   const [energyHistory, setEnergyHistory] = useState(energyHistoryInstance);
@@ -14,6 +15,20 @@ const EnergyDisplay = ({ energyHistoryInstance }) => {
             options={energyHistory.chartOptions}
           />
         </div>
+        <RightBar
+          /*database={this.database}
+          data={this.state.data.datasets}
+          sum={this.getSum()}
+          avg={this.getAllTimeAvg()}
+          carbonMultiplier={this.state.carbonMultiplier}
+          yoy={this.getYoyChange()}
+          pieData={this.getPieData()}
+          pieOptions={this.getPieOptions(this.getPieData())}
+          defaultValue={this.state.partPieView}
+          handlePartPieView={this.handlePartPieView}
+          selectedPartPieView={this.state.partPieView}
+          range={this.state.range}*/
+        />
       </div>
 
       <LowerBar
