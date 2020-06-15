@@ -1,19 +1,25 @@
 import React, { useState } from "react";
 import EnergyChart from "./EnergyChart";
+import LowerBar from "./LowerBar";
 
-const EnergyDisplay = (props) => {
-  const [test, setTest] = useState(props.tester);
+const EnergyDisplay = ({ energyHistoryInstance }) => {
+  const [energyHistory, setEnergyHistory] = useState(energyHistoryInstance);
 
   return (
-    <div style={{ height: "80%" }}>
-      <EnergyChart data={test.data} options={test.chartOptions} />
-      <button onClick={() => setTest(test.prev())}>Previous</button>
-      <button onClick={() => setTest(test.next())}>Next</button>
-      <button onClick={() => setTest(test.setWindow("day"))}>Day</button>
-      <button onClick={() => setTest(test.setWindow("week"))}>Week</button>
-      <button onClick={() => setTest(test.setWindow("month"))}>Month</button>
-      <button onClick={() => setTest(test.setWindow("year"))}>Year</button>
-      <button onClick={() => setTest(test.setWindow("total"))}>total</button>
+    <div className="energy-history">
+      <div className="energy-history-main-div">
+        <div className="energy-chart">
+          <EnergyChart
+            data={energyHistory.data}
+            options={energyHistory.chartOptions}
+          />
+        </div>
+      </div>
+
+      <LowerBar
+        energyHistory={energyHistory}
+        setEnergyHistory={setEnergyHistory}
+      />
     </div>
   );
 };
