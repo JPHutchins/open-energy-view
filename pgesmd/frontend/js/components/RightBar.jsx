@@ -7,69 +7,69 @@ import ViewTotal from "./ViewTotal";
 import CarbonFootprint from "./CarbonFootprint";
 import "../../css/App.css";
 import SeasonalYoY from "./SeasonalYoY";
+import { sum } from "ramda";
 
-export default class RightBar extends React.PureComponent {
-  getData = (datasets, index) => {
-    if (!datasets) return undefined;
-    return datasets[index].data;
-  };
+const RightBar = ({ energyHistory }) => {
+  //   getData = (datasets, index) => {
+  //     if (!datasets) return undefined;
+  //     return datasets[index].data;
+  //   };
 
-  adjustForBaseline = () => {
-    const data = this.getData(this.props.data, 0);
-    if (!data) return undefined;
+  //   adjustForBaseline = () => {
+  //     const data = getData(data, 0);
+  //     if (!data) return undefined;
 
-    const dataB = this.getData(this.props.data, 1);
-    if (!dataB) return undefined;
+  //     const dataB = getData(data, 1);
+  //     if (!dataB) return undefined;
 
-    let output = [];
+  //     let output = [];
 
-    for (let i = 0; i < data.length; i++) {
-      output.push({
-        x: data[i].x,
-        y: data[i].y - data[i].baseline,
-      });
-    }
+  //     for (let i = 0; i < data.length; i++) {
+  //       output.push({
+  //         x: data[i].x,
+  //         y: data[i].y - data[i].baseline,
+  //       });
+  //     }
 
-    return output;
-  };
+  //     return output;
+  //   };
 
-  render() {
-    return (
-      <div className="right-bar">
-        <ViewTotal sum={this.props.sum} avg={this.props.avg} />
-        <CarbonFootprint
-          sum={this.props.sum}
-          carbonMultiplier={this.props.carbonMultiplier}
+  return (
+    <div className="right-bar">
+      <ViewTotal energyHistory={energyHistory} />
+      {/* <CarbonFootprint
+        sum={sum}
+        carbonMultiplier={carbonMultiplier}
+      />
+      {yoy !== false && <SeasonalYoY yoy={yoy} />}
+      <div>
+        <div className="kilowatt-hour">Activities</div>
+        <MiniPie data={pieData} options={pieOptions} />
+        <PartDropdown
+          handleClick={handlePartPieView}
+          defaultValue={defaultValue}
+          selected={selectedPartPieView}
         />
-        {this.props.yoy !== false && <SeasonalYoY yoy={this.props.yoy} />}
-        <div>
-          <div className="kilowatt-hour">Activities</div>
-          <MiniPie data={this.props.pieData} options={this.props.pieOptions} />
-          <PartDropdown
-            handleClick={this.props.handlePartPieView}
-            defaultValue={this.props.defaultValue}
-            selected={this.props.selectedPartPieView}
-          />
-        </div>
-        <div>
-          <Trendline
-            data={this.getData(this.props.data, 0)}
-            database={this.props.database}
-            name="Active Use"
-            range={this.props.range}
-            baseline={false}
-          />
-        </div>
-        <div>
-          <Trendline
-            data={this.getData(this.props.data, 0)}
-            database={this.props.database}
-            name="Background"
-            range={this.props.range}
-            baseline={true}
-          />
-        </div>
       </div>
-    );
-  }
-}
+      <div>
+        <Trendline
+          data={getData(data, 0)}
+          database={database}
+          name="Active Use"
+          range={range}
+          baseline={false}
+        />
+      </div>
+      <div>
+        <Trendline
+          data={getData(data, 0)}
+          database={database}
+          name="Background"
+          range={range}
+          baseline={true}
+        />
+      </div> */}
+    </div>
+  );
+};
+export default RightBar;

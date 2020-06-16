@@ -16,6 +16,7 @@ const EnergyDisplay = ({ energyHistoryInstance }) => {
           />
         </div>
         <RightBar
+          energyHistory={energyHistory}
           /*database={this.database}
           data={this.state.data.datasets}
           sum={this.getSum()}

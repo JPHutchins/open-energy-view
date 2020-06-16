@@ -17,6 +17,7 @@ import { getDataset } from "./helpers/getDataset";
 import { indexInDb } from "../functions/indexInDb";
 import { chartOptions } from "./helpers/chartOptions";
 import { defaultPartitions } from "./helpers/defaultPartitions";
+import { alltimeMeanByDay } from "../functions/alltimeMeanByDay";
 
 export class EnergyHistory {
   constructor(
@@ -50,6 +51,8 @@ export class EnergyHistory {
 
     this.firstDate = new Date(this.database.first().get("x"));
     this.lastDate = new Date(this.database.last().get("x"));
+
+    this.alltimeMeanByDay = alltimeMeanByDay(this.database)
 
     this._graphData = getDataset(this.database)(this);
     this.data = {
