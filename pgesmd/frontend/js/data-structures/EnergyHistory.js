@@ -16,11 +16,13 @@ import { getDataset } from "./helpers/getDataset";
 import { indexInDb } from "../functions/indexInDb";
 import { chartOptions } from "./helpers/chartOptions";
 import { defaultPartitions } from "./helpers/defaultPartitions";
+import { memoizePassiveUse } from "./helpers/memoizePassiveUse";
 import { alltimeMeanByDay } from "../functions/alltimeMeanByDay";
 
 export class EnergyHistory {
-  constructor(response, interval = null, passiveUse = null) {
+  constructor(response, interval = null, memo = {}) {
     this.response = response;
+    this.memo = memo;
     this.friendlyName = response.friendlyName;
     this.lastUpdate = response.lastUpdate;
     this.database = response.database;
@@ -28,9 +30,7 @@ export class EnergyHistory {
       ? Either.Right(response.partitionOptions)
       : Either.Right(defaultPartitions);
     this.chartOptions = chartOptions;
-    this.passiveUse = passiveUse // TODO: Either forking
-      ? passiveUse
-      : calculatePassiveUse(this.database).value;
+    this.passiveUse = memoizePassiveUse(this, calculatePassiveUse);
     if (interval) {
       this.startDate = interval.start;
       this.endDate = interval.end;
@@ -91,8 +91,7 @@ export class EnergyHistory {
         start: sub(this.data.start, toDateInterval(this.windowData.windowSize)),
         end: sub(this.data.end, toDateInterval(this.windowData.windowSize)),
       },
-      this.passiveUse,
-      this.database
+      this.memo
     );
   }
 
@@ -103,8 +102,7 @@ export class EnergyHistory {
         start: add(this.data.start, toDateInterval(this.windowData.windowSize)),
         end: add(this.data.end, toDateInterval(this.windowData.windowSize)),
       },
-      this.passiveUse,
-      this.database
+      this.memo
     );
   }
 
@@ -115,8 +113,7 @@ export class EnergyHistory {
         start: startOf(interval)(this.data.start),
         end: endOf(interval)(this.data.start),
       },
-      this.passiveUse,
-      this.database
+      this.memo
     );
   }
 }
