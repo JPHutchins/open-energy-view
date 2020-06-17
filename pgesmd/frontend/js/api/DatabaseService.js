@@ -2,10 +2,11 @@ import axios from "axios";
 import React from "react";
 import { attemptP, fork, and, value, chain, parallel } from "fluture";
 import AuthService from "./AuthService";
-import { map } from "ramda";
+import { map, compose } from "ramda";
 import EnergyDisplay from "../components/EnergyDisplay";
 import { EnergyHistory } from "../data-structures/EnergyHistory";
 import SourceRegistration from "../components/SourceRegistration";
+import { fromJS as toImmutableJSfromJS } from "immutable";
 
 export const addPgeSource = (regInfo) => {
   return axios.post("/api/add/pge", regInfo, AuthService.getAuthHeader());
@@ -42,18 +43,22 @@ export const getPartitionOptions = (source) => {
 };
 
 export const parseHourResponse = (res) => {
-  const database = res.data.database.split(",");
+  const splitAtCommas = (x) => x.split(",");
+  const parse = (x) =>
+    compose(toImmutableJSfromJS, map(formatPGEHourDB), splitAtCommas)(x);
+
   return {
     friendlyName: res.data.friendlyName,
     lastUpdate: res.data.lastUpdate,
     partitionOptions: res.data.partitionOptions,
-    database: database.map((x) => makeChartJsDatabase(x)),
+    database: parse(res.data.database),
   };
 };
 
-const makeChartJsDatabase = (x) => {
+const formatPGEHourDB = (x) => {
   const secondsInHour = 3600;
   const msInSeconds = 1000;
+  //TODO - validate input and fork
   return {
     x: x.slice(0, 6) * secondsInHour * msInSeconds,
     y: parseInt(x.slice(6)),

@@ -3,7 +3,6 @@ import { findMaxResolution } from "../functions/findMaxResolution";
 import { differenceInMilliseconds, add, sub } from "date-fns";
 import { makeColorsArray } from "./helpers/makeColorsArray";
 import { sum } from "ramda";
-import { fromJS as toImmutableJSfromJS } from "immutable";
 import { Either } from "ramda-fantasy";
 import { getTime } from "date-fns";
 import { intervalToWindow } from "../functions/intervalToWindow";
@@ -20,18 +19,11 @@ import { defaultPartitions } from "./helpers/defaultPartitions";
 import { alltimeMeanByDay } from "../functions/alltimeMeanByDay";
 
 export class EnergyHistory {
-  constructor(
-    response,
-    interval = null,
-    passiveUse = null,
-    immutableDB = null
-  ) {
+  constructor(response, interval = null, passiveUse = null) {
     this.response = response;
     this.friendlyName = response.friendlyName;
     this.lastUpdate = response.lastUpdate;
-    this.database = immutableDB
-      ? immutableDB
-      : toImmutableJSfromJS(response.database);
+    this.database = response.database;
     this.partitionOptions = response.partitionOptions
       ? Either.Right(response.partitionOptions)
       : Either.Right(defaultPartitions);
@@ -52,7 +44,7 @@ export class EnergyHistory {
     this.firstDate = new Date(this.database.first().get("x"));
     this.lastDate = new Date(this.database.last().get("x"));
 
-    this.alltimeMeanByDay = alltimeMeanByDay(this.database)
+    this.alltimeMeanByDay = alltimeMeanByDay(this.database);
 
     this._graphData = getDataset(this.database)(this);
     this.data = {
