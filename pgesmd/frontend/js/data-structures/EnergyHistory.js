@@ -132,4 +132,11 @@ export class EnergyHistory {
       this.memo
     );
   }
+
+  slice(startDate, endDate) {
+      return this.database.slice(
+        indexInDb(this.database)(getTime(startDate)),
+        indexInDb(this.database)(getTime(endDate))
+      )
+  }
 }
