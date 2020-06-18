@@ -44,7 +44,14 @@ export class EnergyHistory {
     this.firstDate = new Date(this.database.first().get("x"));
     this.lastDate = new Date(this.database.last().get("x"));
 
-    this.alltimeMeanByDay = alltimeMeanByDay(this.database);
+    //TODO - refactor to avoid all this and rethink how mean is calculated
+    this.alltimeMeanByDay = alltimeMeanByDay(
+      intervalToWindow(
+        findMaxResolution(
+          differenceInMilliseconds(this.startDate, this.endDate)
+        )
+      )
+    )(this.database);
     this.carbonMultiplier = 0.05; // TODO: lookup by utility
 
     this._graphData = getDataset(this.database)(this);
@@ -75,7 +82,15 @@ export class EnergyHistory {
     };
     this.windowData = {
       windowSize: intervalToWindow(this.data.intervalSize),
-      windowSum: sum(extract("y")(this._graphData)),
+      //TODO: refactor to add a helper and avoid this index lookup
+      windowSum: sum(
+        extract("y")(
+          this.database.slice(
+            indexInDb(this.database)(this.startDateMs),
+            indexInDb(this.database)(this.endDateMs)
+          )
+        )
+      ),
       partitionSums: sumPartitions(this.partitionOptions)(
         this.database.slice(
           indexInDb(this.database)(this.startDateMs),
