@@ -45,6 +45,7 @@ export class EnergyHistory {
     this.lastDate = new Date(this.database.last().get("x"));
 
     this.alltimeMeanByDay = alltimeMeanByDay(this.database);
+    this.carbonMultiplier = 0.05; // TODO: lookup by utility
 
     this._graphData = getDataset(this.database)(this);
     this.data = {

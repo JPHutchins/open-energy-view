@@ -37,6 +37,7 @@ const RightBar = ({ energyHistory }) => {
   return (
     <div className="right-bar">
       <ViewTotal energyHistory={energyHistory} />
+      <CarbonFootprint energyHistory={energyHistory} />
       {/* <CarbonFootprint
         sum={sum}
         carbonMultiplier={carbonMultiplier}
