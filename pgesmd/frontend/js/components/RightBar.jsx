@@ -39,6 +39,7 @@ const RightBar = ({ energyHistory }) => {
       <ViewTotal energyHistory={energyHistory} />
       <CarbonFootprint energyHistory={energyHistory} />
       <SeasonalYoY energyHistory={energyHistory} />
+      <MiniPie energyHistory={energyHistory} />
       {/* <
       <div>
         <div className="kilowatt-hour">Activities</div>
