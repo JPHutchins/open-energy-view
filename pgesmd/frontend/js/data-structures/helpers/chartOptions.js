@@ -27,7 +27,7 @@ export const chartOptions = {
           },
           offset:true,
           gridLines: {
-            offsetGridLines: true,
+            display: false,
           },
           barThickness: "flex",
         },
