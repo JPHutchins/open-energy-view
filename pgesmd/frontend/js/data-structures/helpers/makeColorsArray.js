@@ -11,7 +11,12 @@ import { List } from "immutable";
 export const makeColorsArray = (partitions) => (data) => {
   const first = new Date(data.first().get("x"));
   const last = new Date(data.last().get("x"));
-  if (Math.abs(differenceInMilliseconds(first, last)) > 86400000) return List();
+  // TODO: refactor once userOptions object is ready - should take userOptions
+  // as arg instead of partitions and return month and year colors instead of
+  // the hardcoded default .fill(...)
+  if (Math.abs(differenceInMilliseconds(first, last)) > 604800000)
+
+    return List(new Array(data.size).fill("#5F5566"));
 
   const output = map((x) => {
     const _hour = format(new Date(x.get("x")), "H");
