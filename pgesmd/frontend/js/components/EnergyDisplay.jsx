@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import EnergyChart from "./EnergyChart";
 import LowerBar from "./LowerBar";
-import RightBar from "./RightBar"
+import RightBar from "./RightBar";
 
 const EnergyDisplay = ({ energyHistoryInstance }) => {
   const [energyHistory, setEnergyHistory] = useState(energyHistoryInstance);
@@ -10,10 +10,7 @@ const EnergyDisplay = ({ energyHistoryInstance }) => {
     <div className="energy-history">
       <div className="energy-history-main-div">
         <div className="energy-chart">
-          <EnergyChart
-            data={energyHistory.data}
-            options={energyHistory.chartOptions}
-          />
+          <EnergyChart energyHistory={energyHistory} />
         </div>
         <RightBar
           energyHistory={energyHistory}
