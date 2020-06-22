@@ -24,7 +24,7 @@ export const slicePassive = (passiveUse, startDateMs, endDateMs) => {
   const interval = 86400000; // ms in day; passive use is always per day
 
   const lastValue = {
-    x: passiveUseSlice[passiveUseSlice.length - 1].x + interval - 1,
+    x: passiveUseSlice[passiveUseSlice.length - 1].x + interval - 3600000,
     y: passiveUseSlice[passiveUseSlice.length - 1].y,
   };
 

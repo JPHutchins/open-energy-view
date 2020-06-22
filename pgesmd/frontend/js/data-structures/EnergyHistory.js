@@ -2,7 +2,7 @@ import { calculatePassiveUse } from "./helpers/calculatePassiveUse";
 import { findMaxResolution } from "../functions/findMaxResolution";
 import { differenceInMilliseconds, add, sub } from "date-fns";
 import { makeColorsArray } from "./helpers/makeColorsArray";
-import { sum } from "ramda";
+import { sum, compose, map } from "ramda";
 import { Either } from "ramda-fantasy";
 import { getTime } from "date-fns";
 import { intervalToWindow } from "../functions/intervalToWindow";
@@ -18,6 +18,11 @@ import { chartOptions } from "./helpers/chartOptions";
 import { defaultPartitions } from "./helpers/defaultPartitions";
 import { memoizePassiveUse } from "./helpers/memoizePassiveUse";
 import { alltimeMeanByDay } from "../functions/alltimeMeanByDay";
+import { makeIntervalArray } from "../functions/makeIntervalArray";
+import { makeChartData } from "../functions/makeChartData";
+import { fillInPassiveUseBlanks } from "../functions/fillInPassiveUseBlanks";
+import { Map } from "immutable";
+import {minZero} from "../functions/minZero"
 
 export class EnergyHistory {
   constructor(response, interval = null, memo = {}) {
@@ -29,7 +34,7 @@ export class EnergyHistory {
     this.partitionOptions = response.partitionOptions
       ? Either.Right(response.partitionOptions)
       : Either.Right(defaultPartitions);
-    this.chartOptions = chartOptions;
+
     this.passiveUse = memoizePassiveUse(this, calculatePassiveUse);
     if (interval) {
       this.startDate = interval.start;
@@ -55,6 +60,24 @@ export class EnergyHistory {
     this.carbonMultiplier = 0.05; // TODO: lookup by utility
 
     this._graphData = getDataset(this.database)(this);
+
+    this.chartDataPassiveUse = compose(
+        fillInPassiveUseBlanks,
+      makeChartData(this.passiveUse),
+      makeIntervalArray
+    )(this).toJS()
+
+    this.chartData = compose(
+        makeChartData(this.database),
+        makeIntervalArray
+    )(this).map((x, i) => Map({
+        x: x.get('x'),
+        y: minZero(x.get('y') - this.chartDataPassiveUse[i].y),
+        sum: x.get('sum')
+    })).toJS()
+
+    console.log(this.chartData)
+
     this.data = {
       start: this.startDate,
       end: this.endDate,
@@ -63,20 +86,21 @@ export class EnergyHistory {
       ),
       datasets: [
         {
-          label: "Energy Consumption",
-          type: "bar",
-          data: this._graphData.toJS(),
-          backgroundColor: makeColorsArray(this.partitionOptions)(
-            this._graphData
-          ).toArray(),
-        },
-        {
           label: "Passive Consumption",
-          type: "line",
-          data: slicePassive(this.passiveUse, this.startDateMs, this.endDateMs),
+          type: "bar",
+          data: this.chartDataPassiveUse,
+          // slicePassive(this.passiveUse, this.startDateMs, this.endDateMs),
           // options
           borderColor: "red",
           pointRadius: 0,
+        },
+        {
+          label: "Energy Consumption",
+          type: "bar",
+          data: this.chartData,
+          backgroundColor: makeColorsArray(this.partitionOptions)(
+            this._graphData
+          ).toArray(),
         },
       ],
     };
@@ -98,6 +122,7 @@ export class EnergyHistory {
         )
       ),
     };
+    this.chartOptions = chartOptions(this);
   }
 
   prev() {
@@ -134,9 +159,9 @@ export class EnergyHistory {
   }
 
   slice(startDate, endDate) {
-      return this.database.slice(
-        indexInDb(this.database)(getTime(startDate)),
-        indexInDb(this.database)(getTime(endDate))
-      )
+    return this.database.slice(
+      indexInDb(this.database)(getTime(startDate)),
+      indexInDb(this.database)(getTime(endDate))
+    );
   }
 }
