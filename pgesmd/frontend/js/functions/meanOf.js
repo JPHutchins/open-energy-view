@@ -5,5 +5,8 @@
  * @param {Array} arr The array of numbers.
  */
 export function meanOf(arr) {
-  return arr.reduce((acc, x) => acc + x, 0) / arr.length;
+  // rough support for ImmutablJS List:
+  const length = arr.length ? arr.length : arr.size
+  
+  return arr.reduce((acc, x) => acc + x, 0) / length;
 }

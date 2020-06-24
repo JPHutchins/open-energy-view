@@ -1,6 +1,9 @@
 import { Map, List } from "immutable";
 import { getTime } from "date-fns";
 import { indexInDb } from "./indexInDb";
+import { compose, mean } from "ramda";
+import { extract } from "./extract";
+import { meanOf } from "./meanOf";
 
 export const makeChartData = (database) => (intervalArray) => {
   const indexOf = indexInDb(database);
@@ -13,9 +16,16 @@ export const makeChartData = (database) => (intervalArray) => {
     const _sum = _slice.reduce((a, v) => a + v.get("y"), 0);
     const _mean = Math.round(_sum / (_endIndex - _startIndex));
     return Map({
-      x: getTime(_startTime),
-      y: _mean,
-      sum: _sum,
+      active: Map({
+        x: getTime(_startTime),
+        y: _mean,
+        sum: _sum,
+        total: compose(meanOf, extract("total"))(_slice),
+      }),
+      passive: Map({
+        x: getTime(_startTime),
+        y: compose(meanOf, extract("passive"))(_slice),
+      }),
     });
   });
   return List(data);

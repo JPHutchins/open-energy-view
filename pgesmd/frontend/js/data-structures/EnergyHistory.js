@@ -23,6 +23,7 @@ import { makeChartData } from "../functions/makeChartData";
 import { fillInPassiveUseBlanks } from "../functions/fillInPassiveUseBlanks";
 import { Map } from "immutable";
 import {minZero} from "../functions/minZero"
+import { makeBarGraphData } from "./helpers/makeBarGraphData";
 
 export class EnergyHistory {
   constructor(response, interval = null, memo = {}) {
@@ -59,24 +60,25 @@ export class EnergyHistory {
     )(this.database);
     this.carbonMultiplier = 0.05; // TODO: lookup by utility
 
-    this._graphData = getDataset(this.database)(this);
+    this.zipped = makeBarGraphData(this.database, this.passiveUse)
 
-    this.chartDataPassiveUse = compose(
-        fillInPassiveUseBlanks,
-      makeChartData(this.passiveUse),
-      makeIntervalArray
-    )(this).toJS()
+    // this.chartDataPassiveUse = compose(
+    //     fillInPassiveUseBlanks,
+    //   makeChartData(this.passiveUse),
+    //   makeIntervalArray
+    // )(this).toJS()
 
     this.chartData = compose(
-        makeChartData(this.database),
-        makeIntervalArray
-    )(this).map((x, i) => Map({
-        x: x.get('x'),
-        y: minZero(x.get('y') - this.chartDataPassiveUse[i].y),
-        sum: x.get('sum')
-    })).toJS()
+        makeChartData(this.zipped),
+        makeIntervalArray,
+    )(this)
 
     console.log(this.chartData)
+
+    this._graphData = this.chartData.map(x => x.get("active"))
+
+    console.log(this._graphData)
+    
 
     this.data = {
       start: this.startDate,
@@ -88,7 +90,7 @@ export class EnergyHistory {
         {
           label: "Passive Consumption",
           type: "bar",
-          data: this.chartDataPassiveUse,
+          data: this.chartData.map(x => x.get("passive")).toJS(),
           // slicePassive(this.passiveUse, this.startDateMs, this.endDateMs),
           // options
           borderColor: "red",
@@ -97,7 +99,7 @@ export class EnergyHistory {
         {
           label: "Energy Consumption",
           type: "bar",
-          data: this.chartData,
+          data: this._graphData.toJS(),
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
           ).toArray(),
