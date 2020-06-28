@@ -18,7 +18,11 @@ const App = () => {
   const restrictView = () => {
     if (cookie.load("logged_in")) {
       setView(<DataLoader />);
-      theFuture.pipe(value((x) => setView(<SourceTabs sources={x} />)));
+      theFuture.pipe(
+        fork((x) => setView(<div>{JSON.stringify(x)}</div>))((x) =>
+          setView(<SourceTabs sources={x} />)
+        )
+      );
     } else {
       setView(<Redirect to="/login" />);
     }
