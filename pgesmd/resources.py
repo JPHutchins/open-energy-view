@@ -176,6 +176,8 @@ class GetEnergyHistory(Resource):
             ]
         )
         response = {
+            "utility": "pge",
+            "interval": 3600,
             "friendlyName": data['source'],
             "lastUpdate": None,
             "partitionOptions": source.partition_options,
