@@ -26,7 +26,7 @@ export const sumPartitions = (partitions) => (data) => {
           }, -1)
         );
         const _i = _index < 0 ? partitions.value.length - 1 : _index;
-        acc[_i].sum += x.get("y");
+        acc[_i].sum += x.get("total");
         return acc;
       },
       partitions.value,

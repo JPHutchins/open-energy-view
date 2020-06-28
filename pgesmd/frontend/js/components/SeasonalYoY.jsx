@@ -31,8 +31,8 @@ const SeasonalYoY = ({ energyHistory }) => {
     sub(new Date(currentSlice.last().get("x")), { years: 1 })
   );
 
-  const currentSliceSum = sum(extract("y")(currentSlice));
-  const oldSliceSum = sum(extract("y")(oldSlice));
+  const currentSliceSum = sum(extract("total")(currentSlice));
+  const oldSliceSum = sum(extract("total")(oldSlice));
 
   const percent = Math.round((currentSliceSum / oldSliceSum - 1) * 100);
 

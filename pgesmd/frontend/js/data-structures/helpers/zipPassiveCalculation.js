@@ -3,7 +3,7 @@ import { indexInDb } from "../../functions/indexInDb";
 import { startOfDay, getTime } from "date-fns";
 import { compose } from "ramda";
 
-export const makeBarGraphData = (database, passiveUse) => {
+export const zipPassiveCalculation = (database, passiveUse) => {
   //TODO: refactor - consider moving further up in composition?
   //Rename this function?
   if (!database || !passiveUse) return;
@@ -16,10 +16,10 @@ export const makeBarGraphData = (database, passiveUse) => {
     const hour = database.get(i);
     const day = getTime(startOfDay(new Date(hour.get("x"))));
 
-    const total = hour.get("y");
+    const total = hour.get("total");
 
     let passive = compose(
-      useKey("y"),
+      useKey("passive"),
       getFrom(passiveUse),
       indexInDb(passiveUse)
     )(day);
@@ -28,7 +28,7 @@ export const makeBarGraphData = (database, passiveUse) => {
     const active = total - passive;
 
     const zip = hour.withMutations((hour) => {
-      hour.set("passive", passive).set("y", active).set("total", hour.get("y"));
+      hour.set("passive", passive).set("active", active);
     });
    
     zipped.push(zip)

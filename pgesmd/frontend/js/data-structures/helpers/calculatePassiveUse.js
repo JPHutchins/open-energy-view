@@ -15,7 +15,7 @@ export function calculatePassiveUse(database) {
   const WINDOW = 14; // global config variable?
 
   const dailyMinimums = minOfEachDay(groupByDay(database));
-  const values = Either.Right(extract("y")(dailyMinimums));
+  const values = Either.Right(extract("min")(dailyMinimums));
   const time = Either.Right(extract("x")(dailyMinimums));
 
   const passiveValues = values
@@ -27,7 +27,11 @@ export function calculatePassiveUse(database) {
 
   return Either.Right(
     List(
-      zipWith((x, y) => Map({ x: x, y: y }), time.value, passiveValues.value)
+      zipWith(
+        (x, y) => Map({ x: x, passive: y }),
+        time.value,
+        passiveValues.value
+      )
     )
   );
 }
@@ -48,7 +52,7 @@ function minOfEachDay(list) {
   return list.map((x) =>
     Map({
       x: getTime(startOf("day")(x.get(0).get("x"))),
-      y: minOf(extract("y")(x)),
+      min: minOf(extract("total")(x)),
     })
   );
 }

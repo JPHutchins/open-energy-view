@@ -1,9 +1,12 @@
 import React from "react";
+import { differenceInHours } from "date-fns";
 
 const ViewTotal = ({ energyHistory }) => {
+  const windowMean =
+    energyHistory.hourlyMean *
+    differenceInHours(energyHistory.endDate, energyHistory.startDate);
   const percent = Math.round(
-    (energyHistory.windowData.windowSum / energyHistory.alltimeMeanByDay - 1) *
-      100
+    (energyHistory.windowData.windowSum / windowMean - 1) * 100
   );
   const aboveOrBelow = percent <= 0 ? "below" : "above";
 

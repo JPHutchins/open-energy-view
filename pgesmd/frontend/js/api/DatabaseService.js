@@ -1,12 +1,27 @@
 import axios from "axios";
 import React from "react";
-import { attemptP, fork, and, value, chain, parallel } from "fluture";
+import {
+  attemptP,
+  fork,
+  and,
+  value,
+  chain,
+  parallel,
+  reject,
+  encase,
+} from "fluture";
 import AuthService from "./AuthService";
-import { map, compose } from "ramda";
+import { map, compose, mean } from "ramda";
 import EnergyDisplay from "../components/EnergyDisplay";
 import { EnergyHistory } from "../data-structures/EnergyHistory";
 import SourceRegistration from "../components/SourceRegistration";
 import { fromJS as toImmutableJSfromJS } from "immutable";
+import { calculatePassiveUse } from "../data-structures/helpers/calculatePassiveUse";
+import { zipPassiveCalculation } from "../data-structures/helpers/zipPassiveCalculation";
+import { extract } from "../functions/extract";
+import Either from "ramda-fantasy/src/Either";
+import { defaultPartitions } from "../data-structures/helpers/defaultPartitions";
+import { meanOf } from "../functions/meanOf";
 
 export const addPgeSource = (regInfo) => {
   return axios.post("/api/add/pge", regInfo, AuthService.getAuthHeader());
@@ -43,25 +58,38 @@ export const getPartitionOptions = (source) => {
 };
 
 export const parseHourResponse = (res) => {
-  const splitAtCommas = (x) => x.split(",");
-  const parse = (x) =>
-    compose(toImmutableJSfromJS, map(formatPGEHourDB), splitAtCommas)(x);
+  const parseDatabaseResponse = compose(
+    toImmutableJSfromJS,
+    map(formatPGEHourDB),
+    (x) => x.split(",")
+  );
+
+  const data = parseDatabaseResponse(res.data.database);
+  const passiveUse = calculatePassiveUse(data);
+  const zipped = zipPassiveCalculation(data, passiveUse.value);
+  const partitionOptions = res.data.partitionOptions
+    ? Either.Right(res.data.partitionOptions)
+    : Either.Right(defaultPartitions);
 
   return {
+    utility: res.data.utility,
+    interval: res.data.interval,
     friendlyName: res.data.friendlyName,
     lastUpdate: res.data.lastUpdate,
-    partitionOptions: res.data.partitionOptions,
-    database: parse(res.data.database),
+    hourlyMean: meanOf(extract("total")(data)),
+    partitionOptions: partitionOptions,
+    database: zipped,
   };
 };
 
-const formatPGEHourDB = (x) => {
+const formatPGEHourDB = (data) => {
   const secondsInHour = 3600;
   const msInSeconds = 1000;
   //TODO - validate input and fork
+
   return {
-    x: x.slice(0, 6) * secondsInHour * msInSeconds,
-    y: parseInt(x.slice(6)),
+    x: data.slice(0, 6) * secondsInHour * msInSeconds,
+    total: parseInt(data.slice(6)),
   };
 };
 

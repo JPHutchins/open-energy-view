@@ -22,21 +22,18 @@ import { makeIntervalArray } from "../functions/makeIntervalArray";
 import { makeChartData } from "../functions/makeChartData";
 import { fillInPassiveUseBlanks } from "../functions/fillInPassiveUseBlanks";
 import { Map } from "immutable";
-import {minZero} from "../functions/minZero"
-import { makeBarGraphData } from "./helpers/makeBarGraphData";
+import { minZero } from "../functions/minZero";
+import { makeBarGraphData } from "./helpers/zipPassiveCalculation";
 
 export class EnergyHistory {
-  constructor(response, interval = null, memo = {}) {
+  constructor(response, interval = null) {
     this.response = response;
-    this.memo = memo;
+    this.database = response.database;
+    this.hourlyMean = response.hourlyMean
     this.friendlyName = response.friendlyName;
     this.lastUpdate = response.lastUpdate;
-    this.database = response.database;
-    this.partitionOptions = response.partitionOptions
-      ? Either.Right(response.partitionOptions)
-      : Either.Right(defaultPartitions);
+    this.partitionOptions = response.partitionOptions;
 
-    this.passiveUse = memoizePassiveUse(this, calculatePassiveUse);
     if (interval) {
       this.startDate = interval.start;
       this.endDate = interval.end;
@@ -51,16 +48,7 @@ export class EnergyHistory {
     this.lastDate = new Date(this.database.last().get("x"));
 
     //TODO - refactor to avoid all this and rethink how mean is calculated
-    this.alltimeMeanByDay = alltimeMeanByDay(
-      intervalToWindow(
-        findMaxResolution(
-          differenceInMilliseconds(this.startDate, this.endDate)
-        )
-      )
-    )(this.database);
     this.carbonMultiplier = 0.05; // TODO: lookup by utility
-
-    this.zipped = makeBarGraphData(this.database, this.passiveUse)
 
     // this.chartDataPassiveUse = compose(
     //     fillInPassiveUseBlanks,
@@ -69,16 +57,16 @@ export class EnergyHistory {
     // )(this).toJS()
 
     this.chartData = compose(
-        makeChartData(this.zipped),
-        makeIntervalArray,
-    )(this)
+      makeChartData(this.database),
+      makeIntervalArray
+    )(this);
 
-    console.log(this.chartData)
-
-    this._graphData = this.chartData.map(x => x.get("active"))
-
-    console.log(this._graphData)
-    
+    this._graphData = this.chartData.map((x) => {
+      return Map({
+        x: x.get("x"),
+        y: x.get("active"),
+      });
+    });
 
     this.data = {
       start: this.startDate,
@@ -90,7 +78,15 @@ export class EnergyHistory {
         {
           label: "Passive Consumption",
           type: "bar",
-          data: this.chartData.map(x => x.get("passive")).toJS(),
+          data: this.chartData
+            .map((x) => ({
+              x: x.get("x"),
+              y: x.get("passive"),
+            }))
+            .toJS(),
+            backgroundColor: makeColorsArray(this.partitionOptions)(
+                this._graphData
+              ).toArray().map((x) => x.split("40%").join("20%")),
           // slicePassive(this.passiveUse, this.startDateMs, this.endDateMs),
           // options
           borderColor: "red",
@@ -110,7 +106,7 @@ export class EnergyHistory {
       windowSize: intervalToWindow(this.data.intervalSize),
       //TODO: refactor to add a helper and avoid this index lookup
       windowSum: sum(
-        extract("y")(
+        extract("total")(
           this.database.slice(
             indexInDb(this.database)(this.startDateMs),
             indexInDb(this.database)(this.endDateMs)
@@ -128,36 +124,24 @@ export class EnergyHistory {
   }
 
   prev() {
-    return new EnergyHistory(
-      this.response,
-      {
-        start: sub(this.data.start, toDateInterval(this.windowData.windowSize)),
-        end: sub(this.data.end, toDateInterval(this.windowData.windowSize)),
-      },
-      this.memo
-    );
+    return new EnergyHistory(this.response, {
+      start: sub(this.data.start, toDateInterval(this.windowData.windowSize)),
+      end: sub(this.data.end, toDateInterval(this.windowData.windowSize)),
+    });
   }
 
   next() {
-    return new EnergyHistory(
-      this.response,
-      {
-        start: add(this.data.start, toDateInterval(this.windowData.windowSize)),
-        end: add(this.data.end, toDateInterval(this.windowData.windowSize)),
-      },
-      this.memo
-    );
+    return new EnergyHistory(this.response, {
+      start: add(this.data.start, toDateInterval(this.windowData.windowSize)),
+      end: add(this.data.end, toDateInterval(this.windowData.windowSize)),
+    });
   }
 
   setWindow(interval) {
-    return new EnergyHistory(
-      this.response,
-      {
-        start: startOf(interval)(this.data.start),
-        end: endOf(interval)(this.data.start),
-      },
-      this.memo
-    );
+    return new EnergyHistory(this.response, {
+      start: startOf(interval)(this.data.start),
+      end: endOf(interval)(this.data.start),
+    });
   }
 
   slice(startDate, endDate) {
