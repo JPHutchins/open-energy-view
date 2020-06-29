@@ -173,6 +173,12 @@ export class EnergyHistory {
   }
 
   setWindow(interval) {
+    if (interval === "complete") {
+      return new EnergyHistory(this.response, {
+        start: this.firstDate,
+        end: this.lastDate,
+      });
+    }
     return new EnergyHistory(this.response, {
       start: startOf(interval)(this.data.start),
       end: endOf(interval)(this.data.start),

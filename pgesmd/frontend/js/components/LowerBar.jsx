@@ -29,6 +29,19 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
     }
   };
 
+  const disablePrev = () => {
+    if (energyHistory.windowData.windowSize == "complete") return true;
+    return isBefore(
+      subMilliseconds(energyHistory.startDate, 1),
+      energyHistory.firstDate
+    );
+  };
+
+  const disableNext = () => {
+    if (energyHistory.windowData.windowSize == "complete") return true;
+    return isAfter(energyHistory.endDate, energyHistory.lastDate);
+  };
+
   return (
     <div className="container">
       <div id="window-date">{formatDate(energyHistory)}</div>
@@ -36,17 +49,14 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
         <button
           onClick={() => setEnergyHistory(energyHistory.prev())}
           className="btn btn-primary"
-          disabled={isBefore(
-            subMilliseconds(energyHistory.startDate, 1),
-            energyHistory.firstDate
-          )}
+          disabled={disablePrev()}
         >
           Previous
         </button>
         <button
           onClick={() => setEnergyHistory(energyHistory.next())}
           className="btn btn-primary"
-          disabled={isAfter(energyHistory.endDate, energyHistory.lastDate)}
+          disabled={disableNext()}
         >
           Next
         </button>
