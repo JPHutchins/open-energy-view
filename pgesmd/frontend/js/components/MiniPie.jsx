@@ -7,7 +7,7 @@ import {
 } from "react-bootstrap";
 import { Pie } from "react-chartjs-2";
 import { sum } from "ramda";
-import { readableWatts } from "../functions/readableWatts";
+import { readableWattHours } from "../functions/readableWattHours";
 import { useState } from "react";
 
 /**
@@ -86,7 +86,7 @@ const MiniPie = ({ energyHistory }) => {
             ) +
             "%" +
             "\n" +
-            readableWatts(data.datasets[0].data[tooltipItem.index])
+            readableWattHours(data.datasets[0].data[tooltipItem.index])
           );
         },
       },

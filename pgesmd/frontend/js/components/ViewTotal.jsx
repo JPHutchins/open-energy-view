@@ -1,6 +1,7 @@
 import React from "react";
 import { differenceInHours } from "date-fns";
 import { min } from "ramda";
+import { readableWattHours } from "../functions/readableWattHours";
 
 const ViewTotal = ({ energyHistory }) => {
   const smallerWindowSize = Math.min(
@@ -17,7 +18,7 @@ const ViewTotal = ({ energyHistory }) => {
   return (
     <div>
       <div className="info-medium-number">
-        {Math.round(energyHistory.windowData.windowSum / 1000)}kWh{"\n"}
+        {readableWattHours(energyHistory.windowData.windowSum)}
       </div>
       <div className="info-details">
         {Math.abs(percent)}% {aboveOrBelow} average
