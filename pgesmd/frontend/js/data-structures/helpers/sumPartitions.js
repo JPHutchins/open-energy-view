@@ -1,7 +1,7 @@
 import { map, reduce } from "ramda";
 import { format } from "date-fns";
 
-export const sumPartitions = (partitions) => (data) => {
+export const sumPartitions = (type) => (partitions) => (data) => {
   // TODO: implement memoized DP for subset of already calculated sums
   // Store tabulation [obj (first sum), ..., obj (result)]
   // Subset: sum(i, j) -> dp[j] - dp[i - 1]
@@ -26,7 +26,7 @@ export const sumPartitions = (partitions) => (data) => {
           }, -1)
         );
         const _i = _index < 0 ? partitions.value.length - 1 : _index;
-        acc[_i].sum += x.get("total");
+        acc[_i].sum += x.get(type);
         return acc;
       },
       partitions.value,
