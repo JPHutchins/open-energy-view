@@ -2,7 +2,6 @@ import React from "react";
 import Trendline from "./Trendline";
 import MiniPie from "./MiniPie";
 import PartRadio from "./PartRadio";
-import PartDropdown from "./PartDropdown";
 import ViewTotal from "./ViewTotal";
 import CarbonFootprint from "./CarbonFootprint";
 import "../../css/App.css";
@@ -42,7 +41,6 @@ const RightBar = ({ energyHistory }) => {
       <MiniPie energyHistory={energyHistory} />
       {/* <
       <div>
-        <div className="kilowatt-hour">Activities</div>
         <MiniPie data={pieData} options={pieOptions} />
         <PartDropdown
           handleClick={handlePartPieView}

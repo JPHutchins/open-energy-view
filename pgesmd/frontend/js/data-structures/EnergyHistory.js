@@ -116,7 +116,19 @@ export class EnergyHistory {
           )
         )
       ),
-      partitionSums: sumPartitions(this.partitionOptions)(
+      partitionTotalSums: sumPartitions("total")(this.partitionOptions)(
+        this.database.slice(
+          indexInDb(this.database)(this.startDateMs),
+          indexInDb(this.database)(this.endDateMs)
+        )
+      ),
+      partitionActiveSums: sumPartitions("active")(this.partitionOptions)(
+        this.database.slice(
+          indexInDb(this.database)(this.startDateMs),
+          indexInDb(this.database)(this.endDateMs)
+        )
+      ),
+      partitionPassiveSums: sumPartitions("passive")(this.partitionOptions)(
         this.database.slice(
           indexInDb(this.database)(this.startDateMs),
           indexInDb(this.database)(this.endDateMs)
