@@ -1,71 +1,28 @@
 import React from "react";
 import Trendline from "./Trendline";
 import MiniPie from "./MiniPie";
-import PartRadio from "./PartRadio";
 import ViewTotal from "./ViewTotal";
 import CarbonFootprint from "./CarbonFootprint";
 import "../../css/App.css";
-import AnnualTrend from "./AnnualTrend"
-import { sum } from "ramda";
+import AnnualTrend from "./AnnualTrend";
 
 const RightBar = ({ energyHistory }) => {
-  //   getData = (datasets, index) => {
-  //     if (!datasets) return undefined;
-  //     return datasets[index].data;
-  //   };
-
-  //   adjustForBaseline = () => {
-  //     const data = getData(data, 0);
-  //     if (!data) return undefined;
-
-  //     const dataB = getData(data, 1);
-  //     if (!dataB) return undefined;
-
-  //     let output = [];
-
-  //     for (let i = 0; i < data.length; i++) {
-  //       output.push({
-  //         x: data[i].x,
-  //         y: data[i].y - data[i].baseline,
-  //       });
-  //     }
-
-  //     return output;
-  //   };
-
   return (
     <div className="right-bar">
       <ViewTotal energyHistory={energyHistory} />
       <CarbonFootprint energyHistory={energyHistory} />
       <AnnualTrend energyHistory={energyHistory} />
       <MiniPie energyHistory={energyHistory} />
-      {/* <
-      <div>
-        <MiniPie data={pieData} options={pieOptions} />
-        <PartDropdown
-          handleClick={handlePartPieView}
-          defaultValue={defaultValue}
-          selected={selectedPartPieView}
-        />
-      </div>
-      <div>
-        <Trendline
-          data={getData(data, 0)}
-          database={database}
-          name="Active Use"
-          range={range}
-          baseline={false}
-        />
-      </div>
-      <div>
-        <Trendline
-          data={getData(data, 0)}
-          database={database}
-          name="Background"
-          range={range}
-          baseline={true}
-        />
-      </div> */}
+      <Trendline
+        energyHistory={energyHistory}
+        activeOrPassive="active"
+        name="Active Use"
+      />
+      <Trendline
+        energyHistory={energyHistory}
+        activeOrPassive="passive"
+        name="Passive Use"
+      />
     </div>
   );
 };

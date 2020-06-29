@@ -1,54 +1,31 @@
 import React from "react";
 import regression from "regression";
 import Icon from "@mdi/react";
-import {
-  mdiArrowUpCircle,
-  mdiArrowUp,
-  mdiTrendingUp,
-  mdiTrendingDown,
-  mdiTrendingNeutral
-} from "@mdi/js";
+import { mdiArrowUp } from "@mdi/js";
+import { sub } from "date-fns";
+import { extract } from "../functions/extract";
+import { groupBy } from "../functions/groupBy";
+import { meanOf } from "../functions/meanOf";
+import { standardDeviationOf } from "../functions/standardDeviationOf";
 
-const average = arr => {
-  return arr.reduce((acc, val) => acc + val, 0) / arr.length;
-};
-
-const squaredDiffs = avg => arr => {
-  return arr.map(val => (val - avg) * (val - avg));
-};
-
-const std = arr => {
-  return Math.sqrt(average(squaredDiffs(average(arr))(arr)));
-};
-
-const getKey = baseline => {
-  return baseline ? "baseline" : "y";
-};
-
-const selectData = datatype => data => {
-  let i = -1;
-  if (datatype === "baseline") {
-    return data.map(item => [(i += 1), item["baseline"]]);
-  } else if (datatype === "y") {
-    return data.map(item => [(i += 1), item["y"] - item["baseline"]]);
-  }
-};
-
-const Trendline = props => {
-  const calculateTrend = baseline => data => {
+const Trendline = ({ energyHistory, activeOrPassive, name }) => {
+  const calculateTrend = (data) => {
     if (!data) return;
 
-    const datatype = getKey(baseline);
-    const coords = selectData(datatype)(data);
+    // incomplete periods of the window will be NaN
+    data = data.filter((x) => !isNaN(x));
 
     // Throw out data points that are outisde the standard deviation
-    const coordsAvg = average(coords.map(x => x[1]));
-    const coordsStd = std(coords.map(x => x[1]));
-    const coordsSmooth = coords.filter(
-      x => x[1] < coordsAvg + 2 * coordsStd && x[1] > coordsAvg - 2 * coordsStd
+    const dataMean = meanOf(data);
+    const dataStd = standardDeviationOf(data);
+    const dataSmooth = data.map((x) =>
+      x < dataMean + 2 * dataStd || x > dataMean - 2 * dataStd ? x : dataMean
     );
 
-    const trendline = regression.linear(coordsSmooth);
+    // regression library needs coords in [x, y] format
+    const dataSmoothCoords = dataSmooth.map((y, i) => [i, y]);
+
+    const trendline = regression.linear(dataSmoothCoords);
     const slope = trendline.equation[0];
     const intercept = trendline.equation[1];
 
@@ -57,48 +34,44 @@ const Trendline = props => {
     // measurement gives an estimation of the upward or downward trend in
     // usage during the entire period rather than the "interval over inter"
     const trend = Math.round(
-      (100 * (slope * coordsSmooth.length + intercept)) / intercept - 100
+      (100 * (slope * dataSmooth.length + intercept)) / intercept - 100
     );
-
     return trend;
   };
 
-  const defineDataset = database => range => data => {
+  const defineDataset = (activeOrPassive, energyHistory) => {
     // The trend over the day and week views is useless as the window is
-    // to small to be accurate and the trend simply gives an account of
+    // too small to be accurate and the trend simply gives an account of
     // recurring trends over the small time window.  Here we redefine the
     // dataset to the daily data of the preceeding two weeks (for range "day")
     // or to the daily data of the preceeding four weeks (for range "week").
-    if (database === undefined) {
-      return null;
-    }
 
-    if (range === "year" || range === "complete") {
-      return database
-        .get("day")
-        .slice(data[0].i_day_start, data[data.length - 1].i_day_end + 1)
-        .toJS();
-    }
+    const getPrecedingDays = (numberOfDays) => {
+      const startDate = sub(energyHistory.endDate, { days: numberOfDays });
+      const endDate = energyHistory.endDate;
+      const dataSlice = energyHistory.slice(startDate, endDate);
+      const dailyData = groupBy("day")(dataSlice).map((x) =>
+        meanOf(extract(activeOrPassive)(x))
+      );
+      return dailyData;
+    };
 
-    if (range === "month") return data;
+    const getGraph = () => {
+      if (activeOrPassive === "active")
+        return energyHistory.activeGraph.map((x) => x.y);
+      return energyHistory.passiveGraph.map((x) => x.y);
+    };
 
-    if (range === "week") {
-      return database
-        .get("day")
-        .slice(data[data.length - 1].i_day - 28, data[data.length - 1].i_day)
-        .toJS();
-    }
+    const windowSize = energyHistory.windowData.windowSize;
 
-    if (range === "day") {
-      return database
-        .get("day")
-        .slice(data[0].i_day - 14, data[0].i_day + 1)
-        .toJS();
-    }
+    if (windowSize === "year" || windowSize === "complete") return getGraph();
+    if (windowSize === "month") return getGraph();
+    if (windowSize === "week") return getPrecedingDays(28);
+    if (windowSize === "day") return getPrecedingDays(14);
   };
 
-  const description = range => {
-    switch (range) {
+  const description = (windowSize) => {
+    switch (windowSize) {
       case "day":
         return "last two weeks";
       case "week":
@@ -112,14 +85,12 @@ const Trendline = props => {
     }
   };
 
-  const percent = calculateTrend(props.baseline)(
-    defineDataset(props.database)(props.range)(props.data)
-  );
-  const perc = Math.abs(percent);
+  const dataset = defineDataset(activeOrPassive, energyHistory);
+  const percent = calculateTrend(dataset);
   const aboveOrBelow = percent <= 0 ? "down" : "up";
-  const upOrDown = percent => {
+  const upOrDown = (percent) => {
     const steepest = 50;
-    const angle = percent => {
+    const angle = (percent) => {
       return percent <= 0
         ? Math.max(percent, -steepest)
         : Math.min(percent, steepest);
@@ -129,9 +100,11 @@ const Trendline = props => {
   const greenOrOrange = percent <= 0 ? "green" : "orange";
 
   return (
-    <>
-      <div className="kilowatt-hour">{props.name}</div>
-      <div className="info-details">Trending {aboveOrBelow} {perc + "%"}</div>
+    <div>
+      <div className="kilowatt-hour">{name}</div>
+      <div className="info-details">
+        Trending {aboveOrBelow} {Math.abs(percent) + "%"}
+      </div>
       <div className="info-big-number">
         <Icon
           path={mdiArrowUp}
@@ -143,8 +116,10 @@ const Trendline = props => {
           color={greenOrOrange}
         />
       </div>
-      <div className="info-details">{description(props.range)}</div>
-    </>
+      <div className="info-details">
+        {description(energyHistory.windowData.windowSize)}
+      </div>
+    </div>
   );
 };
 

@@ -69,6 +69,20 @@ export class EnergyHistory {
       });
     });
 
+    this.activeGraph = this.chartData
+      .map((x) => ({
+        x: x.get("x"),
+        y: x.get("active"),
+      }))
+      .toJS();
+
+    this.passiveGraph = this.chartData
+      .map((x) => ({
+        x: x.get("x"),
+        y: x.get("passive"),
+      }))
+      .toJS();
+
     this.data = {
       start: this.startDate,
       end: this.endDate,
@@ -139,16 +153,22 @@ export class EnergyHistory {
   }
 
   prev() {
+    const nextStart = startOf(this.windowData.windowSize)(
+      sub(this.data.start, toDateInterval(this.windowData.windowSize))
+    );
     return new EnergyHistory(this.response, {
-      start: sub(this.data.start, toDateInterval(this.windowData.windowSize)),
-      end: sub(this.data.end, toDateInterval(this.windowData.windowSize)),
+      start: nextStart,
+      end: endOf(this.windowData.windowSize)(nextStart),
     });
   }
 
   next() {
+    const nextStart = startOf(this.windowData.windowSize)(
+      add(this.data.start, toDateInterval(this.windowData.windowSize))
+    );
     return new EnergyHistory(this.response, {
-      start: add(this.data.start, toDateInterval(this.windowData.windowSize)),
-      end: add(this.data.end, toDateInterval(this.windowData.windowSize)),
+      start: nextStart,
+      end: endOf(this.windowData.windowSize)(nextStart),
     });
   }
 
