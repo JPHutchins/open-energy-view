@@ -17,14 +17,14 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
       case "year":
         return format(energyHistory.startDate, "yyyy");
       case "complete":
-        return `${format(energyHistory.startDate, "MMM do, yy")} - ${format(
+        return `${format(energyHistory.startDate, "MMM do, yyyy")} - ${format(
           energyHistory.endDate,
-          "MMM do, yy"
+          "MMMM do, yyyy"
         )}`;
       default:
         return `${format(energyHistory.startDate, "MMM do, yy")} - ${format(
           energyHistory.endDate,
-          "MMM do, yy"
+          "MMMM do, yy"
         )}`;
     }
   };
