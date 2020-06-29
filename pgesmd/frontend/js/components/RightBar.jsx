@@ -6,7 +6,7 @@ import PartDropdown from "./PartDropdown";
 import ViewTotal from "./ViewTotal";
 import CarbonFootprint from "./CarbonFootprint";
 import "../../css/App.css";
-import SeasonalYoY from "./SeasonalYoY";
+import AnnualTrend from "./AnnualTrend"
 import { sum } from "ramda";
 
 const RightBar = ({ energyHistory }) => {
@@ -38,7 +38,7 @@ const RightBar = ({ energyHistory }) => {
     <div className="right-bar">
       <ViewTotal energyHistory={energyHistory} />
       <CarbonFootprint energyHistory={energyHistory} />
-      <SeasonalYoY energyHistory={energyHistory} />
+      <AnnualTrend energyHistory={energyHistory} />
       <MiniPie energyHistory={energyHistory} />
       {/* <
       <div>

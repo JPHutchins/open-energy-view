@@ -1,11 +1,11 @@
 import React from "react";
 import Icon from "@mdi/react";
-import { sub, add } from "date-fns";
+import { sub, add, isBefore } from "date-fns";
 import { sum } from "ramda";
 import { extract } from "../functions/extract";
 import { mdiArrowUpCircle } from "@mdi/js";
 
-const SeasonalYoY = ({ energyHistory }) => {
+const AnnualTrend = ({ energyHistory }) => {
   const getCurrentSlice = (energyHistory) => {
     //TODO: slightly inaccurate for week data; "off center"
     //TODO: verify methodology and add unit tests
@@ -23,45 +23,56 @@ const SeasonalYoY = ({ energyHistory }) => {
 
   const currentSlice = getCurrentSlice(energyHistory);
 
-  //TODO: test for which slice is smaller and only compare equally sized slices
-  //  for example, see the yearly view of 2018
-  //TODO: return hyphen if no annual data is available
-  const oldSlice = energyHistory.slice(
-    sub(new Date(currentSlice.first().get("x")), { years: 1 }),
-    sub(new Date(currentSlice.last().get("x")), { years: 1 })
+  const oneYearBeforeStart = sub(new Date(currentSlice.first().get("x")), {
+    years: 1,
+  });
+
+  // oldStart cannot be before the firstDate available
+  const oldStart = isBefore(oneYearBeforeStart, energyHistory.firstDate)
+    ? energyHistory.firstDate
+    : oneYearBeforeStart;
+  const oldEnd = sub(new Date(currentSlice.last().get("x")), { years: 1 });
+  const oldSlice = energyHistory.slice(oldStart, oldEnd);
+
+  // recalculate the current slice to account for possible changes to oldStart
+  const adjustedCurrentSlice = energyHistory.slice(
+    add(oldStart, { years: 1 }),
+    add(oldEnd, { years: 1 })
   );
 
-  const currentSliceSum = sum(extract("total")(currentSlice));
+  const currentSliceSum = sum(extract("total")(adjustedCurrentSlice));
   const oldSliceSum = sum(extract("total")(oldSlice));
 
   const percent = Math.round((currentSliceSum / oldSliceSum - 1) * 100);
-
-  const perc = Math.abs(percent);
   const aboveOrBelow = percent <= 0 ? "less than" : "more than";
   const upOrDown = percent <= 0 ? 0 : 180;
   const animation =
     percent <= 0 ? "rotate-arrow-upside-down" : "rotate-arrow-upside-up";
   const greenOrOrange = percent <= 0 ? "green" : "orange";
 
+  const arrowIcon = (
+    <Icon
+      className={animation}
+      path={mdiArrowUpCircle}
+      title="User Profile"
+      size={2}
+      horizontal
+      vertical
+      rotate={upOrDown}
+      color={greenOrOrange}
+    />
+  );
+
   return (
     <div className="info-wrapper">
       <div className="kilowatt-hour">Annual Trend</div>
       <div className="info-big-number">
-        {perc + "%"}
-        <Icon
-          className={animation}
-          path={mdiArrowUpCircle}
-          title="User Profile"
-          size={2}
-          horizontal
-          vertical
-          rotate={upOrDown}
-          color={greenOrOrange}
-        />
+        {isNaN(Math.abs(percent)) ? "-" : Math.abs(percent) + "%"}
+        {isNaN(Math.abs(percent)) ? "" : arrowIcon}
       </div>
       <div className="info-details">{aboveOrBelow} last year</div>
     </div>
   );
 };
 
-export default SeasonalYoY;
+export default AnnualTrend;
