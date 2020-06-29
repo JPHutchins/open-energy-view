@@ -14,7 +14,7 @@ import { useState } from "react";
  * Return a flexibly sized ChartJS pie chart.
  */
 const MiniPie = ({ energyHistory }) => {
-  const [currentView, setCurrentView] = useState("total");
+  const [currentView, setCurrentView] = useState("activity");
   const labels = energyHistory.windowData.partitionTotalSums
     .map((x) => x.name)
     .concat("Passive");
