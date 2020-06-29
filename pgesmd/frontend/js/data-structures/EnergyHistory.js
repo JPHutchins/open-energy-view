@@ -24,12 +24,13 @@ import { fillInPassiveUseBlanks } from "../functions/fillInPassiveUseBlanks";
 import { Map } from "immutable";
 import { minZero } from "../functions/minZero";
 import { makeBarGraphData } from "./helpers/zipPassiveCalculation";
+import { editHsl } from "../functions/editHsl";
 
 export class EnergyHistory {
   constructor(response, interval = null) {
     this.response = response;
     this.database = response.database;
-    this.hourlyMean = response.hourlyMean
+    this.hourlyMean = response.hourlyMean;
     this.friendlyName = response.friendlyName;
     this.lastUpdate = response.lastUpdate;
     this.partitionOptions = response.partitionOptions;
@@ -84,9 +85,11 @@ export class EnergyHistory {
               y: x.get("passive"),
             }))
             .toJS(),
-            backgroundColor: makeColorsArray(this.partitionOptions)(
-                this._graphData
-              ).toArray().map((x) => x.split("40%").join("20%")),
+          backgroundColor: makeColorsArray(this.partitionOptions)(
+            this._graphData
+          )
+            .toArray()
+            .map((x) => editHsl(x, { s: (s) => s - 10, l: (l) => l + 15 })),
           // slicePassive(this.passiveUse, this.startDateMs, this.endDateMs),
           // options
           borderColor: "red",

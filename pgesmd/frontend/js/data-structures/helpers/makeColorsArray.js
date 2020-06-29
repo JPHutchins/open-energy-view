@@ -16,7 +16,7 @@ export const makeColorsArray = (partitions) => (data) => {
   // the hardcoded default .fill(...)
   if (Math.abs(differenceInMilliseconds(first, last)) > 604800000)
 
-    return List(new Array(data.size).fill("#5F5566"));
+    return List(new Array(data.size).fill("hsl(275, 9%, 37%)"));
 
   const output = map((x) => {
     const _hour = format(new Date(x.get("x")), "H");
