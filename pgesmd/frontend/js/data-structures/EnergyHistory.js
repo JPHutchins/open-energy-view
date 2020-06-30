@@ -106,8 +106,8 @@ export class EnergyHistory {
             .map((x) => editHsl(x, { s: (s) => s - 10, l: (l) => l + 15 })),
           // slicePassive(this.passiveUse, this.startDateMs, this.endDateMs),
           // options
-          borderColor: "red",
           pointRadius: 0,
+          barThickness: "flex",
         },
         {
           label: "Energy Consumption",
@@ -116,6 +116,7 @@ export class EnergyHistory {
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
           ).toArray(),
+          barThickness: "flex",
         },
       ],
     };
