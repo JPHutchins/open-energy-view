@@ -39,7 +39,7 @@ export function makeIntervalArray(energyHistory) {
   }
 
   const _dateAddFormat = { [`${_dataPointLength}s`]: 1 };
-  let _start = new Date(start);
+  let _start = startOf(_dataPointLength)(new Date(start));
   while (isBefore(_start, end)) {
     intervalArray.push([_start, endOf(_dataPointLength)(_start)]);
     _start = add(startOf(_dataPointLength)(_start), _dateAddFormat);
