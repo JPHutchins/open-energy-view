@@ -1,56 +1,126 @@
-import { truncateNumerals } from "../../functions/truncateNumerals";
+import { readableWattHours } from "../../functions/readableWattHours";
+import { format, roundToNearestMinutes } from "date-fns";
 
-export const chartOptions = (energyHistory) => ({
-  maintainAspectRatio: false,
-  responsiveness: true,
-  legend: {
-    display: false,
-  },
-  scales: {
-    xAxes: [
-      {
-        stacked: true,
-        scaleLabel: {
-          display: true,
-          labelString: "Time Interval",
+const title = (tooltipItem, energyHistory) => {
+  const datapoint = energyHistory.chartData.get(tooltipItem.index);
+  const total = datapoint.get("total");
+  const maybeSum = datapoint.get("sum");
+  const sum =
+    total === maybeSum ? "" : `\n${readableWattHours(maybeSum)} total`;
+
+  const dateFormat = () => {
+    switch (energyHistory.data.intervalSize) {
+      case "hour":
+      case "part":
+        return "ha";
+      case "day":
+        return "EEEE, MMMM do";
+      case "week":
+        return "MMMM do";
+      case "month":
+        return "MMMM, yyyy";
+    }
+  };
+
+  const describeAsAverage =
+    energyHistory.data.intervalSize === "hour" ? "" : "average";
+
+  const startDateString = `${format(datapoint.get("x"), dateFormat())}`;
+  const maybeEndDateString = ` - ${format(
+    roundToNearestMinutes(datapoint.get("endTime")),
+    dateFormat()
+  )}`;
+
+  const endDateString =
+    energyHistory.data.intervalSize === "hour" ||
+    energyHistory.data.intervalSize === "part" ||
+    energyHistory.data.intervalSize === "week"
+      ? maybeEndDateString
+      : "";
+
+  return `${startDateString}${endDateString}\n${readableWattHours(
+    total
+  )} ${describeAsAverage}${sum}`;
+};
+
+const activeLabel = (tooltipItem, energyHistory) => {
+  const datapoint = energyHistory.chartData.get(tooltipItem.index);
+  const active = datapoint.get("active");
+  return `${readableWattHours(active)} average Active Use`;
+};
+
+const passiveLabel = (tooltipItem, energyHistory) => {
+  const datapoint = energyHistory.chartData.get(tooltipItem.index);
+  const passive = datapoint.get("passive");
+  return `${readableWattHours(passive)} average Passive Use`;
+};
+export const chartOptions = (energyHistory) => {
+  const tooltip = {
+    label: (tooltipItem) => {
+      if (!tooltipItem) return;
+      return tooltipItem.datasetIndex
+        ? activeLabel(tooltipItem, energyHistory)
+        : passiveLabel(tooltipItem, energyHistory);
+    },
+    title: (tooltipItems) => {
+      return title(tooltipItems[0], energyHistory);
+    },
+  };
+
+  return {
+    maintainAspectRatio: false,
+    responsiveness: true,
+    tooltips: {
+      callbacks: tooltip,
+    },
+    legend: {
+      display: false,
+    },
+    scales: {
+      xAxes: [
+        {
+          stacked: true,
+          scaleLabel: {
+            display: true,
+            labelString: "Time Interval",
+          },
+          type: "time",
+          distribution: "linear",
+          bounds: "ticks",
+          ticks: {
+            //beginAtZero: true,
+            // labelOffset: xLabelOffset,
+            // min: data[0].interval_start,
+            // max: data[data.length - 1].interval_end - 1000,
+          },
+          time: {
+            unit: unit[energyHistory.data.intervalSize],
+            displayFormats: displayFormats[energyHistory.data.intervalSize],
+          },
+          offset: true,
+          gridLines: {
+            display: false,
+          },
         },
-        type: "time",
-        distribution: "linear",
-        bounds: "ticks",
-        ticks: {
-          //beginAtZero: true,
-          // labelOffset: xLabelOffset,
-          // min: data[0].interval_start,
-          // max: data[data.length - 1].interval_end - 1000,
+      ],
+      yAxes: [
+        {
+          stacked: true,
+          scaleLabel: {
+            display: true,
+            labelString: "Average Watts of Electricity",
+          },
+          ticks: {
+            beginAtZero: true,
+            min: 0,
+            // suggestedMax: database.get("info").get("max_watt_hour")
+            suggestedMax: 5000,
+          },
         },
-        time: {
-          unit: unit[energyHistory.data.intervalSize],
-          displayFormats: displayFormats[energyHistory.data.intervalSize],
-        },
-        offset: true,
-        gridLines: {
-          display: false,
-        },
-        barThickness: "flex",
-      },
-    ],
-    yAxes: [
-      {
-        stacked: true,
-        scaleLabel: {
-          display: true,
-          labelString: "Average Watts of Electricity",
-        },
-        ticks: {
-          beginAtZero: true,
-          min: 0,
-          // suggestedMax: database.get("info").get("max_watt_hour")
-          suggestedMax: 5000,
-        },
-      },
-    ],
-  },
-});
+      ],
+    },
+  };
+};
 
 const unit = {
   hour: "hour",
