@@ -1,6 +1,12 @@
 import { calculatePassiveUse } from "./helpers/calculatePassiveUse";
 import { findMaxResolution } from "../functions/findMaxResolution";
-import { differenceInMilliseconds, add, sub, isBefore } from "date-fns";
+import {
+  differenceInMilliseconds,
+  add,
+  sub,
+  isBefore,
+  roundToNearestMinutes,
+} from "date-fns";
 import { makeColorsArray } from "./helpers/makeColorsArray";
 import { sum, compose, map } from "ramda";
 import { Either } from "ramda-fantasy";
@@ -36,6 +42,7 @@ export class EnergyHistory {
     this.partitionOptions = response.partitionOptions;
     this.firstDate = new Date(this.database.first().get("x"));
     this.lastDate = new Date(this.database.last().get("x"));
+    // TODO add dateStartDate and dataEndDate and apply, namely to windowHours
 
     if (interval) {
       this.startDate = interval.start;
@@ -121,6 +128,14 @@ export class EnergyHistory {
       ],
     };
     this.windowData = {
+      windowHours: Math.round(
+        Math.abs(
+          differenceInMilliseconds(
+            roundToNearestMinutes(this.startDate),
+            roundToNearestMinutes(this.endDate)
+          )
+        ) / 3600000
+      ),
       windowSize: this.custom
         ? "custom"
         : intervalToWindow(this.data.intervalSize),

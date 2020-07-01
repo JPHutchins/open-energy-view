@@ -47,7 +47,10 @@ const MiniPie = ({ energyHistory }) => {
             return distance >= 0 ? distance : 24 + distance;
           }
         );
-        return active2.map((x, i) => x / partLengthArray[i])
+        const totalHoursPerPart = partLengthArray.map(
+          (x) => x * energyHistory.windowData.windowHours / 24
+        );
+        return active2.map((x, i) => x / totalHoursPerPart[i]);
 
       default:
         return;
