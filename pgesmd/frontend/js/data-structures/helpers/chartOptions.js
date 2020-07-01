@@ -79,6 +79,9 @@ export const chartOptions = (energyHistory) => {
   };
 
   return {
+    animation: {
+      duration: 0,
+    },
     maintainAspectRatio: false,
     responsiveness: true,
     tooltips: {
