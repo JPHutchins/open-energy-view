@@ -14,13 +14,24 @@ const title = (tooltipItem, energyHistory) => {
       case "part":
         return "ha";
       case "day":
-        return "EEEE, MMMM do";
+        return "EEEE, MMMM do, yyyy";
       case "week":
-        return "MMMM do";
+        return "MMMM do, yyyy";
       case "month":
         return "MMMM, yyyy";
     }
   };
+
+  const maybeDateTitle = () => {
+    switch (energyHistory.data.intervalSize) {
+      case "part":
+        return `${format(datapoint.get("x"), "MMMM do, yyyy")}\n`;
+      default:
+        return "";
+    }
+  };
+
+  const dateTitle = maybeDateTitle();
 
   const describeAsAverage =
     energyHistory.data.intervalSize === "hour" ? "" : "average";
@@ -38,7 +49,7 @@ const title = (tooltipItem, energyHistory) => {
       ? maybeEndDateString
       : "";
 
-  return `${startDateString}${endDateString}\n${readableWattHours(
+  return `${dateTitle}${startDateString}${endDateString}\n${readableWattHours(
     total
   )} ${describeAsAverage}${sum}`;
 };
