@@ -1,34 +1,16 @@
 import React from "react";
-import { format, isBefore, isAfter, subMilliseconds } from "date-fns";
+import DatePicker from "react-datepicker";
+import { format, isBefore, isAfter, subMilliseconds, sub, add } from "date-fns";
 import { DropdownButton, Dropdown } from "react-bootstrap";
+import "../../css/react-datepicker.css";
+
+import { useState } from "react";
 
 /**
  * The component to provide navigation of the data window.
  */
 const LowerBar = ({ energyHistory, setEnergyHistory }) => {
-  const formatDate = (energyHistory) => {
-    switch (energyHistory.windowData.windowSize) {
-      case "day":
-        return format(energyHistory.startDate, "EEEE, MMMM do, yyyy");
-      case "week":
-        return `Week of ${format(energyHistory.startDate, "MMMM do, yyyy")}`;
-      case "month":
-        return format(energyHistory.startDate, "MMMM yyyy");
-      case "year":
-        return format(energyHistory.startDate, "yyyy");
-      case "complete":
-        return `${format(energyHistory.startDate, "MMM do, yyyy")} - ${format(
-          energyHistory.endDate,
-          "MMMM do, yyyy"
-        )}`;
-      default:
-        return `${format(energyHistory.startDate, "MMM do, yy")} - ${format(
-          energyHistory.endDate,
-          "MMMM do, yy"
-        )}`;
-    }
-  };
-
+  const [windowMode, setWindowMode] = useState("Day");
   const disablePrev = () => {
     if (energyHistory.windowData.windowSize == "complete") return true;
     return isBefore(
@@ -42,37 +24,188 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
     return isAfter(energyHistory.endDate, energyHistory.lastDate);
   };
 
+  const startPickerMaxDate = () => {
+    return energyHistory.custom
+      ? energyHistory.endDate
+      : energyHistory.lastDate;
+  };
+
+  const handleRangeChange = (startOrEnd) => (date) => {
+    if (!energyHistory.custom) {
+      setEnergyHistory(energyHistory.setDate(date));
+      return;
+    }
+    if (startOrEnd === "start") {
+      setEnergyHistory(
+        energyHistory.setCustomRange(date, energyHistory.endDate)
+      );
+      return;
+    }
+    if (startOrEnd === "end") {
+      setEnergyHistory(
+        energyHistory.setCustomRange(energyHistory.startDate, date)
+      );
+      return;
+    }
+  };
+
+  const handleWindowChange = (e) => {
+    setEnergyHistory(energyHistory.setWindow(e));
+    setWindowMode(
+      {
+        day: "Day",
+        week: "Week",
+        month: "Month",
+        year: "Year",
+        complete: "Complete",
+        custom: "Custom Range",
+      }[e]
+    );
+  };
+
+  const buttonIntervalLabel = () => {
+    switch (windowMode) {
+      case "Day":
+      case "Week":
+      case "Month":
+      case "Year":
+        return ` ${windowMode}`;
+      default:
+        return "";
+    }
+  };
+
+  const handleSizeWindow = ({ startOrEnd, addOrSub }) => {
+    const startDateOrEndDate =
+      startOrEnd === "start" ? energyHistory.startDate : energyHistory.endDate;
+    const date = add(startDateOrEndDate, { days: addOrSub });
+    handleRangeChange(startOrEnd)(date);
+  };
+
+  const handlePrevNextClick = (prevOrNext) => {
+    if (energyHistory.custom) return;
+
+    if (prevOrNext === "prev") {
+      setEnergyHistory(energyHistory.prev());
+      return;
+    }
+    setEnergyHistory(energyHistory.next());
+  };
+
+  const disablePrevNextButton = (prevOrNext) => {
+    if (windowMode === "Custom Range") return true;
+    return prevOrNext === "prev" ? disablePrev() : disableNext();
+  };
+
+  const displayLeftRangeSelector = () => {
+    if (windowMode != "Custom Range") return;
+    return (
+      <>
+        <button
+          onClick={() =>
+            handleSizeWindow({ startOrEnd: "start", addOrSub: -1 })
+          }
+          className="btn btn-primary"
+          disabled={windowMode != "Custom Range"}
+        >
+          {"\u2190"}
+        </button>
+        <button
+          onClick={() => handleSizeWindow({ startOrEnd: "start", addOrSub: 1 })}
+          className="btn btn-primary"
+          disabled={windowMode != "Custom Range"}
+        >
+          {"\u2192"}
+        </button>
+      </>
+    );
+  };
+
+  const displayRightRangeSelector = () => {
+    if (windowMode != "Custom Range") return;
+    return (
+      <>
+        <div className="datePickerWithScrollers">
+          <DatePicker
+            selected={energyHistory.endDate}
+            onChange={(d) => handleRangeChange("end")(d)}
+            selectsEnd={windowMode === "Custom Range"}
+            startDate={energyHistory.startDate}
+            endDate={energyHistory.endDate}
+            dateFormat="MM/d/yyyy h:mma"
+            disabled={windowMode != "Custom Range"}
+            minDate={energyHistory.startDate}
+            maxDate={energyHistory.lastDate}
+            showYearDropdown
+            showMonthDropdown
+          />
+          <button
+            onClick={() =>
+              handleSizeWindow({ startOrEnd: "end", addOrSub: -1 })
+            }
+            className="btn btn-primary"
+            disabled={windowMode != "Custom Range"}
+          >
+            {"\u2190"}
+          </button>
+          <button
+            onClick={() => handleSizeWindow({ startOrEnd: "end", addOrSub: 1 })}
+            className="btn btn-primary"
+            disabled={windowMode != "Custom Range"}
+          >
+            {"\u2192"}
+          </button>
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="container">
-      <div id="window-date">{formatDate(energyHistory)}</div>
       <div className="box">
         <button
-          onClick={() => setEnergyHistory(energyHistory.prev())}
+          onClick={() => handlePrevNextClick("prev")}
           className="btn btn-primary"
-          disabled={disablePrev()}
+          disabled={disablePrevNextButton("prev")}
         >
-          Previous
+          {`Previous ${buttonIntervalLabel()}`}
         </button>
         <button
-          onClick={() => setEnergyHistory(energyHistory.next())}
+          onClick={() => handlePrevNextClick("next")}
           className="btn btn-primary"
-          disabled={disableNext()}
+          disabled={disablePrevNextButton("next")}
         >
-          Next
+          {`Next ${buttonIntervalLabel()}`}
         </button>
         <DropdownButton
-          title={
-            energyHistory.windowData.windowSize.charAt(0).toUpperCase() +
-            energyHistory.windowData.windowSize.slice(1)
-          }
-          onSelect={(e) => setEnergyHistory(energyHistory.setWindow(e))}
+          title={windowMode}
+          onSelect={(e) => handleWindowChange(e)}
         >
           <Dropdown.Item eventKey="day">Day</Dropdown.Item>
           <Dropdown.Item eventKey="week">Week</Dropdown.Item>
           <Dropdown.Item eventKey="month">Month</Dropdown.Item>
           <Dropdown.Item eventKey="year">Year</Dropdown.Item>
           <Dropdown.Item eventKey="complete">Complete</Dropdown.Item>
+          <Dropdown.Item eventKey="custom">Custom Range</Dropdown.Item>
         </DropdownButton>
+      </div>
+      <div className="datePickers">
+        <div className="datePickerWithScrollers">
+          {displayLeftRangeSelector()}
+          <DatePicker
+            selected={energyHistory.startDate}
+            onChange={(d) => handleRangeChange("start")(d)}
+            selectsStart={windowMode === "Custom Range"}
+            startDate={energyHistory.startDate}
+            endDate={energyHistory.endDate}
+            dateFormat="MM/d/yyyy h:mma"
+            minDate={energyHistory.firstDate}
+            maxDate={startPickerMaxDate()}
+            showYearDropdown
+            showMonthDropdown
+          />
+        </div>
+        {displayRightRangeSelector()}
       </div>
     </div>
   );

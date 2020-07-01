@@ -68,6 +68,7 @@ const Trendline = ({ energyHistory, activeOrPassive, name }) => {
     if (windowSize === "month") return getGraph();
     if (windowSize === "week") return getPrecedingDays(28);
     if (windowSize === "day") return getPrecedingDays(14);
+    if (windowSize === "custom") return getGraph();
   };
 
   const description = (windowSize) => {
@@ -82,6 +83,8 @@ const Trendline = ({ energyHistory, activeOrPassive, name }) => {
         return "this year";
       case "complete":
         return "all time";
+      case "custom":
+          return "this period"
     }
   };
 

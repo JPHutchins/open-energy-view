@@ -14,7 +14,7 @@ export const makeColorsArray = (partitions) => (data) => {
   // TODO: refactor once userOptions object is ready - should take userOptions
   // as arg instead of partitions and return month and year colors instead of
   // the hardcoded default .fill(...)
-  if (Math.abs(differenceInMilliseconds(first, last)) > 604800000)
+  if (Math.abs(differenceInMilliseconds(first, last)) >= 2332800000)
 
     return List(new Array(data.size).fill("hsl(275, 9%, 37%)"));
 

@@ -1,6 +1,6 @@
 import { calculatePassiveUse } from "./helpers/calculatePassiveUse";
 import { findMaxResolution } from "../functions/findMaxResolution";
-import { differenceInMilliseconds, add, sub } from "date-fns";
+import { differenceInMilliseconds, add, sub, isBefore } from "date-fns";
 import { makeColorsArray } from "./helpers/makeColorsArray";
 import { sum, compose, map } from "ramda";
 import { Either } from "ramda-fantasy";
@@ -34,19 +34,19 @@ export class EnergyHistory {
     this.friendlyName = response.friendlyName;
     this.lastUpdate = response.lastUpdate;
     this.partitionOptions = response.partitionOptions;
+    this.firstDate = new Date(this.database.first().get("x"));
+    this.lastDate = new Date(this.database.last().get("x"));
 
     if (interval) {
       this.startDate = interval.start;
       this.endDate = interval.end;
+      this.custom = interval.custom === true;
     } else {
-      this.startDate = startOf("day")(new Date(this.database.last().get("x")));
-      this.endDate = endOf("day")(this.startDate);
+      this.startDate = startOf("day")(this.lastDate);
+      this.endDate = endOf("day")(this.lastDate);
     }
     this.startDateMs = getTime(this.startDate);
     this.endDateMs = getTime(this.endDate) + 1;
-
-    this.firstDate = new Date(this.database.first().get("x"));
-    this.lastDate = new Date(this.database.last().get("x"));
 
     //TODO - refactor to avoid all this and rethink how mean is calculated
     this.carbonMultiplier = 0.05; // TODO: lookup by utility
@@ -121,7 +121,9 @@ export class EnergyHistory {
       ],
     };
     this.windowData = {
-      windowSize: intervalToWindow(this.data.intervalSize),
+      windowSize: this.custom
+        ? "custom"
+        : intervalToWindow(this.data.intervalSize),
       //TODO: refactor to add a helper and avoid this index lookup
       windowSum: sum(
         extract("total")(
@@ -153,6 +155,24 @@ export class EnergyHistory {
     this.chartOptions = chartOptions(this);
   }
 
+  setDate(date) {
+    if (this.windowData.windowSize === "complete") return this;
+    console.log(date);
+    return new EnergyHistory(this.response, {
+      start: startOf(this.windowData.windowSize)(date),
+      end: endOf(this.windowData.windowSize)(date),
+    });
+  }
+
+  setCustomRange(startDate, endDate) {
+    if (this.windowData.windowSize === "complete") return this;
+    return new EnergyHistory(this.response, {
+      start: startOf("day")(startDate),
+      end: endOf("day")(endDate),
+      custom: true,
+    });
+  }
+
   prev() {
     const nextStart = startOf(this.windowData.windowSize)(
       sub(this.data.start, toDateInterval(this.windowData.windowSize))
@@ -179,6 +199,10 @@ export class EnergyHistory {
         start: this.firstDate,
         end: this.lastDate,
       });
+    }
+    if (interval === "custom") {
+      this.custom = true;
+      return this;
     }
     return new EnergyHistory(this.response, {
       start: startOf(interval)(this.data.start),

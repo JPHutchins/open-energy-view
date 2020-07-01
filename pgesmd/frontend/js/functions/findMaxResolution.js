@@ -7,9 +7,9 @@
  */
 export function findMaxResolution(windowSize) {
   const _dataPointLength = Math.abs(windowSize) / 52;
-  if (_dataPointLength >= 609785000) return "month";
-  if (_dataPointLength >= 52538461) return "week";
-  if (_dataPointLength >= 11700000) return "day";
-  if (_dataPointLength >= 1661538 + 1) return "part";
+  if (_dataPointLength >= 1212923076) return "month";
+  if (_dataPointLength >= 299076923) return "week";
+  if (_dataPointLength >= 46523076) return "day";
+  if (_dataPointLength >= 11298461) return "part";
   return "hour";
 }
