@@ -1,16 +1,24 @@
 import React, { useState } from "react";
-import EnergyHistory from "./EnergyHistory";
-import SourceRegistration from "./SourceRegistration";
-import ViewTabs from "./ViewTabs";
+import PatternChart from "./PatternChart";
 
-/**
- * Returns a tabbed container. Each tab may contain components passed in as props (TODO).
- *
- * @param {Object} props Props.
- */
-const SourceTabs = (props) => {
-  const [nTabs, setNTabs] = useState(props.sources.length); // set to props.(length of tab list) after testing
+const ViewTabs = ({ energyDisplayComponent }) => {
   const [selectedTab, setSelectedTab] = useState(0); // always preselect first tab
+
+
+  const views = [
+    {
+      title: "History",
+      component: energyDisplayComponent,
+    },
+    {
+      title: "Patterns",
+      component: (
+        <PatternChart
+          energyHistory={energyDisplayComponent.props.energyHistoryInstance}
+        />
+      ),
+    },
+  ];
 
   /**
    * Set the State Variable selectedTab to the value attribute of the click event.
@@ -36,7 +44,7 @@ const SourceTabs = (props) => {
           value={tabIndex}
           onClick={handleClick}
         >
-          {props.sources[tabIndex].title}
+          {views[tabIndex].title}
         </div>
       );
     }
@@ -47,21 +55,21 @@ const SourceTabs = (props) => {
         value={tabIndex}
         onClick={handleClick}
       >
-        {props.sources[tabIndex].title}
+        {views[tabIndex].title}
       </div>
     );
   };
 
   const tabs = [];
-  for (let i = 0; i < nTabs; i++) {
+  for (let i = 0; i < views.length; i++) {
     tabs.push(makeTab(i));
   }
 
   return (
     <div className="source-tabs">
       <div className="tab-container">{tabs}</div>
-      <ViewTabs energyDisplayComponent={props.sources[selectedTab].component} />
+      {views[selectedTab].component}
     </div>
   );
 };
-export default SourceTabs;
+export default ViewTabs;
