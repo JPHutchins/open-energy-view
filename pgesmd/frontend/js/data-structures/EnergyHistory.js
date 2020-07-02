@@ -55,6 +55,11 @@ export class EnergyHistory {
     this.startDateMs = getTime(this.startDate);
     this.endDateMs = getTime(this.endDate) + 1;
 
+    this.startDateIndex = indexInDb(this.database)(this.startDateMs);
+    this.endDateIndex = indexInDb(this.database)(this.endDateMs);
+
+    this.partitionSums = response.partitionSums
+
     //TODO - refactor to avoid all this and rethink how mean is calculated
     this.carbonMultiplier = 0.05; // TODO: lookup by utility
 
@@ -127,6 +132,7 @@ export class EnergyHistory {
         },
       ],
     };
+
     this.windowData = {
       windowHours: Math.round(
         Math.abs(
@@ -146,24 +152,6 @@ export class EnergyHistory {
             indexInDb(this.database)(this.startDateMs),
             indexInDb(this.database)(this.endDateMs)
           )
-        )
-      ),
-      partitionTotalSums: sumPartitions("total")(this.partitionOptions)(
-        this.database.slice(
-          indexInDb(this.database)(this.startDateMs),
-          indexInDb(this.database)(this.endDateMs)
-        )
-      ),
-      partitionActiveSums: sumPartitions("active")(this.partitionOptions)(
-        this.database.slice(
-          indexInDb(this.database)(this.startDateMs),
-          indexInDb(this.database)(this.endDateMs)
-        )
-      ),
-      partitionPassiveSums: sumPartitions("passive")(this.partitionOptions)(
-        this.database.slice(
-          indexInDb(this.database)(this.startDateMs),
-          indexInDb(this.database)(this.endDateMs)
         )
       ),
     };

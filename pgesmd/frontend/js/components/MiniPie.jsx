@@ -9,13 +9,19 @@ import { Pie } from "react-chartjs-2";
 import { sum } from "ramda";
 import { readableWattHours } from "../functions/readableWattHours";
 import { useState } from "react";
+import { lookupPartitionSums } from "../functions/lookupPartitionSums";
 
 /**
  * Return a flexibly sized ChartJS pie chart.
  */
 const MiniPie = ({ energyHistory }) => {
   const [currentView, setCurrentView] = useState("activity");
-  const labels = energyHistory.windowData.partitionTotalSums
+  const partitionSums = lookupPartitionSums(
+    energyHistory.partitionSums,
+    energyHistory.startDateIndex,
+    energyHistory.endDateIndex
+  );
+  const labels = energyHistory.partitionOptions.value
     .map((x) => x.name)
     .concat("Passive");
   const colors = energyHistory.partitionOptions.value.map((x) => x.color);
@@ -24,20 +30,13 @@ const MiniPie = ({ energyHistory }) => {
   const makePieData = (currentView) => {
     switch (currentView) {
       case "total":
-        return energyHistory.windowData.partitionTotalSums.map((x) => x.sum);
+        return partitionSums.map((x) => x.sumTotal);
       case "activity":
-        const active = energyHistory.windowData.partitionActiveSums.map(
-          (x) => x.sum
-        );
-        const passive = energyHistory.windowData.partitionPassiveSums.reduce(
-          (acc, x) => acc + x.sum,
-          0
-        );
+        const active = partitionSums.map((x) => x.sumActive);
+        const passive = partitionSums.reduce((acc, x) => acc + x.sumPassive, 0);
         return active.concat(passive);
       case "average":
-        const active2 = energyHistory.windowData.partitionActiveSums.map(
-          (x) => x.sum
-        );
+        const active2 = partitionSums.map((x) => x.sumTotal);
         const partLengthArray = energyHistory.partitionOptions.value.map(
           (x, i) => {
             const parts = energyHistory.partitionOptions.value.length;
@@ -48,7 +47,7 @@ const MiniPie = ({ energyHistory }) => {
           }
         );
         const totalHoursPerPart = partLengthArray.map(
-          (x) => x * energyHistory.windowData.windowHours / 24
+          (x) => (x * energyHistory.windowData.windowHours) / 24
         );
         return active2.map((x, i) => x / totalHoursPerPart[i]);
 

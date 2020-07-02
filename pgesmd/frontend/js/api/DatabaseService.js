@@ -22,6 +22,7 @@ import { extract } from "../functions/extract";
 import Either from "ramda-fantasy/src/Either";
 import { defaultPartitions } from "../data-structures/helpers/defaultPartitions";
 import { meanOf } from "../functions/meanOf";
+import { tabulatePartitionSums } from "../functions/tabulatePartitionSums";
 
 export const addPgeSource = (regInfo) => {
   return axios.post("/api/add/pge", regInfo, AuthService.getAuthHeader());
@@ -67,6 +68,7 @@ export const parseHourResponse = (res) => {
   const data = parseDatabaseResponse(res.data.database);
   const passiveUse = calculatePassiveUse(data);
   const zipped = zipPassiveCalculation(data, passiveUse.value);
+  
   const partitionOptions = res.data.partitionOptions
     ? Either.Right(res.data.partitionOptions)
     : Either.Right(defaultPartitions);
@@ -78,6 +80,7 @@ export const parseHourResponse = (res) => {
     lastUpdate: res.data.lastUpdate,
     hourlyMean: meanOf(extract("total")(data)),
     partitionOptions: partitionOptions,
+    partitionSums: tabulatePartitionSums(zipped, partitionOptions),
     database: zipped,
   };
 };
