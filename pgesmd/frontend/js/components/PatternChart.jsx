@@ -4,6 +4,29 @@ import { groupBy } from "../functions/groupBy";
 
 const PatternChart = ({ energyHistory }) => {
   const dayGroups = groupBy("day")(energyHistory.database);
+  const weekGroupsUncut = groupBy("week")(energyHistory.database);
+
+  console.log(new Date(weekGroupsUncut[1].get(0).get("x")))
+
+  const weekGroups = weekGroupsUncut.slice(1, weekGroupsUncut.length - 1)
+
+  const partTimes = energyHistory.partitionOptions.value.map(x => x.start)
+  partTimes[0] = 24 // TEMPORARY HACK
+  const colorsArray = []
+  let j = 1;
+  for (let i = 0; i < 24; i++) {
+    if (j%3 === energyHistory.partitionOptions.value.length - 1) {
+      colorsArray.push(energyHistory.partitionOptions.value[j].color)
+    }
+     else if (i <= partTimes[j%3]) {
+      colorsArray.push(energyHistory.partitionOptions.value[j].color)
+    } else {
+      j++
+    }
+  }
+
+  console.log(colorsArray)
+
 
   const getMeans = (groups, type, hoursInEachGroup) => {
       const sums = groups.reduce((acc, day) => {
@@ -16,43 +39,69 @@ const PatternChart = ({ energyHistory }) => {
       return means;
   }
 
-  const totals = getMeans(dayGroups, "total", 24)
+  const dayTotals = getMeans(dayGroups, "total", 24)
+  const dayActive = getMeans(dayGroups, "active", 24)
 
-  const active = getMeans(dayGroups, "active", 24)
+  const weekTotals = getMeans(weekGroups, "total", 24*7)
+  const weekActive = getMeans(weekGroups, "active", 24*7)
+  const weekPassive = getMeans(weekGroups, "passive", 24*7)
 
-  const data = {
-    labels: [
-      "Midnight",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "6AM",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "Noon",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "6PM",
-      "",
-      "",
-      "",
-      "",
-      "",
-    ],
+  const dayLabel = [
+    "Midnight",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "6AM",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "Noon",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "6PM",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]
+
+  const dayToWeekArray = (arr) => {
+    let labels = [];
+    for (let _ = 0; _ < 7; _++) {
+      labels = labels.concat(arr.slice())
+    }
+    
+    return labels
+  }
+
+  const dataWeek = {
+    labels: dayToWeekArray(dayLabel),
     datasets: [
       {
-        data: totals,
+        data: weekTotals,
+        backgroundColor: dayToWeekArray(colorsArray),
+      },
+    ],
+  }
+
+  
+
+  const dataDay = {
+    labels: dayLabel,
+    datasets: [
+      {
+        data: dayTotals,
       },
       {
-        data: active,
+        data: dayActive,
       },
     ],
   };
@@ -70,7 +119,8 @@ const PatternChart = ({ energyHistory }) => {
         width: "100%",
       }}
     >
-      <Line data={data} options={options} />
+      
+      <Line data={dataWeek} options={options} />
     </div>
   );
 };
