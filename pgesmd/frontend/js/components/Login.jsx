@@ -24,7 +24,7 @@ const Login = props => {
   }
 
   function handleDemo(e) {
-    const creds = { email: "jph@demo.com", password: "password" };
+    const creds = { email: "jph@demo.com", password: "demo" };
     AuthService.login(creds).then(res => {
       if (res.status === 401) {
         throw Error("That's weird, the demo credentials are missing.");
