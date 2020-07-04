@@ -2,6 +2,7 @@ import { getTime, add } from "date-fns";
 import { prepend, slice } from "ramda";
 import { toDateInterval } from "./toDateInterval";
 import { indexInDb } from "./indexInDb";
+import { startOf } from "./startOf"
 
 export const groupBy = (windowSize) => (list) => {
   if (list.size <= 0) {
@@ -16,7 +17,7 @@ export const groupBy = (windowSize) => (list) => {
     year: 8760,
   }[windowSize];
 
-  const start = new Date(list.first().get("x"));
+  const start = startOf(windowSize)(new Date(list.first().get("x")));
   const endTime = getTime(add(start, toDateInterval(windowSize)));
 
   const endIndex = list[guess] === endTime ? guess : indexInDb(list)(endTime);
