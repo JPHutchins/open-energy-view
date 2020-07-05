@@ -16,6 +16,36 @@ footer {
   justify-self: flex-end;
 }
 
+.pattern-day-labels-container {
+  padding-left: 35px;
+}
+
+.pattern-week-labels-container {
+  padding-left: 50px;
+  padding-right: 10px
+}
+
+.pattern-labels-day {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pattern-labels-week {
+  display: flex;
+  justify-content: space-around
+}
+
+.pattern-div-2-rectangle {
+  width: 400px;
+  height: 200px;
+}
+
+.pattern-div-4-rectangle {
+  width: 800px;
+  height: 200px;
+}
+
+
 .react-datepicker__input-container > input {
   border: none;
 }
