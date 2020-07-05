@@ -52,13 +52,20 @@ export class EnergyHistory {
       this.startDate = startOf("day")(this.lastDate);
       this.endDate = endOf("day")(this.lastDate);
     }
+
+    this.firstData = isBefore(this.startDate, this.firstDate)
+      ? this.firstDate
+      : this.startDate;
+    
+      console.log(this.firstData)
+
     this.startDateMs = getTime(this.startDate);
     this.endDateMs = getTime(this.endDate) + 1;
 
     this.startDateIndex = indexInDb(this.database)(this.startDateMs);
     this.endDateIndex = indexInDb(this.database)(this.endDateMs);
 
-    this.partitionSums = response.partitionSums
+    this.partitionSums = response.partitionSums;
 
     //TODO - refactor to avoid all this and rethink how mean is calculated
     this.carbonMultiplier = 0.05; // TODO: lookup by utility
@@ -208,8 +215,8 @@ export class EnergyHistory {
       return this;
     }
     return new EnergyHistory(this.response, {
-      start: startOf(interval)(this.data.start),
-      end: endOf(interval)(this.data.start),
+      start: startOf(interval)(this.firstData),
+      end: endOf(interval)(this.firstData),
     });
   }
 
