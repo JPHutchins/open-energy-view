@@ -66,8 +66,8 @@ const ViewTabs = ({ energyDisplayComponent }) => {
   }
 
   return (
-    <div className="source-tabs">
-      <div className="tab-container">{tabs}</div>
+    <div className="sidebar-and-contents">
+      <div className="sidebar-container">{tabs}</div>
       {views[selectedTab].component}
     </div>
   );

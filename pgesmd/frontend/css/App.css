@@ -16,13 +16,28 @@ footer {
   justify-self: flex-end;
 }
 
+.sidebar-and-contents {
+  padding: 0px;
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+}
+
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  padding-top: 50px;
+  background-color: #5f5566;
+}
+
 .pattern-day-labels-container {
   padding-left: 35px;
 }
 
 .pattern-week-labels-container {
   padding-left: 50px;
-  padding-right: 10px
+  padding-right: 10px;
 }
 
 .pattern-labels-day {
@@ -32,7 +47,7 @@ footer {
 
 .pattern-labels-week {
   display: flex;
-  justify-content: space-around
+  justify-content: space-around;
 }
 
 .pattern-div-2-rectangle {
@@ -44,7 +59,6 @@ footer {
   width: 800px;
   height: 200px;
 }
-
 
 .react-datepicker__input-container > input {
   border: none;
@@ -232,11 +246,12 @@ footer {
   flex-direction: column;
   margin: 0;
   height: 100%;
+  width: 100%;
 }
 
 .energy-history-main-div {
   display: flex;
-  height: 80%;
+  height: 100%;
 }
 
 .form-control {

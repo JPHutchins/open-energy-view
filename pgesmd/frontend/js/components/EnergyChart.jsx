@@ -9,19 +9,11 @@ const EnergyChart = ({ energyHistory }) => {
   return (
     <div
       style={{
-        display: "flex",
+        height: "80%",
         padding: "10px",
-        position: "relative",
-        margin: "auto",
-        height: "100%",
-        width: "100%",
       }}
     >
-      <Bar
-        //ref="bargraph"
-        data={energyHistory.data}
-        options={energyHistory.chartOptions}
-      />
+      <Bar data={energyHistory.data} options={energyHistory.chartOptions} />
     </div>
   );
 };
