@@ -23,6 +23,8 @@ const AnnualTrend = ({ energyHistory }) => {
 
   const currentSlice = getCurrentSlice(energyHistory);
 
+  if (currentSlice.size === 0) return <div></div>;
+
   const oneYearBeforeStart = sub(new Date(currentSlice.first().get("x")), {
     years: 1,
   });
