@@ -12,7 +12,7 @@ import { useState } from "react";
 const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   const [windowMode, setWindowMode] = useState("Day");
   const disablePrev = () => {
-    if (energyHistory.windowData.windowSize == "complete") return true;
+    if (windowMode === "Complete") return true;
     return isBefore(
       subMilliseconds(energyHistory.startDate, 1),
       energyHistory.firstDate
@@ -20,7 +20,7 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const disableNext = () => {
-    if (energyHistory.windowData.windowSize == "complete") return true;
+    if (windowMode === "Complete") return true;
     return isAfter(energyHistory.endDate, energyHistory.lastDate);
   };
 
