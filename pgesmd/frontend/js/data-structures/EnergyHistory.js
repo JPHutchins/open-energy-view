@@ -1,4 +1,3 @@
-import { calculatePassiveUse } from "./helpers/calculatePassiveUse";
 import { findMaxResolution } from "../functions/findMaxResolution";
 import {
   differenceInMilliseconds,
@@ -8,28 +7,18 @@ import {
   roundToNearestMinutes,
 } from "date-fns";
 import { makeColorsArray } from "./helpers/makeColorsArray";
-import { sum, compose, map } from "ramda";
-import { Either } from "ramda-fantasy";
+import { sum, compose } from "ramda";
 import { getTime } from "date-fns";
 import { intervalToWindow } from "../functions/intervalToWindow";
-import { sumPartitions } from "./helpers/sumPartitions";
 import { extract } from "../functions/extract";
 import { toDateInterval } from "../functions/toDateInterval";
 import { startOf } from "../functions/startOf";
 import { endOf } from "../functions/endOf";
-import { slicePassive } from "../functions/slicePassive";
-import { getDataset } from "./helpers/getDataset";
 import { indexInDb } from "../functions/indexInDb";
 import { chartOptions } from "./helpers/chartOptions";
-import { defaultPartitions } from "./helpers/defaultPartitions";
-import { memoizePassiveUse } from "./helpers/memoizePassiveUse";
-import { alltimeMeanByDay } from "../functions/alltimeMeanByDay";
 import { makeIntervalArray } from "../functions/makeIntervalArray";
 import { makeChartData } from "../functions/makeChartData";
-import { fillInPassiveUseBlanks } from "../functions/fillInPassiveUseBlanks";
 import { Map } from "immutable";
-import { minZero } from "../functions/minZero";
-import { makeBarGraphData } from "./helpers/zipPassiveCalculation";
 import { editHsl } from "../functions/editHsl";
 
 export class EnergyHistory {
@@ -56,8 +45,6 @@ export class EnergyHistory {
     this.firstData = isBefore(this.startDate, this.firstDate)
       ? this.firstDate
       : this.startDate;
-    
-      console.log(this.firstData)
 
     this.startDateMs = getTime(this.startDate);
     this.endDateMs = getTime(this.endDate) + 1;
@@ -69,12 +56,6 @@ export class EnergyHistory {
 
     //TODO - refactor to avoid all this and rethink how mean is calculated
     this.carbonMultiplier = 0.05; // TODO: lookup by utility
-
-    // this.chartDataPassiveUse = compose(
-    //     fillInPassiveUseBlanks,
-    //   makeChartData(this.passiveUse),
-    //   makeIntervalArray
-    // )(this).toJS()
 
     this.chartData = compose(
       makeChartData(this.database),
@@ -123,7 +104,6 @@ export class EnergyHistory {
           )
             .toArray()
             .map((x) => editHsl(x, { s: (s) => s - 10, l: (l) => l + 15 })),
-          // slicePassive(this.passiveUse, this.startDateMs, this.endDateMs),
           // options
           pointRadius: 0,
           barThickness: "flex",
