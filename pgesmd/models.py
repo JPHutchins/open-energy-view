@@ -66,7 +66,7 @@ class PgeSmd(db.Model):
     partition_options = db.Column(db.String(1000), nullable=True)
     # Relationship to data tables
     raw = db.relationship("Raw", backref="pgesmd", lazy=True)
-    hour = db.relationship("Hour", backref="pgesmd", lazy=True)
+    espi = db.relationship("Espi", backref="pgesmd", lazy=True)
     part = db.relationship("Part", backref="pgesmd", lazy=True)
     day = db.relationship("Day", backref="pgesmd", lazy=True)
     week = db.relationship("Week", backref="pgesmd", lazy=True)
@@ -101,21 +101,15 @@ class Raw(db.Model):
     __table_args__ = (db.UniqueConstraint("pge_id", "start"),)
 
 
-class Hour(db.Model):
-    """Model for hourly data from PGESMD API."""
+class Espi(db.Model):
+    """Model for ESPI data from PGESMD API."""
 
     id = db.Column(db.Integer, primary_key=True)
     pge_id = db.Column(db.Integer, db.ForeignKey("pgesmd.id"), nullable=False)
     # Data
     start = db.Column(db.Integer, nullable=False)
-    watt_hours = db.Column(db.Integer, nullable=False)
-    # TEMP PATCH FOR OLD SCHEMA
     duration = db.Column(db.Integer, nullable=False)
-    end = db.Column(db.Integer, nullable=False)
-    middle = db.Column(db.Integer, nullable=False)
-    value = db.Column(db.Integer, nullable=False)
-    date = db.Column(db.Text, nullable=False)
-    part_type = db.Column(db.Integer, nullable=False)
+    watt_hours = db.Column(db.Integer, nullable=False)
     __table_args__ = (db.UniqueConstraint("pge_id", "start",),)
 
 

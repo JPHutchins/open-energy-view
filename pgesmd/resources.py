@@ -16,7 +16,6 @@ from flask_jwt_extended import (
 from . import models
 from . import bcrypt
 from . import db
-from .database import EnergyHistory
 
 auth_parser = reqparse.RequestParser()
 auth_parser.add_argument("email", help="Cannot be blank", required=True)
@@ -155,7 +154,7 @@ class GetPartitionOptions(Resource):
         return source.partition_options
 
 
-class GetEnergyHistory(Resource):
+class GetEnergyHistoryHours(Resource):
     @jwt_required
     def post(self):
         data = get_data_parser.parse_args()
@@ -169,8 +168,8 @@ class GetEnergyHistory(Resource):
             .with_parent(user)
             .first()
         )
-        hours = db.session.query(models.Hour).filter_by(
-            pge_id=source.third_party_id).all()
+        hours = db.session.query(models.Espi).filter_by(
+            pge_id=source.third_party_id, duration=3600).all()
         database = ','.join([
             f'{entry.start//3600}{entry.watt_hours}' for entry in hours
             ]
@@ -206,26 +205,6 @@ class GetHours(Resource):
             f'{entry.start//3600}{entry.watt_hours}' for entry in hours
             ]
         )
-
-class GetDatabase(Resource):
-    @jwt_required
-    def post(self):
-        data = get_data_parser.parse_args()
-        if not data['source'] or data['source'] == 'None':
-            return
-        user = db.session.query(models.User).filter_by(
-            email=get_jwt_identity()).first()
-        source = (
-            db.session.query(models.PgeSmd)
-            .filter_by(friendly_name=data["source"])
-            .with_parent(user)
-            .first()
-        )
-        eh = EnergyHistory(path="/test/data/energy_history_test.db")
-        if eh.save_json(source.third_party_id):
-            eh.cursor.close()
-            return json.dumps(eh.json)
-        eh.cursor.close()
 
 
 class AddDemoPge(Resource):

@@ -83,7 +83,7 @@ def parse_espi_data(xml, ns='{http://naesb.org/espi}'):
     """Generate ESPI tuple from ESPI XML.
 
     Sequentially yields a tuple for each Interval Reading:
-        (start, duration, value, watthours, date)
+        (start, duration, watthours)
 
     The transition from Daylight Savings Time to Daylight Standard
     Time or inverse are ignored as follows:
@@ -101,7 +101,7 @@ def parse_espi_data(xml, ns='{http://naesb.org/espi}'):
         first_start = int(child.find(f'{ns}start').text)
         duration = int(child.find(f'{ns}duration').text)
         break
-    previous = (first_start - duration, 0, 0, 0, 0)
+    previous = (first_start - duration, 0, 0)
     root.clear()
 
     xml = StringIO(xml)
@@ -119,21 +119,19 @@ def parse_espi_data(xml, ns='{http://naesb.org/espi}'):
                 start = int(time_period.find(f'{ns}start').text)
                 value = int(interval.find(f'{ns}value').text)
                 watt_hours = int(round(value * pow(10, mp) * duration / 3600))
-                date = datetime.fromtimestamp(start).strftime('%Y-%m-%d')
 
                 if start == previous[0]:  # clocks back
                     continue
 
                 if not start == previous[0] + duration:  # clocks forward
                     start = previous[0] + duration
-                    value = int((previous[2] + value) / 2)
-                    watt_hours = int(round(value * pow(10, mp)))
-                    previous = (start, duration, value, watt_hours)
-                    yield (start, duration, value, watt_hours, date)
+                    watt_hours = int((previous[2] + watt_hours) / 2)
+                    previous = (start, duration, watt_hours)
+                    yield (start, duration, watt_hours)
                     continue
 
-                previous = (start, duration, value, watt_hours, date)
-                yield (start, duration, value, watt_hours, date)
+                previous = (start, duration, watt_hours)
+                yield (start, duration, watt_hours)
 
             data.clear()
 

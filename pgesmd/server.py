@@ -8,6 +8,7 @@ import os
 
 from pgesmd.helpers import parse_espi_data, get_bulk_id_from_xml
 from pgesmd.database import EnergyHistory
+# from . import db
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
