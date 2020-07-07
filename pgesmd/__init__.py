@@ -5,6 +5,7 @@ from flask_restful import Api
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from xml.etree import cElementTree as ET
+from sqlalchemy import exc
 from .helpers import parse_espi_data, get_auth_file, get_bulk_id_from_xml
 from .api import SelfAccessApi
 
