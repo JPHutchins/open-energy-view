@@ -1,7 +1,7 @@
 #!/bin/bash
 source venv/bin/activate
 export FLASK_APP=pgesmd
-export FLASK_ENV=development
+export FLASK_ENV=production
 export SECRET_KEY=dev
 export JWT_SECRET_KEY=dev
 export JWT_BLACKLIST_ENABLED=True
@@ -14,4 +14,4 @@ export DEV_JWT_COOKIE_SECURE=False
 export PROD_DATABASE_URI=sqlite:///../data/energy_history.db
 export DEV_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
 python3 -m pgesmd.test_gui
-flask run
+flask run --host=0.0.0.0

@@ -21,7 +21,7 @@ def create_app() -> Flask:
         __name__,
         instance_relative_config=False,
         template_folder="./frontend",
-        static_folder=f"./frontend/dist",
+        static_folder="./frontend/dist",
     )
     app.config.from_object("config.DevConfig")
 
