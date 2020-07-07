@@ -251,11 +251,3 @@ class TestAddXml(Resource):
                 "INSERT OR IGNORE INTO espi (pge_id, start, duration, watt_hours) VALUES (:pge_id, :start, :duration, :watt_hours)",
                 data_update,
             )
-
-
-class HandlePgePost(Resource):
-    def get(self):
-        return "PGE endpoint"
-    def post(self):
-        return {}, 200
-
