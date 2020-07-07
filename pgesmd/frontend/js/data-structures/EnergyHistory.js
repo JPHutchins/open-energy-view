@@ -30,7 +30,6 @@ export class EnergyHistory {
     if (interval) {
       this.startDate = interval.start;
       this.endDate = interval.end;
-      this.custom = interval.custom === true;
     } else {
       this.startDate = startOf("day")(this.lastDate);
       this.endDate = endOf("day")(this.lastDate);
@@ -41,6 +40,8 @@ export class EnergyHistory {
     } else {
       this.windowMode = "Day"
     }
+
+    console.log(this.windowMode)
 
     this.firstData = isBefore(this.startDate, this.firstDate)
       ? this.firstDate
@@ -75,13 +76,6 @@ export class EnergyHistory {
         y: x.get("active"),
       }))
       .toJS();
-
-      console.log(this.chartData
-        .map((x) => ({
-          x: x.get("x"),
-          y: x.get("total"),
-        }))
-        .toJS())
 
     this.passiveGraph = this.chartData
       .map((x) => ({
@@ -123,7 +117,7 @@ export class EnergyHistory {
     };
 
     this.windowData = {
-      windowSize: this.custom
+      windowSize: this.windowMode === "Custom Range"
         ? "custom"
         : intervalToWindow(this.data.intervalSize),
       windowSum: sum(
@@ -180,9 +174,11 @@ export class EnergyHistory {
       }, window);
     }
     if (window === "Custom Range") {
-      this.windowMode = window
-      this.custom = true;
-      return this;
+      return new EnergyHistory(this.response, {
+        start: this.startDate,
+        end: this.endDate,
+        custom: true
+      }, window);
     }
     return new EnergyHistory(this.response, {
       start: startOf(window.toLowerCase())(this.firstData),

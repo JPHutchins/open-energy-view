@@ -23,13 +23,13 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const startPickerMaxDate = () => {
-    return energyHistory.custom
+    return energyHistory.windowMode === "Custom Range"
       ? energyHistory.endDate
       : energyHistory.lastDate;
   };
 
   const handleRangeChange = (startOrEnd) => (date) => {
-    if (!energyHistory.custom) {
+    if (!energyHistory.windowMode === "Custom Range") {
       setEnergyHistory(energyHistory.setDate(date));
       return;
     }
@@ -78,7 +78,7 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const handlePrevNextClick = (prevOrNext) => {
-    if (energyHistory.custom) return;
+    if (energyHistory.windowMode === "Custom Range") return;
 
     if (prevOrNext === "prev") {
       setEnergyHistory(energyHistory.prev());
