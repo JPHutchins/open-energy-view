@@ -1,10 +1,12 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
-from .helpers import parse_espi_data
+from xml.etree import cElementTree as ET
+from .helpers import parse_espi_data, get_auth_file, get_bulk_id_from_xml
+from .api import SelfAccessApi
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -41,7 +43,6 @@ def create_app() -> Flask:
     rest.add_resource(resources.GetPartitionOptions, "/api/partitionOptions")
     rest.add_resource(resources.GetEnergyHistoryHours, "/api/energyHistory")
     rest.add_resource(resources.TestAddXml, "/test/add/xml")
-    rest.add_resource(resources.HandlePgePost, "/pgesmd")
 
     # Initialize extensions with the Flask app
     db.init_app(app)
@@ -77,5 +78,49 @@ def create_app() -> Flask:
         @app.route("/")
         def index():
             return render_template("index.html")
+
+        @app.route("/pge_false", methods=["GET"])
+        def pge_test():
+            print(request.data)
+            with open("/home/jp/pgesmd/test/data/espi/Single Days/2019-10-27.xml") as xml_reader:
+                xml = xml_reader.read()
+            return xml
+
+        @app.route("/pgesmd", methods=["POST"])
+        def handle_pgesmd_post():
+            data = request.data
+            try:
+                resource_uri = ET.fromstring(data)[0].text
+            except ET.ParseError:
+                #print(f'Could not parse message: {data}')
+                return f'Could not parse message: {data}', 500
+
+            auth = get_auth_file()
+            print(auth)
+            api = SelfAccessApi(*auth)
+
+            xml = api.get_espi_data(resource_uri)
+            bulk_id = get_bulk_id_from_xml(xml)
+
+            data_update = []
+            for entry in parse_espi_data(xml):
+                data_update.append(
+                    {
+                        "pge_id": bulk_id,
+                        "start": entry[0],
+                        "duration": entry[1],
+                        "watt_hours": entry[2],
+                    }
+                )
+            try:
+                db.session.bulk_insert_mappings(models.Espi, data_update)
+                db.session.commit()
+            except exc.IntegrityError:
+                db.engine.execute(
+                    "INSERT OR IGNORE INTO espi (pge_id, start, duration, watt_hours) VALUES (:pge_id, :start, :duration, :watt_hours)",
+                    data_update,
+                )
+
+            return {}, 200
 
         return app
