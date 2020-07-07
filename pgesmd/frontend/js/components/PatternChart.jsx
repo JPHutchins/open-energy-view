@@ -26,8 +26,6 @@ const PatternChart = ({ energyHistory }) => {
 
   const yLabelWidth = 50;
 
-  console.log(new Date(weekGroupsUncut[1].get(0).get("x")));
-
   const weekGroups = weekGroupsUncut.slice(1, weekGroupsUncut.length - 1);
 
   const partTimes = energyHistory.partitionOptions.value.map((x) => x.start);
@@ -43,8 +41,6 @@ const PatternChart = ({ energyHistory }) => {
       j++;
     }
   }
-
-  console.log(colorsArray);
 
   const getMeans = (groups, type, hoursInEachGroup) => {
     const sums = groups.reduce((acc, day) => {
@@ -87,8 +83,6 @@ const PatternChart = ({ energyHistory }) => {
 
           const firstStop = (minZero(start - 2) / 24 + d) / days;
           const secondStop = ((start + 2) / 24 + d) / days;
-
-          console.log(firstStop, secondStop);
 
           gradient.addColorStop(firstStop, previousColor);
           gradient.addColorStop(secondStop, color);
