@@ -1,14 +1,22 @@
 import React, { useState } from "react";
 import PatternChart from "./PatternChart";
+import EnergyDisplay from "./EnergyDisplay";
 
 const ViewTabs = ({ energyDisplayComponent }) => {
   const [selectedTab, setSelectedTab] = useState(0); // always preselect first tab
-
+  const [energyHistory, setEnergyHistory] = useState(
+    energyDisplayComponent.props.energyHistoryInstance
+  );
 
   const views = [
     {
       title: "History",
-      component: energyDisplayComponent,
+      component: (
+        <EnergyDisplay
+          energyHistory={energyHistory}
+          setEnergyHistory={setEnergyHistory}
+        />
+      ),
     },
     {
       title: "Patterns",
