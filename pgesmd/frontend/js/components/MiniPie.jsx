@@ -10,6 +10,7 @@ import { sum } from "ramda";
 import { readableWattHours } from "../functions/readableWattHours";
 import { useState } from "react";
 import { lookupPartitionSums } from "../functions/lookupPartitionSums";
+import { differenceInMilliseconds, roundToNearestMinutes } from "date-fns";
 
 /**
  * Return a flexibly sized ChartJS pie chart.
@@ -21,6 +22,16 @@ const MiniPie = ({ energyHistory }) => {
     energyHistory.startDateIndex,
     energyHistory.endDateIndex
   );
+
+  const windowHours = Math.round(
+    Math.abs(
+      differenceInMilliseconds(
+        roundToNearestMinutes(energyHistory.startDate),
+        roundToNearestMinutes(energyHistory.endDate)
+      )
+    ) / 3600000
+  );
+
   const labels = energyHistory.partitionOptions.value
     .map((x) => x.name)
     .concat("Passive");
@@ -47,7 +58,7 @@ const MiniPie = ({ energyHistory }) => {
           }
         );
         const totalHoursPerPart = partLengthArray.map(
-          (x) => (x * energyHistory.windowData.windowHours) / 24
+          (x) => (x * windowHours) / 24
         );
         return active2.map((x, i) => x / totalHoursPerPart[i]);
 

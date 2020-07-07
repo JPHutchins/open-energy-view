@@ -11,7 +11,7 @@ export const makeChartData = (database) => (intervalArray) => {
   const data = intervalArray.map((point) => {
     const [_startTime, _endTime] = point;
     const _startIndex = indexOf(getTime(_startTime));
-    const _endIndex = indexOf(getTime(_endTime) + 1);
+    const _endIndex = indexOf(getTime(_endTime));
     const _slice = database.slice(_startIndex, _endIndex);
     return Map({
       x: getTime(_startTime),

@@ -1,11 +1,5 @@
 import { findMaxResolution } from "../functions/findMaxResolution";
-import {
-  differenceInMilliseconds,
-  add,
-  sub,
-  isBefore,
-  roundToNearestMinutes,
-} from "date-fns";
+import { differenceInMilliseconds, add, sub, isBefore } from "date-fns";
 import { makeColorsArray } from "./helpers/makeColorsArray";
 import { sum, compose } from "ramda";
 import { getTime } from "date-fns";
@@ -47,7 +41,7 @@ export class EnergyHistory {
       : this.startDate;
 
     this.startDateMs = getTime(this.startDate);
-    this.endDateMs = getTime(this.endDate) + 1;
+    this.endDateMs = getTime(this.endDate);
 
     this.startDateIndex = indexInDb(this.database)(this.startDateMs);
     this.endDateIndex = indexInDb(this.database)(this.endDateMs);
@@ -76,6 +70,13 @@ export class EnergyHistory {
       }))
       .toJS();
 
+      console.log(this.chartData
+        .map((x) => ({
+          x: x.get("x"),
+          y: x.get("total"),
+        }))
+        .toJS())
+
     this.passiveGraph = this.chartData
       .map((x) => ({
         x: x.get("x"),
@@ -93,12 +94,7 @@ export class EnergyHistory {
         {
           label: "Passive Consumption",
           type: "bar",
-          data: this.chartData
-            .map((x) => ({
-              x: x.get("x"),
-              y: x.get("passive"),
-            }))
-            .toJS(),
+          data: this.passiveGraph,
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
           )
@@ -111,7 +107,7 @@ export class EnergyHistory {
         {
           label: "Energy Consumption",
           type: "bar",
-          data: this._graphData.toJS(),
+          data: this.activeGraph,
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
           ).toArray(),
@@ -121,24 +117,12 @@ export class EnergyHistory {
     };
 
     this.windowData = {
-      windowHours: Math.round(
-        Math.abs(
-          differenceInMilliseconds(
-            roundToNearestMinutes(this.startDate),
-            roundToNearestMinutes(this.endDate)
-          )
-        ) / 3600000
-      ),
       windowSize: this.custom
         ? "custom"
         : intervalToWindow(this.data.intervalSize),
-      //TODO: refactor to add a helper and avoid this index lookup
       windowSum: sum(
         extract("total")(
-          this.database.slice(
-            indexInDb(this.database)(this.startDateMs),
-            indexInDb(this.database)(this.endDateMs)
-          )
+          this.database.slice(this.startDateIndex, this.endDateIndex)
         )
       ),
     };
@@ -147,7 +131,6 @@ export class EnergyHistory {
 
   setDate(date) {
     if (this.windowData.windowSize === "complete") return this;
-    console.log(date);
     return new EnergyHistory(this.response, {
       start: startOf(this.windowData.windowSize)(date),
       end: endOf(this.windowData.windowSize)(date),
