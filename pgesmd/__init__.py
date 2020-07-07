@@ -40,6 +40,8 @@ def create_app() -> Flask:
     rest.add_resource(resources.GetSources, "/api/sources")
     rest.add_resource(resources.GetPartitionOptions, "/api/partitionOptions")
     rest.add_resource(resources.GetEnergyHistoryHours, "/api/energyHistory")
+    rest.add_resource(resources.TestAddXml, "/test/add/xml")
+    rest.add_resource(resources.HandlePgePost, "/pgesmd")
 
     # Initialize extensions with the Flask app
     db.init_app(app)
