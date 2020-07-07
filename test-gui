@@ -11,7 +11,7 @@ export JWT_REFRESH_COOKIE_PATH=/token/refresh
 export JWT_COOKIE_CSRF_PROTECT=True
 export PROD_JWT_COOKIE_SECURE=True
 export DEV_JWT_COOKIE_SECURE=False
-export PROD_DATABASE_URI=sqlite:///../data/energy_history.db
+export PROD_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
 export DEV_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
 python3 -m pgesmd.test_gui
 flask run
