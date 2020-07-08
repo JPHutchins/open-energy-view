@@ -41,8 +41,6 @@ export class EnergyHistory {
       this.windowMode = "Day"
     }
 
-    console.log(this.windowMode)
-
     this.firstData = isBefore(this.startDate, this.firstDate)
       ? this.firstDate
       : this.startDate;

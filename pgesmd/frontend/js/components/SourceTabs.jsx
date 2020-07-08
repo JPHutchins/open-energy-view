@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import EnergyHistory from "./EnergyHistory";
-import SourceRegistration from "./SourceRegistration";
 import ViewTabs from "./ViewTabs";
 
 /**
@@ -60,7 +58,7 @@ const SourceTabs = (props) => {
   return (
     <div className="source-tabs">
       <div className="tab-container">{tabs}</div>
-      <ViewTabs energyDisplayComponent={props.sources[selectedTab].component} />
+      <ViewTabs energyDisplayComponent={props.sources[0].component} />
     </div>
   );
 };
