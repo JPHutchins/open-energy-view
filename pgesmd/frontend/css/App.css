@@ -45,6 +45,11 @@ footer {
   padding-right: 20px;
 }
 
+.day-week-pattern {
+  display: flex;
+  margin-bottom: 80px;
+}
+
 .pattern-day-labels-container {
   padding-left: 35px;
 }
