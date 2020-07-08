@@ -24,11 +24,30 @@ footer {
   width: 100%;
 }
 
+.sidebar-icon  {
+  color: #5f5566;
+}
+
+.energy-chart-header-container {
+  padding-left: 70px;
+}
+
+.friendly-name-title {
+  font-size: 20px;
+}
+
 .sidebar-container {
   display: flex;
   flex-direction: column;
-  padding-top: 50px;
-  background-color: #5f5566;
+  padding-top: 20px;
+  background-color: #f6f8ff;
+  width: 130px;
+  padding-right: 20px;
+}
+
+.day-week-pattern {
+  display: flex;
+  margin-bottom: 80px;
 }
 
 .pattern-day-labels-container {
@@ -112,9 +131,7 @@ footer {
 }
 
 #window-date {
-  font-size: large;
-  font-weight: bold;
-  padding-bottom: 20px;
+  font-size: 20px;
 }
 
 .box {
@@ -174,19 +191,29 @@ footer {
   height: 100%;
 }
 
+.tab-box {
+  height: 100px;
+  width: 75px;
+}
+
 .tab-container {
   display: flex;
   background-color: #cdc5d3;
 }
 
 .tab {
-  height: 30px;
-  max-width: 20vw;
-  min-width: 10vw;
+  max-width: 4rem;
   text-align: center;
   color: grey;
   cursor: pointer;
   padding: 5px;
+  transition: all 0.1s ease-out;
+  font-size: 10pt;
+  margin: auto;
+}
+
+.tab:hover {
+  max-width: 4.5rem;
 }
 
 .tab-container div.tab:hover {
@@ -194,7 +221,6 @@ footer {
 }
 
 .tab-selected {
-  font-weight: bold;
   color: black;
   background-color: #f6f8ff;
 }

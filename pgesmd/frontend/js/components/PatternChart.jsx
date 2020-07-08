@@ -6,7 +6,7 @@ import {
   mdiWeatherSunsetDown,
   mdiWeatherSunny,
 } from "@mdi/js";
-import { Line } from "react-chartjs-2";
+import { Line, Scatter } from "react-chartjs-2";
 import { groupBy } from "../functions/groupBy";
 import { useRef } from "react";
 import { useEffect } from "react";
@@ -15,9 +15,116 @@ import { minZero } from "../functions/minZero";
 import { max, sum, min } from "ramda";
 import { maxOf } from "../functions/maxOf";
 import { minOf } from "../functions/minOf";
+import { makeIntervalArray } from "../functions/makeIntervalArray";
+import { EnergyHistory } from "../data-structures/EnergyHistory";
+import { makeChartData } from "../functions/makeChartData";
+import { startOf } from "../functions/startOf";
+import { endOf } from "../functions/endOf";
+import { add } from "date-fns";
+import { isEqual } from "date-fns/esm";
+import Either from "ramda-fantasy/src/Either";
+import { removeOutliers } from "../functions/removeOutliers";
+import { fastRollingMean } from "../functions/fastRollingMean";
+import { makeFillWindow } from "../functions/makeFillWindow";
+import { meanOf } from "../functions/meanOf";
 
 const PatternChart = ({ energyHistory }) => {
   const [gradient, setGradient] = useState({ day: "", week: "" });
+
+  const daysArray = makeIntervalArray(
+    new EnergyHistory(energyHistory.response, {
+      start: startOf("year")(energyHistory.firstDate),
+      end: endOf("year")(energyHistory.lastDate),
+    }),
+    "day"
+  );
+
+  console.log(daysArray);
+
+  const arrayOfYears = [];
+  let oneYear = [];
+  let nextYear = add(daysArray[0][0], { years: 1 });
+  for (let array of daysArray) {
+    if (!isEqual(array[0], nextYear)) {
+      oneYear.push(array);
+    } else {
+      arrayOfYears.push(oneYear);
+      oneYear = [];
+      oneYear.push(array);
+      nextYear = add(array[0], { years: 1 });
+    }
+  }
+  arrayOfYears.push(oneYear);
+
+  console.log(arrayOfYears);
+
+  const makeYearsData = makeChartData(energyHistory.database);
+
+  const yearsData = arrayOfYears.map(makeYearsData);
+
+  //TODO: add bogus data to leapyear to make all 365
+
+  console.log(yearsData);
+
+  const dataSet = new Array(365);
+  for (let i = 0; i < 364; i++) {
+    let dayEntries = 0;
+    let dayTotal = 0;
+    let dayPassive = 0;
+    for (let year of yearsData) {
+      if (isNaN(year.get(i).get("total"))) continue;
+      dayEntries += 1;
+      dayTotal += year.get(i).get("total");
+      dayPassive += year.get(i).get("passive");
+    }
+    dataSet[i] = {
+      total: dayTotal / dayEntries,
+      passive: dayPassive / dayEntries,
+    };
+  }
+
+  console.log(dataSet);
+
+  const totalsDays = dataSet.map((x) => x.total)
+
+  const WINDOW = 7;
+
+  const eTotalsDays = Either.Right(totalsDays)
+
+  const rolling = eTotalsDays
+  .map(removeOutliers(WINDOW))
+  .map(fastRollingMean(WINDOW))
+  .map(makeFillWindow(WINDOW)(eTotalsDays.value)(meanOf));
+
+  console.log(rolling)
+
+  const dataYear = {
+    labels: new Array(365).fill(""),
+    datasets: [
+      {
+        label: "passive",
+        data: dataSet.map((x) => x.passive),
+        backgroundColor: "gray",
+        pointRadius: 0,
+      },
+      {
+        label: "rolling",
+        data: rolling.value,
+        backgroundColor: "hsl(185, 16%, 83%)",
+        fill: true,
+        borderColor: "blue",
+        pointRadius: 0,
+      },
+      {
+        type: "scatter",
+        label: "total",
+        data: totalsDays,
+        backgroundColor: "blue",
+        pointRadius: 1,
+      },
+    ],
+  };
+
   const dayGroups = groupBy("day")(energyHistory.database);
   const weekGroupsUncut = groupBy("week")(energyHistory.database);
 
@@ -25,8 +132,6 @@ const PatternChart = ({ energyHistory }) => {
   const dayChart = useRef(null);
 
   const yLabelWidth = 50;
-
-  console.log(new Date(weekGroupsUncut[1].get(0).get("x")));
 
   const weekGroups = weekGroupsUncut.slice(1, weekGroupsUncut.length - 1);
 
@@ -43,8 +148,6 @@ const PatternChart = ({ energyHistory }) => {
       j++;
     }
   }
-
-  console.log(colorsArray);
 
   const getMeans = (groups, type, hoursInEachGroup) => {
     const sums = groups.reduce((acc, day) => {
@@ -87,8 +190,6 @@ const PatternChart = ({ energyHistory }) => {
 
           const firstStop = (minZero(start - 2) / 24 + d) / days;
           const secondStop = ((start + 2) / 24 + d) / days;
-
-          console.log(firstStop, secondStop);
 
           gradient.addColorStop(firstStop, previousColor);
           gradient.addColorStop(secondStop, color);
@@ -208,45 +309,52 @@ const PatternChart = ({ energyHistory }) => {
     <div
       style={{
         display: "flex",
+        flexDirection: "column",
         padding: "10px",
         position: "relative",
         margin: "auto",
         height: "100%",
       }}
     >
-      <div className="pattern-div-2-rectangle">
-        <div className="pattern-title">Average Use Each Day</div>
-        <Line ref={dayChart} data={dataDay} options={options} />
-        <div className="pattern-day-labels-container">
-          <div className="pattern-labels-day">
-            <Icon
-              path={mdiWeatherNight}
-              width="30px"
-              color="hsla(253, 43%, 26%, 1)"
-            />
-            <Icon
-              path={mdiWeatherSunny}
-              width="30px"
-              color="hsla(47, 98%, 48%, 1)"
-            />
-            <div></div>
+      <div className="day-week-pattern">
+        <div className="pattern-div-2-rectangle">
+          <div className="pattern-title">Average Use Each Day</div>
+          <Line ref={dayChart} data={dataDay} options={options} />
+          <div className="pattern-day-labels-container">
+            <div className="pattern-labels-day">
+              <Icon
+                path={mdiWeatherNight}
+                width="30px"
+                color="hsla(253, 43%, 26%, 1)"
+              />
+              <Icon
+                path={mdiWeatherSunny}
+                width="30px"
+                color="hsla(47, 98%, 48%, 1)"
+              />
+              <div></div>
+            </div>
+          </div>
+        </div>
+        <div className="pattern-div-4-rectangle">
+          <div className="pattern-title">Average Use Each Week</div>
+          <Line ref={weekChart} data={dataWeek} options={options} />
+          <div className="pattern-week-labels-container">
+            <div className="pattern-labels-week">
+              <div>Sun</div>
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+            </div>
           </div>
         </div>
       </div>
       <div className="pattern-div-4-rectangle">
         <div className="pattern-title">Average Use Each Week</div>
-        <Line ref={weekChart} data={dataWeek} options={options} />
-        <div className="pattern-week-labels-container">
-          <div className="pattern-labels-week">
-            <div>Sun</div>
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
-          </div>
-        </div>
+        <Line data={dataYear} options={options} />
       </div>
     </div>
   );

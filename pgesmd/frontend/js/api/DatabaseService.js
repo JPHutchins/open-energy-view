@@ -103,11 +103,6 @@ const makeSources = (energyHistoryInstance) => {
   };
 };
 
-const addNewSourceTab = (x) => {
-  x.push({ title: "Add New Source", component: <SourceRegistration /> });
-  return x;
-};
-
 const sourcesF = getSourcesF().pipe(map((x) => x.data));
 
 export const theFuture = sourcesF
@@ -116,7 +111,6 @@ export const theFuture = sourcesF
   .pipe(map(map(parseHourResponse)))
   .pipe(map(map((x) => new EnergyHistory(x))))
   .pipe(map(map(makeSources)))
-  .pipe(map(addNewSourceTab));
 
 export const getHoursF = (source) => {
   return attemptP(() =>

@@ -4,9 +4,7 @@ import TopBar from "./TopBar";
 import LowerBar from "./LowerBar";
 import RightBar from "./RightBar";
 
-const EnergyDisplay = ({ energyHistoryInstance }) => {
-  const [energyHistory, setEnergyHistory] = useState(energyHistoryInstance);
-
+const EnergyDisplay = ({ energyHistory, setEnergyHistory }) => {
   return (
     <div className="energy-history">
       <div className="energy-history-main-div">

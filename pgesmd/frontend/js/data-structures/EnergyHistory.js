@@ -16,7 +16,7 @@ import { Map } from "immutable";
 import { editHsl } from "../functions/editHsl";
 
 export class EnergyHistory {
-  constructor(response, interval = null) {
+  constructor(response, interval = null, windowMode = null) {
     this.response = response;
     this.database = response.database;
     this.hourlyMean = response.hourlyMean;
@@ -30,10 +30,15 @@ export class EnergyHistory {
     if (interval) {
       this.startDate = interval.start;
       this.endDate = interval.end;
-      this.custom = interval.custom === true;
     } else {
       this.startDate = startOf("day")(this.lastDate);
       this.endDate = endOf("day")(this.lastDate);
+    }
+
+    if (windowMode) {
+      this.windowMode = windowMode
+    } else {
+      this.windowMode = "Day"
     }
 
     this.firstData = isBefore(this.startDate, this.firstDate)
@@ -69,13 +74,6 @@ export class EnergyHistory {
         y: x.get("active"),
       }))
       .toJS();
-
-      console.log(this.chartData
-        .map((x) => ({
-          x: x.get("x"),
-          y: x.get("total"),
-        }))
-        .toJS())
 
     this.passiveGraph = this.chartData
       .map((x) => ({
@@ -117,7 +115,7 @@ export class EnergyHistory {
     };
 
     this.windowData = {
-      windowSize: this.custom
+      windowSize: this.windowMode === "Custom Range"
         ? "custom"
         : intervalToWindow(this.data.intervalSize),
       windowSum: sum(
@@ -134,7 +132,7 @@ export class EnergyHistory {
     return new EnergyHistory(this.response, {
       start: startOf(this.windowData.windowSize)(date),
       end: endOf(this.windowData.windowSize)(date),
-    });
+    }, "Day");
   }
 
   setCustomRange(startDate, endDate) {
@@ -143,7 +141,7 @@ export class EnergyHistory {
       start: startOf("day")(startDate),
       end: endOf("day")(endDate),
       custom: true,
-    });
+    }, "Custom Range");
   }
 
   prev() {
@@ -153,7 +151,7 @@ export class EnergyHistory {
     return new EnergyHistory(this.response, {
       start: nextStart,
       end: endOf(this.windowData.windowSize)(nextStart),
-    });
+    }, this.windowMode);
   }
 
   next() {
@@ -163,24 +161,27 @@ export class EnergyHistory {
     return new EnergyHistory(this.response, {
       start: nextStart,
       end: endOf(this.windowData.windowSize)(nextStart),
-    });
+    }, this.windowMode);
   }
 
-  setWindow(interval) {
-    if (interval === "complete") {
+  setWindow(window) {
+    if (window === "Complete") {
       return new EnergyHistory(this.response, {
         start: this.firstDate,
         end: this.lastDate,
-      });
+      }, window);
     }
-    if (interval === "custom") {
-      this.custom = true;
-      return this;
+    if (window === "Custom Range") {
+      return new EnergyHistory(this.response, {
+        start: this.startDate,
+        end: this.endDate,
+        custom: true
+      }, window);
     }
     return new EnergyHistory(this.response, {
-      start: startOf(interval)(this.firstData),
-      end: endOf(interval)(this.firstData),
-    });
+      start: startOf(window.toLowerCase())(this.firstData),
+      end: endOf(window.toLowerCase())(this.firstData),
+    }, window);
   }
 
   slice(startDate, endDate) {

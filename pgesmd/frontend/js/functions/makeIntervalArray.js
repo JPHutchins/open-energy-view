@@ -12,11 +12,13 @@ import { isEqual } from "date-fns/esm";
 
 // Refactor to composition
 
-export function makeIntervalArray(energyHistory) {
+export function makeIntervalArray(energyHistory, _dataPointLength = null) {
   const _intervalLength = Math.abs(
     differenceInMilliseconds(energyHistory.startDate, energyHistory.endDate)
   );
-  const _dataPointLength = findMaxResolution(_intervalLength);
+  _dataPointLength = _dataPointLength
+    ? _dataPointLength
+    : findMaxResolution(_intervalLength);
   const intervalArray = [];
   const start = energyHistory.startDate;
   const end = energyHistory.endDate;

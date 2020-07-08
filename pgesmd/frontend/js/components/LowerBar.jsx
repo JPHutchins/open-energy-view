@@ -4,15 +4,13 @@ import { format, isBefore, isAfter, subMilliseconds, sub, add } from "date-fns";
 import { DropdownButton, Dropdown } from "react-bootstrap";
 import "../../css/react-datepicker.css";
 
-import { useState } from "react";
 
 /**
  * The component to provide navigation of the data window.
  */
 const LowerBar = ({ energyHistory, setEnergyHistory }) => {
-  const [windowMode, setWindowMode] = useState("Day");
   const disablePrev = () => {
-    if (windowMode === "Complete") return true;
+    if (energyHistory.windowMode === "Complete") return true;
     return isBefore(
       subMilliseconds(energyHistory.startDate, 1),
       energyHistory.firstDate
@@ -20,18 +18,18 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const disableNext = () => {
-    if (windowMode === "Complete") return true;
+    if (energyHistory.windowMode === "Complete") return true;
     return isAfter(energyHistory.endDate, energyHistory.lastDate);
   };
 
   const startPickerMaxDate = () => {
-    return energyHistory.custom
+    return energyHistory.windowMode === "Custom Range"
       ? energyHistory.endDate
       : energyHistory.lastDate;
   };
 
   const handleRangeChange = (startOrEnd) => (date) => {
-    if (!energyHistory.custom) {
+    if (!energyHistory.windowMode === "Custom Range") {
       setEnergyHistory(energyHistory.setDate(date));
       return;
     }
@@ -50,26 +48,23 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const handleWindowChange = (e) => {
-    setEnergyHistory(energyHistory.setWindow(e));
-    setWindowMode(
-      {
-        day: "Day",
-        week: "Week",
-        month: "Month",
-        year: "Year",
-        complete: "Complete",
-        custom: "Custom Range",
-      }[e]
-    );
+    setEnergyHistory(energyHistory.setWindow({
+      day: "Day",
+      week: "Week",
+      month: "Month",
+      year: "Year",
+      complete: "Complete",
+      custom: "Custom Range",
+    }[e]));
   };
 
   const buttonIntervalLabel = () => {
-    switch (windowMode) {
+    switch (energyHistory.windowMode) {
       case "Day":
       case "Week":
       case "Month":
       case "Year":
-        return ` ${windowMode}`;
+        return ` ${energyHistory.windowMode}`;
       default:
         return "";
     }
@@ -83,7 +78,7 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const handlePrevNextClick = (prevOrNext) => {
-    if (energyHistory.custom) return;
+    if (energyHistory.windowMode === "Custom Range") return;
 
     if (prevOrNext === "prev") {
       setEnergyHistory(energyHistory.prev());
@@ -93,12 +88,12 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const disablePrevNextButton = (prevOrNext) => {
-    if (windowMode === "Custom Range") return true;
+    if (energyHistory.windowMode === "Custom Range") return true;
     return prevOrNext === "prev" ? disablePrev() : disableNext();
   };
 
   const displayLeftRangeSelector = () => {
-    if (windowMode != "Custom Range") return;
+    if (energyHistory.windowMode != "Custom Range") return;
     return (
       <>
         <button
@@ -106,14 +101,14 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
             handleSizeWindow({ startOrEnd: "start", addOrSub: -1 })
           }
           className="btn btn-primary"
-          disabled={windowMode != "Custom Range"}
+          disabled={energyHistory.windowMode != "Custom Range"}
         >
           {"\u2190"}
         </button>
         <button
           onClick={() => handleSizeWindow({ startOrEnd: "start", addOrSub: 1 })}
           className="btn btn-primary"
-          disabled={windowMode != "Custom Range"}
+          disabled={energyHistory.windowMode != "Custom Range"}
         >
           {"\u2192"}
         </button>
@@ -122,18 +117,18 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const displayRightRangeSelector = () => {
-    if (windowMode != "Custom Range") return;
+    if (energyHistory.windowMode != "Custom Range") return;
     return (
       <>
         <div className="datePickerWithScrollers">
           <DatePicker
             selected={energyHistory.endDate}
             onChange={(d) => handleRangeChange("end")(d)}
-            selectsEnd={windowMode === "Custom Range"}
+            selectsEnd={energyHistory.windowMode === "Custom Range"}
             startDate={energyHistory.startDate}
             endDate={energyHistory.endDate}
             dateFormat="MM/d/yyyy h:mma"
-            disabled={windowMode != "Custom Range"}
+            disabled={energyHistory.windowMode != "Custom Range"}
             minDate={energyHistory.startDate}
             maxDate={energyHistory.lastDate}
             showYearDropdown
@@ -144,14 +139,14 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
               handleSizeWindow({ startOrEnd: "end", addOrSub: -1 })
             }
             className="btn btn-primary"
-            disabled={windowMode != "Custom Range"}
+            disabled={energyHistory.windowMode != "Custom Range"}
           >
             {"\u2190"}
           </button>
           <button
             onClick={() => handleSizeWindow({ startOrEnd: "end", addOrSub: 1 })}
             className="btn btn-primary"
-            disabled={windowMode != "Custom Range"}
+            disabled={energyHistory.windowMode != "Custom Range"}
           >
             {"\u2192"}
           </button>
@@ -178,7 +173,7 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
           {`Next ${buttonIntervalLabel()}`}
         </button>
         <DropdownButton
-          title={windowMode}
+          title={energyHistory.windowMode}
           onSelect={(e) => handleWindowChange(e)}
         >
           <Dropdown.Item eventKey="day">Day</Dropdown.Item>
@@ -195,7 +190,7 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
           <DatePicker
             selected={energyHistory.startDate}
             onChange={(d) => handleRangeChange("start")(d)}
-            selectsStart={windowMode === "Custom Range"}
+            selectsStart={energyHistory.windowMode === "Custom Range"}
             startDate={energyHistory.startDate}
             endDate={energyHistory.endDate}
             dateFormat="MM/d/yyyy h:mma"
