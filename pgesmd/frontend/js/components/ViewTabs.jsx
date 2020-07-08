@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import PatternChart from "./PatternChart";
 import EnergyDisplay from "./EnergyDisplay";
+import { mdiGaugeLow } from "@mdi/js";
+import { mdiChartBellCurve } from "@mdi/js";
+import { mdiChartBar } from "@mdi/js";
+import { mdiCog } from "@mdi/js";
+import { mdiCogs } from "@mdi/js";
+import Icon from "@mdi/react";
 
 const ViewTabs = ({ energyDisplayItem }) => {
   const [selectedTab, setSelectedTab] = useState(0); // always preselect first tab
@@ -10,7 +16,34 @@ const ViewTabs = ({ energyDisplayItem }) => {
 
   const views = [
     {
+      title: "Dashboard",
+      icon: (
+        <Icon className="sidebar-icon" color="#5f5566" path={mdiGaugeLow} />
+      ),
+      component: <>Dashboard</>,
+    },
+    {
+      title: "Patterns",
+      icon: (
+        <Icon
+          className="sidebar-icon"
+          color="#5f5566"
+          path={mdiChartBellCurve}
+        />
+      ),
+      component: (
+        <PatternChart
+          energyHistory={
+            energyDisplayItem.component.props.energyHistoryInstance
+          }
+        />
+      ),
+    },
+    {
       title: "History",
+      icon: (
+        <Icon className="sidebar-icon" color="#5f5566" path={mdiChartBar} />
+      ),
       component: (
         <EnergyDisplay
           energyHistory={energyHistory}
@@ -19,12 +52,9 @@ const ViewTabs = ({ energyDisplayItem }) => {
       ),
     },
     {
-      title: "Patterns",
-      component: (
-        <PatternChart
-          energyHistory={energyDisplayItem.component.props.energyHistoryInstance}
-        />
-      ),
+      title: "Settings",
+      icon: <Icon className="sidebar-icon" color="#5f5566" path={mdiCogs} />,
+      component: <>Settings</>,
     },
   ];
 
@@ -45,25 +75,30 @@ const ViewTabs = ({ energyDisplayItem }) => {
    */
   const makeTab = (tabIndex) => {
     if (tabIndex === selectedTab) {
-      return (
+      return (<div className="tab-box">
         <div
           key={tabIndex}
           className="tab tab-selected"
           value={tabIndex}
           onClick={handleClick}
         >
+          {views[tabIndex].icon}
           {views[tabIndex].title}
+        </div>
         </div>
       );
     }
     return (
+      <div className="tab-box">
       <div
         key={tabIndex}
         className="tab"
         value={tabIndex}
         onClick={handleClick}
       >
+        {views[tabIndex].icon}
         {views[tabIndex].title}
+      </div>
       </div>
     );
   };

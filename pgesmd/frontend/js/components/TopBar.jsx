@@ -31,7 +31,7 @@ const TopBar = ({ energyHistory }) => {
   };
 
   return (
-    <div>
+    <div className="energy-chart-header-container">
       <div className="friendly-name-title">{energyHistory.friendlyName}</div>
       <div id="window-date">{formatDate(energyHistory)}</div>
     </div>
