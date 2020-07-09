@@ -22,6 +22,8 @@ footer {
   flex-direction: row;
   height: 100%;
   width: 100%;
+  flex: 1;
+  overflow: hidden;
 }
 
 .sidebar-icon  {
@@ -43,6 +45,7 @@ footer {
   background-color: #f6f8ff;
   width: 130px;
   padding-right: 20px;
+  flex: 1;
 }
 
 .day-week-pattern {
@@ -67,6 +70,24 @@ footer {
 .pattern-labels-week {
   display: flex;
   justify-content: space-around;
+}
+
+.energy-history-flex {
+  flex: 1;
+  overflow: hidden;
+  max-height: 80vh;
+}
+
+.pattern-flex-1 {
+  flex: 1;
+  overflow: hidden;
+  max-height: 200px;
+}
+
+.pattern-flex-2 {
+  flex: 2;
+  overflow: hidden;
+  max-height: 200px;
 }
 
 .pattern-div-2-rectangle {
@@ -232,6 +253,8 @@ footer {
   margin-left: 0px;
   margin-right: 0px;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .default-text {
@@ -273,6 +296,7 @@ footer {
   margin: 0;
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 .energy-history-main-div {
