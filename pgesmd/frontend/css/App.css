@@ -59,7 +59,6 @@ footer {
 
 .pattern-option {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   font-size: small;
   color: darkgrey;
@@ -71,7 +70,7 @@ footer {
 
 .day-week-pattern {
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 50px;
   border: solid;
   border-color: rgb(221, 216, 211);
   border-width: 2px;
@@ -111,6 +110,8 @@ footer {
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  text-align: center;
+  margin-right: 50px;
 }
 
 .pattern-flex-2 {
@@ -118,6 +119,8 @@ footer {
   flex-direction: column;
   flex: 2;
   overflow: hidden;
+  text-align: center;
+  margin-right: 50px;
 }
 
 .pattern-chartJS-box {

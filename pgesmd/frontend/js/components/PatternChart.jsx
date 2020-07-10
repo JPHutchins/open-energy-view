@@ -26,8 +26,6 @@ import { editHsl } from "../functions/editHsl";
 const PatternChart = ({ energyHistory }) => {
   const [showApplianceSpikes, setShowApplianceSpikes] = useState(true);
 
-  console.log(energyHistory.partitionSums);
-
   const daysArray = makeIntervalArray(
     new EnergyHistory(energyHistory.response, {
       start: startOfWeekYear(energyHistory.firstDate),
@@ -51,7 +49,6 @@ const PatternChart = ({ energyHistory }) => {
   }
   arrayOfYears.push(oneYear);
 
-  console.log(arrayOfYears);
   const getIndex = indexInDb(energyHistory.database);
   const output = new Array(52);
   for (let i = 0; i < 52; i++) {
@@ -79,7 +76,6 @@ const PatternChart = ({ energyHistory }) => {
         const part = entry[j];
         if (!part.name) break;
         entries += 1;
-        console.log(output[i].parts);
         output[i].parts[j] += part.sumActive;
         total += part.sumTotal;
         passive += part.sumPassive;
@@ -89,8 +85,6 @@ const PatternChart = ({ energyHistory }) => {
       output[i].entries += entries / entry.length;
     }
   }
-
-  console.log(output);
 
   const partData = output.map((x) => {
     const partPercentages = x.parts.map((y) => {
@@ -110,8 +104,6 @@ const PatternChart = ({ energyHistory }) => {
     }, []);
   });
 
-  console.log(partData);
-
   const yearParts = new Array(partData[0].length);
   for (let i = 0; i < yearParts.length; i++) {
     yearParts[i] = {
@@ -119,25 +111,24 @@ const PatternChart = ({ energyHistory }) => {
         i === 0 ? "Passive" : energyHistory.partitionOptions.value[i - 1].name,
       data: partData.map((x) => x[i].chart),
       backgroundColor: editHsl(
-        i === 0 ? "hsla(185, 16%, 83%, 1)" : energyHistory.partitionOptions.value[i - 1].color,
+        i === 0
+          ? "hsla(185, 16%, 83%, 1)"
+          : energyHistory.partitionOptions.value[i - 1].color,
         { l: (l) => (l + 100) / 2 }
       ),
       fill: i === 0 ? true : "-1",
       borderColor:
         i === 0 ? "gray" : energyHistory.partitionOptions.value[i - 1].color,
       pointRadius: 0,
-      order: yearParts.length - i + 1
+      order: yearParts.length - i + 1,
     };
   }
-
-  console.log(yearParts);
 
   const makeYearsData = makeChartData(energyHistory.database);
 
   const yearsData = arrayOfYears.map(makeYearsData);
 
   //TODO: add bogus data to leapyear to make all 365
-  console.log(yearsData.map((x) => x.toJS()));
 
   const yearTotals = new Array(52);
   for (let i = 0; i < 52; i++) {
@@ -243,8 +234,6 @@ const PatternChart = ({ energyHistory }) => {
   );
   const suggestedMin = min(minOf(dayTotals), minOf(weekTotals));
 
-  console.log(suggestedMax);
-
   return (
     <div
       style={{
@@ -255,23 +244,21 @@ const PatternChart = ({ energyHistory }) => {
         margin: "auto",
         height: "100%",
         width: "100%",
-        overflow: "hidden",
       }}
     >
+      <h1>{`${energyHistory.friendlyName} Energy Usage Patterns`}</h1>
+      <div className="pattern-option">
+        <input
+          className="pattern-option-checkbox"
+          type="checkbox"
+          onChange={() => setShowApplianceSpikes(!showApplianceSpikes)}
+          checked={showApplianceSpikes}
+        />
+        Show Appliance Usage?
+      </div>
       <div className="day-week-pattern">
-        <div className="pattern-header">
-          <div className="pattern-title">Daily and Weekly</div>
-          <div className="pattern-option">
-            <input
-              className="pattern-option-checkbox"
-              type="checkbox"
-              onChange={() => setShowApplianceSpikes(!showApplianceSpikes)}
-              checked={showApplianceSpikes}
-            />
-            Show Appliance Usage?
-          </div>
-        </div>
         <div className="pattern-flex-1">
+          <h3>Daily Energy Pattern</h3>
           <div className="pattern-chartJS-box">
             <PatternDay
               energyHistory={energyHistory}
@@ -291,6 +278,7 @@ const PatternChart = ({ energyHistory }) => {
           </div>
         </div>
         <div className="pattern-flex-2">
+          <h3>Weekly Energy Pattern</h3>
           <div className="pattern-chartJS-box">
             <PatternWeek
               energyHistory={energyHistory}
@@ -315,10 +303,8 @@ const PatternChart = ({ energyHistory }) => {
         </div>
       </div>
       <div className="day-week-pattern">
-        <div className="pattern-header">
-          <div className="pattern-title">Yearly</div>
-        </div>
         <div className="pattern-flex-1">
+          <h3>Yearly Energy Pattern</h3>
           <div className="pattern-chartJS-box">
             <PatternYear yearTotals={yearTotals} yLabelWidth={yLabelWidth} />
           </div>
@@ -339,12 +325,8 @@ const PatternChart = ({ energyHistory }) => {
             </div>
           </div>
         </div>
-      </div>
-      <div className="day-week-pattern">
-        <div className="pattern-header">
-          <div className="pattern-title">Yearly</div>
-        </div>
         <div className="pattern-flex-1">
+          <h3>Yearly Proportion By Activity</h3>
           <div className="pattern-chartJS-box">
             <PatternParts yearParts={yearParts} yLabelWidth={yLabelWidth} />
           </div>

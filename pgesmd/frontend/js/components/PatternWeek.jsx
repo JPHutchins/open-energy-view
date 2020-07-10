@@ -153,7 +153,7 @@ const PatternWeek = ({
           },
           ticks: {
             min: 0,
-            suggestedMax: suggestedMax,
+            max: suggestedMax,
             maxTicksLimit: 5,
           },
         },

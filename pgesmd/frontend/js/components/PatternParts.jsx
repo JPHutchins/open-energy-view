@@ -4,18 +4,25 @@ import { Line } from "react-chartjs-2";
 const PatternParts = ({ yLabelWidth, yearParts }) => {
   const dataYear = {
     labels: new Array(52).fill("Jan"),
-    datasets: yearParts
+    datasets: yearParts,
   };
 
   const tooltipLabelYear = (tooltipItems) => {
     const labels = dataYear.datasets.map((x) => x.label);
     const label = labels[tooltipItems.datasetIndex];
-    return `${Math.round(tooltipItems.yLabel)} ${label} Whs`;
+    const percentBelowThisData =
+      tooltipItems.datasetIndex === 0
+        ? 0
+        : dataYear.datasets[tooltipItems.datasetIndex - 1].data[
+            tooltipItems.index
+          ];
+    return `${Math.round(tooltipItems.yLabel - percentBelowThisData)}% ${label}`;
   };
 
   const options = {
     legend: {
-      display: false,
+      display: true,
+      onClick: (e) => e.stopPropagation(),
     },
     hover: {
       mode: "nearest",
@@ -54,7 +61,7 @@ const PatternParts = ({ yLabelWidth, yearParts }) => {
           },
           ticks: {
             min: 0,
-            max:100,
+            max: 100,
             maxTicksLimit: 5,
           },
         },
