@@ -26,7 +26,7 @@ footer {
   overflow: hidden;
 }
 
-.sidebar-icon  {
+.sidebar-icon {
   color: #5f5566;
 }
 
@@ -48,9 +48,38 @@ footer {
   flex: 1;
 }
 
+.pattern-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pattern-title {
+  font-size: medium;
+}
+
+.pattern-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: small;
+  color: darkgrey;
+}
+
+.pattern-option-checkbox {
+  margin-right: 10px;
+}
+
 .day-week-pattern {
   display: flex;
-  margin-bottom: 80px;
+  margin-bottom: 20px;
+  border: solid;
+  border-color: rgb(221, 216, 211);
+  border-width: 2px;
+  padding: 10px;
+  flex: 1;
+  overflow: hidden;
+  min-height: 300px;
 }
 
 .pattern-day-labels-container {
@@ -79,15 +108,22 @@ footer {
 }
 
 .pattern-flex-1 {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   overflow: hidden;
-  max-height: 200px;
 }
 
 .pattern-flex-2 {
+  display: flex;
+  flex-direction: column;
   flex: 2;
   overflow: hidden;
-  max-height: 200px;
+}
+
+.pattern-chartJS-box {
+ flex: 1;
+ max-height: 100%;
 }
 
 .pattern-div-2-rectangle {

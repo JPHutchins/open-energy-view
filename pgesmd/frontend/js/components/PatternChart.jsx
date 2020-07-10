@@ -1,49 +1,37 @@
 import React from "react";
-import Icon from "@mdi/react";
-import {
-  mdiWeatherNight,
-  mdiWeatherSunsetUp,
-  mdiWeatherSunsetDown,
-  mdiWeatherSunny,
-} from "@mdi/js";
-import { Line, Scatter } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import { groupBy } from "../functions/groupBy";
-import { useRef } from "react";
-import { useEffect } from "react";
-import { useState } from "react";
-import { minZero } from "../functions/minZero";
-import { max, sum, min } from "ramda";
+import { max, sum, min, mean } from "ramda";
 import { maxOf } from "../functions/maxOf";
 import { minOf } from "../functions/minOf";
 import { makeIntervalArray } from "../functions/makeIntervalArray";
+import { removeOutliers } from "../functions/removeOutliers";
 import { EnergyHistory } from "../data-structures/EnergyHistory";
 import { makeChartData } from "../functions/makeChartData";
-import { startOf } from "../functions/startOf";
-import { endOf } from "../functions/endOf";
 import { add } from "date-fns";
 import { isEqual } from "date-fns/esm";
-import Either from "ramda-fantasy/src/Either";
-import { removeOutliers } from "../functions/removeOutliers";
-import { fastRollingMean } from "../functions/fastRollingMean";
-import { makeFillWindow } from "../functions/makeFillWindow";
-import { meanOf } from "../functions/meanOf";
+import { startOfWeekYear } from "date-fns";
+import PatternDay from "./PatternDay";
+import PatternWeek from "./PatternWeek";
+import PatternYear from "./PatternYear";
+import { List, Map, remove } from "immutable";
+import { standardDeviationOf } from "../functions/standardDeviationOf";
+import { useState } from "react";
+import { ToggleButton } from "react-bootstrap";
 
 const PatternChart = ({ energyHistory }) => {
-  const [gradient, setGradient] = useState({ day: "", week: "" });
-
+  const [showApplianceSpikes, setShowApplianceSpikes] = useState(true);
   const daysArray = makeIntervalArray(
     new EnergyHistory(energyHistory.response, {
-      start: startOf("year")(energyHistory.firstDate),
-      end: endOf("year")(energyHistory.lastDate),
+      start: startOfWeekYear(energyHistory.firstDate),
+      end: add(startOfWeekYear(energyHistory.lastDate), { weeks: 52 }),
     }),
-    "day"
+    "week"
   );
-
-  console.log(daysArray);
 
   const arrayOfYears = [];
   let oneYear = [];
-  let nextYear = add(daysArray[0][0], { years: 1 });
+  let nextYear = add(daysArray[0][0], { weeks: 52 });
   for (let array of daysArray) {
     if (!isEqual(array[0], nextYear)) {
       oneYear.push(array);
@@ -51,12 +39,10 @@ const PatternChart = ({ energyHistory }) => {
       arrayOfYears.push(oneYear);
       oneYear = [];
       oneYear.push(array);
-      nextYear = add(array[0], { years: 1 });
+      nextYear = add(array[0], { weeks: 52 });
     }
   }
   arrayOfYears.push(oneYear);
-
-  console.log(arrayOfYears);
 
   const makeYearsData = makeChartData(energyHistory.database);
 
@@ -64,90 +50,32 @@ const PatternChart = ({ energyHistory }) => {
 
   //TODO: add bogus data to leapyear to make all 365
 
-  console.log(yearsData);
-
-  const dataSet = new Array(365);
-  for (let i = 0; i < 364; i++) {
+  const yearTotals = new Array(52);
+  for (let i = 0; i < 52; i++) {
     let dayEntries = 0;
     let dayTotal = 0;
     let dayPassive = 0;
+    let dayActive = 0;
     for (let year of yearsData) {
       if (isNaN(year.get(i).get("total"))) continue;
       dayEntries += 1;
       dayTotal += year.get(i).get("total");
       dayPassive += year.get(i).get("passive");
+      dayActive += year.get(i).get("active");
     }
-    dataSet[i] = {
+    yearTotals[i] = {
       total: dayTotal / dayEntries,
       passive: dayPassive / dayEntries,
+      active: dayActive / dayEntries
     };
   }
 
-  console.log(dataSet);
-
-  const totalsDays = dataSet.map((x) => x.total)
-
-  const WINDOW = 7;
-
-  const eTotalsDays = Either.Right(totalsDays)
-
-  const rolling = eTotalsDays
-  .map(removeOutliers(WINDOW))
-  .map(fastRollingMean(WINDOW))
-  .map(makeFillWindow(WINDOW)(eTotalsDays.value)(meanOf));
-
-  console.log(rolling)
-
-  const dataYear = {
-    labels: new Array(365).fill(""),
-    datasets: [
-      {
-        label: "passive",
-        data: dataSet.map((x) => x.passive),
-        backgroundColor: "gray",
-        pointRadius: 0,
-      },
-      {
-        label: "rolling",
-        data: rolling.value,
-        backgroundColor: "hsl(185, 16%, 83%)",
-        fill: true,
-        borderColor: "blue",
-        pointRadius: 0,
-      },
-      {
-        type: "scatter",
-        label: "total",
-        data: totalsDays,
-        backgroundColor: "blue",
-        pointRadius: 1,
-      },
-    ],
-  };
-
   const dayGroups = groupBy("day")(energyHistory.database);
+
   const weekGroupsUncut = groupBy("week")(energyHistory.database);
-
-  const weekChart = useRef(null);
-  const dayChart = useRef(null);
-
-  const yLabelWidth = 50;
-
   const weekGroups = weekGroupsUncut.slice(1, weekGroupsUncut.length - 1);
 
-  const partTimes = energyHistory.partitionOptions.value.map((x) => x.start);
-  partTimes[0] = 24; // TEMPORARY HACK
-  const colorsArray = [];
-  let j = 1;
-  for (let i = 0; i < 24; i++) {
-    if (j % 3 === energyHistory.partitionOptions.value.length - 1) {
-      colorsArray.push(energyHistory.partitionOptions.value[j].color);
-    } else if (i <= partTimes[j % 3]) {
-      colorsArray.push(energyHistory.partitionOptions.value[j].color);
-    } else {
-      j++;
-    }
-  }
+  const yLabelWidth = 50;
 
   const getMeans = (groups, type, hoursInEachGroup) => {
     const sums = groups.reduce((acc, day) => {
@@ -160,150 +88,71 @@ const PatternChart = ({ energyHistory }) => {
     return means;
   };
 
-  const dayTotals = getMeans(dayGroups, "total", 24).slice(0, 24);
-  const dayActive = getMeans(dayGroups, "active", 24);
+  const quickRemoveOutliers = (arr) => {
+    const _arrMean = mean(arr);
+    const _arrStd = standardDeviationOf(arr);
 
-  const weekTotals = getMeans(weekGroups, "total", 24 * 7).slice(0, 7 * 24);
-  const weekActive = getMeans(weekGroups, "active", 24 * 7);
-  const weekPassive = getMeans(weekGroups, "passive", 24 * 7);
+    return arr.map((x) => {
+      return x < _arrMean + 2*_arrStd ? x : _arrMean;
+    });
+  };
 
-  const suggestedMax = max(maxOf(dayTotals), maxOf(weekTotals));
+  // TODO: this is a nice metric ... but it should be done on the entire history
+  // and be accessible as a prop of the energyHistory instance
+
+  const removeApplianceSpikes = (groups) => {
+    return groups.map((x) => {
+      const arr = x.map((y) => y.get("total")).toJS();
+      return List(quickRemoveOutliers(arr).map((z) => Map({ total: z })));
+    });
+  };
+
+  const recentDayGroups = dayGroups.slice(
+    dayGroups.length - 28,
+    dayGroups.length
+  );
+
+  const recentWeekGroups = weekGroups.slice(
+    weekGroups.length - 4,
+    weekGroups.length
+  );
+
+  const smoothDayGroups = removeApplianceSpikes(dayGroups);
+  const smoothWeekGroups = removeApplianceSpikes(weekGroups);
+  const smoothRecentDayGroups = removeApplianceSpikes(recentDayGroups);
+  const smoothRecentWeekGroups = removeApplianceSpikes(recentWeekGroups);
+
+  const selectedDayGroups = showApplianceSpikes ? dayGroups : smoothDayGroups;
+  const selectedWeekGroups = showApplianceSpikes
+    ? weekGroups
+    : smoothWeekGroups;
+  const selectedRecentDayGroups = showApplianceSpikes
+    ? recentDayGroups
+    : smoothRecentDayGroups;
+  const selectedRecentWeekGroups = showApplianceSpikes
+    ? recentWeekGroups
+    : smoothRecentWeekGroups;
+
+  const dayTotals = getMeans(selectedDayGroups, "total", 24).slice(0, 24);
+  const recentDayTotals = getMeans(selectedRecentDayGroups, "total", 24).slice(
+    0,
+    24
+  );
+
+  const weekTotals = getMeans(selectedWeekGroups, "total", 24 * 7).slice(
+    0,
+    7 * 24
+  );
+  const recentWeekTotals = getMeans(
+    selectedRecentWeekGroups,
+    "total",
+    24 * 7
+  ).slice(0, 24 * 7);
+
+  const suggestedMax = maxOf(getMeans(recentWeekGroups, "total", 24*7).slice(0, 7*24));
   const suggestedMin = min(minOf(dayTotals), minOf(weekTotals));
 
-  const weekLabel = new Array(7 * 24).fill("");
-
-  useEffect(() => {
-    let ctx = dayChart.current.chartInstance.ctx;
-
-    const makeGradient = (ctx, days) => {
-      const width = ctx.canvas.clientWidth;
-      const gradient = ctx.createLinearGradient(yLabelWidth, 0, width - 10, 0);
-
-      for (let d = 0; d < days; d++) {
-        let previousColor =
-          energyHistory.partitionOptions.value[
-            energyHistory.partitionOptions.value.length - 1
-          ].color;
-        for (let i = 0; i < energyHistory.partitionOptions.value.length; i++) {
-          const start = energyHistory.partitionOptions.value[i].start;
-          const color = energyHistory.partitionOptions.value[i].color;
-
-          const firstStop = (minZero(start - 2) / 24 + d) / days;
-          const secondStop = ((start + 2) / 24 + d) / days;
-
-          gradient.addColorStop(firstStop, previousColor);
-          gradient.addColorStop(secondStop, color);
-
-          previousColor = color;
-        }
-      }
-      return gradient;
-    };
-
-    setGradient({
-      day: makeGradient(dayChart.current.chartInstance.ctx, 1),
-      week: makeGradient(weekChart.current.chartInstance.ctx, 7),
-    });
-  }, []);
-
-  let dataWeek = {
-    labels: weekLabel,
-    datasets: [
-      {
-        data: weekTotals,
-        backgroundColor: gradient.week,
-      },
-    ],
-  };
-
-  const dataDay = {
-    labels: new Array(24).fill(""),
-    datasets: [
-      {
-        data: dayTotals,
-        backgroundColor: gradient.day,
-      },
-    ],
-  };
-
-  const intToHour = (int) => {
-    int = Math.floor(int) % 24;
-    if (int === 0) return "12:00 AM";
-    if (int <= 12) return `${int}:00 AM`;
-    return `${int - 12}:00 PM`;
-  };
-
-  const tooltipLabelWeek = (tooltipItems) => {
-    let weekDay = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
-    weekDay = weekDay[Math.floor(tooltipItems.index / 24)];
-
-    const day = Math.floor(tooltipItems.index / 24);
-    const total = Math.round(sum(weekTotals.slice(day * 24, (day + 1) * 24)));
-
-    return `${Math.round(tooltipItems.yLabel)} Wh\n${total} Whs / day`;
-  };
-
-  const options = {
-    legend: {
-      display: false,
-    },
-    hover: {
-      mode: "nearest",
-      intersect: true,
-    },
-    tooltips: {
-      callbacks: {
-        label: (tooltipItems) => tooltipLabelWeek(tooltipItems),
-        title: (tooltipItems) => intToHour(tooltipItems[0].index),
-      },
-      mode: "index",
-      intersect: false,
-    },
-    responsiveness: true,
-    maintainAspectRatio: false,
-    elements: {
-      point: {
-        radius: 0,
-      },
-    },
-    scales: {
-      xAxes: [
-        {
-          afterFit: function (scaleInstance) {
-            scaleInstance.height = 0;
-          },
-          gridLines: {
-            display: false,
-            offsetGridLines: true,
-          },
-          ticks: {
-            max: 167,
-            min: 11,
-            stepSize: 12,
-          },
-        },
-      ],
-      yAxes: [
-        {
-          afterFit: function (scaleInstance) {
-            scaleInstance.width = yLabelWidth; // sets the width to 100px
-          },
-          ticks: {
-            suggestedMin: suggestedMin,
-            suggestedMax: suggestedMax,
-          },
-        },
-      ],
-    },
-  };
+  console.log(suggestedMax);
 
   return (
     <div
@@ -314,31 +163,53 @@ const PatternChart = ({ energyHistory }) => {
         position: "relative",
         margin: "auto",
         height: "100%",
+        width: "100%",
+        overflow: "hidden",
       }}
     >
       <div className="day-week-pattern">
-        <div className="pattern-div-2-rectangle">
-          <div className="pattern-title">Average Use Each Day</div>
-          <Line ref={dayChart} data={dataDay} options={options} />
-          <div className="pattern-day-labels-container">
-            <div className="pattern-labels-day">
-              <Icon
-                path={mdiWeatherNight}
-                width="30px"
-                color="hsla(253, 43%, 26%, 1)"
-              />
-              <Icon
-                path={mdiWeatherSunny}
-                width="30px"
-                color="hsla(47, 98%, 48%, 1)"
-              />
-              <div></div>
+        <div className="pattern-header">
+          <div className="pattern-title">Daily and Weekly</div>
+          <div className="pattern-option">
+            <input
+              className="pattern-option-checkbox"
+              type="checkbox"
+              onChange={() => setShowApplianceSpikes(!showApplianceSpikes)}
+              checked={showApplianceSpikes}
+            />
+            Show Appliance Usage?
+          </div>
+        </div>
+        <div className="pattern-flex-1">
+          <div className="pattern-chartJS-box">
+            <PatternDay
+              energyHistory={energyHistory}
+              dayTotals={dayTotals}
+              recentDayTotals={recentDayTotals}
+              suggestedMin={suggestedMin}
+              suggestedMax={suggestedMax}
+              yLabelWidth={yLabelWidth}
+            />
+          </div>
+          <div className="pattern-week-labels-container">
+            <div className="pattern-labels-week">
+              <div>Night</div>
+              <div>Day</div>
+              <div>Evening</div>
             </div>
           </div>
         </div>
-        <div className="pattern-div-4-rectangle">
-          <div className="pattern-title">Average Use Each Week</div>
-          <Line ref={weekChart} data={dataWeek} options={options} />
+        <div className="pattern-flex-2">
+          <div className="pattern-chartJS-box">
+            <PatternWeek
+              energyHistory={energyHistory}
+              weekTotals={weekTotals}
+              recentWeekTotals={recentWeekTotals}
+              suggestedMin={suggestedMin}
+              suggestedMax={suggestedMax}
+              yLabelWidth={yLabelWidth}
+            />
+          </div>
           <div className="pattern-week-labels-container">
             <div className="pattern-labels-week">
               <div>Sun</div>
@@ -352,9 +223,31 @@ const PatternChart = ({ energyHistory }) => {
           </div>
         </div>
       </div>
-      <div className="pattern-div-4-rectangle">
-        <div className="pattern-title">Average Use Each Week</div>
-        <Line data={dataYear} options={options} />
+      <div className="day-week-pattern">
+      <div className="pattern-header">
+          <div className="pattern-title">Yearly</div>
+        </div>
+        <div className="pattern-flex-1">
+          <div className="pattern-chartJS-box">
+            <PatternYear yearTotals={yearTotals} yLabelWidth={yLabelWidth} />
+          </div>
+          <div className="pattern-week-labels-container">
+            <div className="pattern-labels-week">
+              <div>Jan</div>
+              <div>Feb</div>
+              <div>Mar</div>
+              <div>Apr</div>
+              <div>May</div>
+              <div>Jun</div>
+              <div>Jul</div>
+              <div>Aug</div>
+              <div>Sep</div>
+              <div>Oct</div>
+              <div>Nov</div>
+              <div>Dec</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
