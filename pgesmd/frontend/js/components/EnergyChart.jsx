@@ -7,12 +7,7 @@ import SourceRegistration from "./SourceRegistration";
  */
 const EnergyChart = ({ energyHistory }) => {
   return (
-    <div
-      style={{
-        height: "80%",
-        padding: "10px",
-      }}
-    >
+    <div className="energy-history-flex">
       <Bar data={energyHistory.data} options={energyHistory.chartOptions} />
     </div>
   );

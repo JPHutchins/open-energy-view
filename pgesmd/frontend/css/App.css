@@ -22,9 +22,10 @@ footer {
   flex-direction: row;
   height: 100%;
   width: 100%;
+  flex: 1;
 }
 
-.sidebar-icon  {
+.sidebar-icon {
   color: #5f5566;
 }
 
@@ -43,11 +44,41 @@ footer {
   background-color: #f6f8ff;
   width: 130px;
   padding-right: 20px;
+  flex: 1;
+}
+
+.pattern-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pattern-title {
+  font-size: medium;
+}
+
+.pattern-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: small;
+  color: darkgrey;
+}
+
+.pattern-option-checkbox {
+  margin-right: 10px;
 }
 
 .day-week-pattern {
   display: flex;
-  margin-bottom: 80px;
+  margin-bottom: 20px;
+  border: solid;
+  border-color: rgb(221, 216, 211);
+  border-width: 2px;
+  padding: 10px;
+  flex: 1;
+  overflow: hidden;
+  min-height: 300px;
 }
 
 .pattern-day-labels-container {
@@ -67,6 +98,31 @@ footer {
 .pattern-labels-week {
   display: flex;
   justify-content: space-around;
+}
+
+.energy-history-flex {
+  flex: 1;
+  overflow: hidden;
+  max-height: 80vh;
+}
+
+.pattern-flex-1 {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.pattern-flex-2 {
+  display: flex;
+  flex-direction: column;
+  flex: 2;
+  overflow: hidden;
+}
+
+.pattern-chartJS-box {
+ flex: 1;
+ max-height: 100%;
 }
 
 .pattern-div-2-rectangle {
@@ -232,6 +288,8 @@ footer {
   margin-left: 0px;
   margin-right: 0px;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .default-text {
@@ -273,6 +331,7 @@ footer {
   margin: 0;
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 .energy-history-main-div {
