@@ -14,13 +14,20 @@ import { startOfWeekYear } from "date-fns";
 import PatternDay from "./PatternDay";
 import PatternWeek from "./PatternWeek";
 import PatternYear from "./PatternYear";
+import PatternParts from "./PatternParts";
 import { List, Map, remove } from "immutable";
 import { standardDeviationOf } from "../functions/standardDeviationOf";
 import { useState } from "react";
 import { ToggleButton } from "react-bootstrap";
+import { lookupPartitionSums } from "../functions/lookupPartitionSums";
+import { indexInDb } from "../functions/indexInDb";
+import { editHsl } from "../functions/editHsl";
 
 const PatternChart = ({ energyHistory }) => {
   const [showApplianceSpikes, setShowApplianceSpikes] = useState(true);
+
+  console.log(energyHistory.partitionSums);
+
   const daysArray = makeIntervalArray(
     new EnergyHistory(energyHistory.response, {
       start: startOfWeekYear(energyHistory.firstDate),
@@ -44,11 +51,93 @@ const PatternChart = ({ energyHistory }) => {
   }
   arrayOfYears.push(oneYear);
 
+  console.log(arrayOfYears);
+  const getIndex = indexInDb(energyHistory.database);
+  const output = new Array(52);
+  for (let i = 0; i < 52; i++) {
+    output[i] = {
+      parts: new Array(energyHistory.partitionOptions.value.length).fill(0),
+      entries: 0,
+      passive: 0,
+      total: 0,
+    };
+
+    for (let year of arrayOfYears) {
+      const week = year[i];
+      const startIndex = getIndex(week[0]);
+      const endIndex = getIndex(week[1]);
+      const entry = lookupPartitionSums(
+        energyHistory.partitionSums,
+        startIndex,
+        endIndex
+      );
+
+      let total = 0;
+      let passive = 0;
+      let entries = 0;
+      for (let j = 0; j < entry.length; j++) {
+        const part = entry[j];
+        if (!part.name) break;
+        entries += 1;
+        console.log(output[i].parts);
+        output[i].parts[j] += part.sumActive;
+        total += part.sumTotal;
+        passive += part.sumPassive;
+      }
+      output[i].total += total;
+      output[i].passive += passive;
+      output[i].entries += entries / entry.length;
+    }
+  }
+
+  console.log(output);
+
+  const partData = output.map((x) => {
+    const partPercentages = x.parts.map((y) => {
+      return (y / x.total) * 100;
+    });
+    const passivePercentage = [(x.passive / x.total) * 100];
+
+    const grouped = passivePercentage.concat(partPercentages);
+    // grouped is [passive, part1, part2, part3, etc...]
+
+    return grouped.reduce((acc, x, i) => {
+      if (i === 0) return [{ value: x, chart: x }];
+      return acc.concat({
+        value: x,
+        chart: x + acc[i - 1].chart,
+      });
+    }, []);
+  });
+
+  console.log(partData);
+
+  const yearParts = new Array(partData[0].length);
+  for (let i = 0; i < yearParts.length; i++) {
+    yearParts[i] = {
+      label:
+        i === 0 ? "Passive" : energyHistory.partitionOptions.value[i - 1].name,
+      data: partData.map((x) => x[i].chart),
+      backgroundColor: editHsl(
+        i === 0 ? "hsla(185, 16%, 83%, 1)" : energyHistory.partitionOptions.value[i - 1].color,
+        { l: (l) => (l + 100) / 2 }
+      ),
+      fill: i === 0 ? true : "-1",
+      borderColor:
+        i === 0 ? "gray" : energyHistory.partitionOptions.value[i - 1].color,
+      pointRadius: 0,
+      order: yearParts.length - i + 1
+    };
+  }
+
+  console.log(yearParts);
+
   const makeYearsData = makeChartData(energyHistory.database);
 
   const yearsData = arrayOfYears.map(makeYearsData);
 
   //TODO: add bogus data to leapyear to make all 365
+  console.log(yearsData.map((x) => x.toJS()));
 
   const yearTotals = new Array(52);
   for (let i = 0; i < 52; i++) {
@@ -66,7 +155,7 @@ const PatternChart = ({ energyHistory }) => {
     yearTotals[i] = {
       total: dayTotal / dayEntries,
       passive: dayPassive / dayEntries,
-      active: dayActive / dayEntries
+      active: dayActive / dayEntries,
     };
   }
 
@@ -93,7 +182,7 @@ const PatternChart = ({ energyHistory }) => {
     const _arrStd = standardDeviationOf(arr);
 
     return arr.map((x) => {
-      return x < _arrMean + 2*_arrStd ? x : _arrMean;
+      return x < _arrMean + 2 * _arrStd ? x : _arrMean;
     });
   };
 
@@ -149,7 +238,9 @@ const PatternChart = ({ energyHistory }) => {
     24 * 7
   ).slice(0, 24 * 7);
 
-  const suggestedMax = maxOf(getMeans(recentWeekGroups, "total", 24*7).slice(0, 7*24));
+  const suggestedMax = maxOf(
+    getMeans(recentWeekGroups, "total", 24 * 7).slice(0, 7 * 24)
+  );
   const suggestedMin = min(minOf(dayTotals), minOf(weekTotals));
 
   console.log(suggestedMax);
@@ -224,12 +315,38 @@ const PatternChart = ({ energyHistory }) => {
         </div>
       </div>
       <div className="day-week-pattern">
-      <div className="pattern-header">
+        <div className="pattern-header">
           <div className="pattern-title">Yearly</div>
         </div>
         <div className="pattern-flex-1">
           <div className="pattern-chartJS-box">
             <PatternYear yearTotals={yearTotals} yLabelWidth={yLabelWidth} />
+          </div>
+          <div className="pattern-week-labels-container">
+            <div className="pattern-labels-week">
+              <div>Jan</div>
+              <div>Feb</div>
+              <div>Mar</div>
+              <div>Apr</div>
+              <div>May</div>
+              <div>Jun</div>
+              <div>Jul</div>
+              <div>Aug</div>
+              <div>Sep</div>
+              <div>Oct</div>
+              <div>Nov</div>
+              <div>Dec</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="day-week-pattern">
+        <div className="pattern-header">
+          <div className="pattern-title">Yearly</div>
+        </div>
+        <div className="pattern-flex-1">
+          <div className="pattern-chartJS-box">
+            <PatternParts yearParts={yearParts} yLabelWidth={yLabelWidth} />
           </div>
           <div className="pattern-week-labels-container">
             <div className="pattern-labels-week">
