@@ -34,8 +34,8 @@ const MiniPie = ({ energyHistory }) => {
 
   const labels = energyHistory.partitionOptions.value
     .map((x) => x.name)
-    .concat("Passive");
-  const colors = energyHistory.partitionOptions.value.map((x) => x.color);
+    .concat(["Passive", "Appliance"]);
+  const colors = energyHistory.partitionOptions.value.map((x) => x.color).concat(["gray", "orange"]);
 
   // these sums may be made availabe in the DP implementation of passive calc
   const makePieData = (currentView) => {
@@ -45,7 +45,8 @@ const MiniPie = ({ energyHistory }) => {
       case "activity":
         const active = partitionSums.map((x) => x.sumActive);
         const passive = partitionSums.reduce((acc, x) => acc + x.sumPassive, 0);
-        return active.concat(passive);
+        const spike = partitionSums.reduce((acc, x) => acc + x.sumSpike, 0)
+        return active.concat(passive).concat(spike);
       case "average":
         const active2 = partitionSums.map((x) => x.sumTotal);
         const partLengthArray = energyHistory.partitionOptions.value.map(

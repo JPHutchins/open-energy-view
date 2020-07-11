@@ -36,9 +36,9 @@ export class EnergyHistory {
     }
 
     if (windowMode) {
-      this.windowMode = windowMode
+      this.windowMode = windowMode;
     } else {
-      this.windowMode = "Day"
+      this.windowMode = "Day";
     }
 
     this.firstData = isBefore(this.startDate, this.firstDate)
@@ -75,6 +75,13 @@ export class EnergyHistory {
       }))
       .toJS();
 
+    this.spikeGraph = this.chartData
+      .map((x) => ({
+        x: x.get("x"),
+        y: x.get("spike"),
+      }))
+      .toJS();
+
     this.passiveGraph = this.chartData
       .map((x) => ({
         x: x.get("x"),
@@ -91,7 +98,7 @@ export class EnergyHistory {
       datasets: [
         {
           label: "Passive Consumption",
-          type: "bar",
+          //type: "bar",
           data: this.passiveGraph,
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
@@ -103,21 +110,28 @@ export class EnergyHistory {
           barThickness: "flex",
         },
         {
-          label: "Energy Consumption",
-          type: "bar",
+          label: "Active Consumption",
+          //type: "bar",
           data: this.activeGraph,
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
           ).toArray(),
           barThickness: "flex",
         },
+        {
+          label: "Spike Consumption",
+          data: this.spikeGraph,
+          backgroundColor: "orange",
+          barThickness: "flex",
+        },
       ],
     };
 
     this.windowData = {
-      windowSize: this.windowMode === "Custom Range"
-        ? "custom"
-        : intervalToWindow(this.data.intervalSize),
+      windowSize:
+        this.windowMode === "Custom Range"
+          ? "custom"
+          : intervalToWindow(this.data.intervalSize),
       windowSum: sum(
         extract("total")(
           this.database.slice(this.startDateIndex, this.endDateIndex)
@@ -129,59 +143,87 @@ export class EnergyHistory {
 
   setDate(date) {
     if (this.windowData.windowSize === "complete") return this;
-    return new EnergyHistory(this.response, {
-      start: startOf(this.windowData.windowSize)(date),
-      end: endOf(this.windowData.windowSize)(date),
-    }, "Day");
+    return new EnergyHistory(
+      this.response,
+      {
+        start: startOf(this.windowData.windowSize)(date),
+        end: endOf(this.windowData.windowSize)(date),
+      },
+      "Day"
+    );
   }
 
   setCustomRange(startDate, endDate) {
     if (this.windowData.windowSize === "complete") return this;
-    return new EnergyHistory(this.response, {
-      start: startOf("day")(startDate),
-      end: endOf("day")(endDate),
-      custom: true,
-    }, "Custom Range");
+    return new EnergyHistory(
+      this.response,
+      {
+        start: startOf("day")(startDate),
+        end: endOf("day")(endDate),
+        custom: true,
+      },
+      "Custom Range"
+    );
   }
 
   prev() {
     const nextStart = startOf(this.windowData.windowSize)(
       sub(this.data.start, toDateInterval(this.windowData.windowSize))
     );
-    return new EnergyHistory(this.response, {
-      start: nextStart,
-      end: endOf(this.windowData.windowSize)(nextStart),
-    }, this.windowMode);
+    return new EnergyHistory(
+      this.response,
+      {
+        start: nextStart,
+        end: endOf(this.windowData.windowSize)(nextStart),
+      },
+      this.windowMode
+    );
   }
 
   next() {
     const nextStart = startOf(this.windowData.windowSize)(
       add(this.data.start, toDateInterval(this.windowData.windowSize))
     );
-    return new EnergyHistory(this.response, {
-      start: nextStart,
-      end: endOf(this.windowData.windowSize)(nextStart),
-    }, this.windowMode);
+    return new EnergyHistory(
+      this.response,
+      {
+        start: nextStart,
+        end: endOf(this.windowData.windowSize)(nextStart),
+      },
+      this.windowMode
+    );
   }
 
   setWindow(window) {
     if (window === "Complete") {
-      return new EnergyHistory(this.response, {
-        start: this.firstDate,
-        end: this.lastDate,
-      }, window);
+      return new EnergyHistory(
+        this.response,
+        {
+          start: this.firstDate,
+          end: this.lastDate,
+        },
+        window
+      );
     }
     if (window === "Custom Range") {
-      return new EnergyHistory(this.response, {
-        start: this.startDate,
-        end: this.endDate,
-        custom: true
-      }, window);
+      return new EnergyHistory(
+        this.response,
+        {
+          start: this.startDate,
+          end: this.endDate,
+          custom: true,
+        },
+        window
+      );
     }
-    return new EnergyHistory(this.response, {
-      start: startOf(window.toLowerCase())(this.firstData),
-      end: endOf(window.toLowerCase())(this.firstData),
-    }, window);
+    return new EnergyHistory(
+      this.response,
+      {
+        start: startOf(window.toLowerCase())(this.firstData),
+        end: endOf(window.toLowerCase())(this.firstData),
+      },
+      window
+    );
   }
 
   slice(startDate, endDate) {

@@ -16,6 +16,7 @@ import EnergyDisplay from "../components/EnergyDisplay";
 import { EnergyHistory } from "../data-structures/EnergyHistory";
 import SourceRegistration from "../components/SourceRegistration";
 import { fromJS as toImmutableJSfromJS } from "immutable";
+import { List } from "immutable";
 import { calculatePassiveUse } from "../data-structures/helpers/calculatePassiveUse";
 import { zipPassiveCalculation } from "../data-structures/helpers/zipPassiveCalculation";
 import { extract } from "../functions/extract";
@@ -23,6 +24,7 @@ import Either from "ramda-fantasy/src/Either";
 import { defaultPartitions } from "../data-structures/helpers/defaultPartitions";
 import { meanOf } from "../functions/meanOf";
 import { tabulatePartitionSums } from "../functions/tabulatePartitionSums";
+import { calculateSpikeUse } from "../data-structures/helpers/calculateSpikeUse";
 
 export const addPgeSource = (regInfo) => {
   return axios.post("/api/add/pge", regInfo, AuthService.getAuthHeader());
@@ -64,14 +66,27 @@ export const parseHourResponse = (res) => {
     map(formatPGEHourDB),
     (x) => x.split(",")
   );
-
+  //TODO: combine zipPassiveCalculation and the spike calculation
   const data = parseDatabaseResponse(res.data.database);
   const passiveUse = calculatePassiveUse(data);
-  const zipped = zipPassiveCalculation(data, passiveUse.value);
-  
+  const zippedPassive = zipPassiveCalculation(data, passiveUse.value);
+
   const partitionOptions = res.data.partitionOptions
     ? Either.Right(res.data.partitionOptions)
     : Either.Right(defaultPartitions);
+
+  const spikes = calculateSpikeUse(zippedPassive);
+
+  const zipped = [];
+  for (let i = 0; i < zippedPassive.size; i++) {
+    const hour = zippedPassive.get(i);
+    const active = hour.get("active") - spikes[i];
+    const zip = hour.withMutations((hour) => {
+      hour.set("active", active).set("spike", spikes[i]);
+    });
+    zipped.push(zip);
+  }
+  const zippedList = List(zipped);
 
   return {
     utility: res.data.utility,
@@ -80,8 +95,8 @@ export const parseHourResponse = (res) => {
     lastUpdate: res.data.lastUpdate,
     hourlyMean: meanOf(extract("total")(data)),
     partitionOptions: partitionOptions,
-    partitionSums: tabulatePartitionSums(zipped, partitionOptions),
-    database: zipped,
+    partitionSums: tabulatePartitionSums(zippedList, partitionOptions),
+    database: zippedList,
   };
 };
 
@@ -110,7 +125,7 @@ export const theFuture = sourcesF
   .pipe(chain(parallel(10)))
   .pipe(map(map(parseHourResponse)))
   .pipe(map(map((x) => new EnergyHistory(x))))
-  .pipe(map(map(makeSources)))
+  .pipe(map(map(makeSources)));
 
 export const getHoursF = (source) => {
   return attemptP(() =>

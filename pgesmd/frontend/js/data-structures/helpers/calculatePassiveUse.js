@@ -12,7 +12,7 @@ import { minOf } from "../../functions/minOf";
 import { meanOf } from "../../functions/meanOf";
 
 export function calculatePassiveUse(database) {
-  const WINDOW = 14; // global config variable?
+  const WINDOW = 14; // days; global config variable?
 
   const dailyMinimums = minOfEachDay(groupByDay(database));
   const values = Either.Right(extract("min")(dailyMinimums));

@@ -24,7 +24,7 @@ import { indexInDb } from "../functions/indexInDb";
 import { editHsl } from "../functions/editHsl";
 
 const PatternChart = ({ energyHistory }) => {
-  const [showApplianceSpikes, setShowApplianceSpikes] = useState(true);
+  const [showApplianceSpikes, setShowApplianceSpikes] = useState(false);
 
   const daysArray = makeIntervalArray(
     new EnergyHistory(energyHistory.response, {
@@ -168,22 +168,9 @@ const PatternChart = ({ energyHistory }) => {
     return means;
   };
 
-  const quickRemoveOutliers = (arr) => {
-    const _arrMean = mean(arr);
-    const _arrStd = standardDeviationOf(arr);
-
-    return arr.map((x) => {
-      return x < _arrMean + 2 * _arrStd ? x : _arrMean;
-    });
-  };
-
-  // TODO: this is a nice metric ... but it should be done on the entire history
-  // and be accessible as a prop of the energyHistory instance
-
   const removeApplianceSpikes = (groups) => {
     return groups.map((x) => {
-      const arr = x.map((y) => y.get("total")).toJS();
-      return List(quickRemoveOutliers(arr).map((z) => Map({ total: z })));
+      return x.map((y) => Map({ total: y.get("total") - y.get("spike") }));
     });
   };
 

@@ -16,6 +16,7 @@ export const makeChartData = (database) => (intervalArray) => {
     return Map({
       x: getTime(_startTime),
       active: compose(meanOf, extract("active"))(_slice),
+      spike: compose(meanOf, extract("spike"))(_slice),
       passive: compose(meanOf, extract("passive"))(_slice),
       total: compose(meanOf, extract("total"))(_slice),
       sum: sum(extract("total")(_slice)),

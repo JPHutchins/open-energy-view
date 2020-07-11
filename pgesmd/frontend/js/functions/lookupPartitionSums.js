@@ -8,6 +8,7 @@ export const lookupPartitionSums = (tabulation, startIndex, endIndex) => {
       start: l.get("start"),
       sumActive: r.get("sumActive") - l.get("sumActive"),
       sumPassive: r.get("sumPassive") - l.get("sumPassive"),
+      sumSpike: r.get("sumSpike") - l.get("sumSpike"),
       sumTotal: r.get("sumTotal") - l.get("sumTotal"),
     };
   };

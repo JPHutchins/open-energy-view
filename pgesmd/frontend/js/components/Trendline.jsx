@@ -8,6 +8,10 @@ import { groupBy } from "../functions/groupBy";
 import { meanOf } from "../functions/meanOf";
 import { standardDeviationOf } from "../functions/standardDeviationOf";
 
+// TODO - window was changed from 14 & 28 to 15 & 29 with the idea that
+// including the day of the week being viewed as the start of the period
+// would increase trendline accuracy.  Needs proof.
+
 const Trendline = ({ energyHistory, activeOrPassive, name }) => {
   const calculateTrend = (data) => {
     if (!data) return;
@@ -66,8 +70,8 @@ const Trendline = ({ energyHistory, activeOrPassive, name }) => {
 
     if (windowSize === "year" || windowSize === "complete") return getGraph();
     if (windowSize === "month") return getGraph();
-    if (windowSize === "week") return getPrecedingDays(28);
-    if (windowSize === "day") return getPrecedingDays(14);
+    if (windowSize === "week") return getPrecedingDays(29);
+    if (windowSize === "day") return getPrecedingDays(15);
     if (windowSize === "custom") return getGraph();
   };
 
