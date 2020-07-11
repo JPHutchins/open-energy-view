@@ -5,7 +5,7 @@ import { standardDeviationOf } from "../../functions/standardDeviationOf";
 import { meanOf } from "../../functions/meanOf";
 
 export function calculateSpikeUse(zippedDatabase) {
-  const WINDOW = WINDOW; //hours
+  const WINDOW = 24; //hours
   const rawHours = zippedDatabase.map((x) => x.get("active")).toArray();
 
   const fillWindow = makeFillWindow(WINDOW)(rawHours);
