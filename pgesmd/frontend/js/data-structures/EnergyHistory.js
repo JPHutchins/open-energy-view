@@ -104,7 +104,7 @@ export class EnergyHistory {
             this._graphData
           )
             .toArray()
-            .map((x) => editHsl(x, { s: (s) => s - 10, l: (l) => l + 15 })),
+            .map((x) => editHsl(x, { s: (s) => s / 2, l: (l) => l + 20 })),
           // options
           pointRadius: 0,
           barThickness: "flex",
@@ -121,7 +121,16 @@ export class EnergyHistory {
         {
           label: "Spike Consumption",
           data: this.spikeGraph,
-          backgroundColor: "orange",
+          backgroundColor: makeColorsArray(this.partitionOptions)(
+            this._graphData
+          )
+            .toArray()
+            .map((x) =>
+              editHsl(x, {
+                s: (s) => Math.min(100, s * 2),
+                l: (l) => (l + 200) / 3,
+              })
+            ),
           barThickness: "flex",
         },
       ],
