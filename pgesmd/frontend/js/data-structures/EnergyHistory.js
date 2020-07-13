@@ -149,7 +149,7 @@ export class EnergyHistory {
         start: startOf(this.windowData.windowSize)(date),
         end: endOf(this.windowData.windowSize)(date),
       },
-      "Day"
+      this.windowMode
     );
   }
 
