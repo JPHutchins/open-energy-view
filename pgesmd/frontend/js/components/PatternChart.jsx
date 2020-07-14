@@ -22,21 +22,23 @@ import { ToggleButton } from "react-bootstrap";
 import { lookupPartitionSums } from "../functions/lookupPartitionSums";
 import { indexInDb } from "../functions/indexInDb";
 import { editHsl } from "../functions/editHsl";
+import { startOf } from "../functions/startOf";
+import { endOf } from "../functions/endOf";
 
 const PatternChart = ({ energyHistory }) => {
   const [showApplianceSpikes, setShowApplianceSpikes] = useState(false);
 
   const daysArray = makeIntervalArray(
     new EnergyHistory(energyHistory.response, {
-      start: startOfWeekYear(energyHistory.firstDate),
-      end: add(startOfWeekYear(energyHistory.lastDate), { weeks: 52 }),
+      start: startOf("year")(energyHistory.firstDate),
+      end: endOf("year")(energyHistory.lastDate),
     }),
-    "week"
+    "month"
   );
 
   const arrayOfYears = [];
   let oneYear = [];
-  let nextYear = add(daysArray[0][0], { weeks: 52 });
+  let nextYear = add(daysArray[0][0], { years: 1 });
   for (let array of daysArray) {
     if (!isEqual(array[0], nextYear)) {
       oneYear.push(array);
@@ -44,14 +46,14 @@ const PatternChart = ({ energyHistory }) => {
       arrayOfYears.push(oneYear);
       oneYear = [];
       oneYear.push(array);
-      nextYear = add(array[0], { weeks: 52 });
+      nextYear = add(array[0], { years: 1 });
     }
   }
   arrayOfYears.push(oneYear);
 
   const getIndex = indexInDb(energyHistory.database);
-  const output = new Array(52);
-  for (let i = 0; i < 52; i++) {
+  const output = new Array(12);
+  for (let i = 0; i < 12; i++) {
     output[i] = {
       parts: new Array(energyHistory.partitionOptions.value.length).fill(0),
       entries: 0,
@@ -130,8 +132,8 @@ const PatternChart = ({ energyHistory }) => {
 
   //TODO: add bogus data to leapyear to make all 365
 
-  const yearTotals = new Array(52);
-  for (let i = 0; i < 52; i++) {
+  const yearTotals = new Array(12);
+  for (let i = 0; i < 12; i++) {
     let dayEntries = 0;
     let dayTotal = 0;
     let dayPassive = 0;

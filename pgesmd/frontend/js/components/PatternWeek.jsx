@@ -11,7 +11,7 @@ const PatternWeek = ({
   suggestedMax,
   yLabelWidth,
   weekTotals,
-  recentWeekTotals
+  recentWeekTotals,
 }) => {
   const [gradient, setGradient] = useState("");
 
@@ -60,7 +60,6 @@ const PatternWeek = ({
       );
     }, 0);
 
-
   useEffect(() => {
     calculateGradient();
     window.addEventListener("resize", calculateGradient);
@@ -79,7 +78,7 @@ const PatternWeek = ({
       {
         label: "Past 4 Weeks",
         data: recentWeekTotals,
-        borderColor: "orange",
+        borderColor: "green",
       },
     ],
   };
@@ -143,7 +142,7 @@ const PatternWeek = ({
           },
           ticks: {
             maxTicksLimit: 7,
-          }
+          },
         },
       ],
       yAxes: [

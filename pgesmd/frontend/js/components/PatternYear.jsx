@@ -1,31 +1,31 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
+import { editHsl } from "../functions/editHsl";
 
 const PatternYear = ({ yLabelWidth, yearTotals }) => {
   const dataYear = {
-    labels: new Array(52).fill("Jan"),
+    labels: new Array(12).fill("Jan"),
     datasets: [
       {
         label: "Total",
         data: yearTotals.map((x) => x.total),
-        backgroundColor: "hsla(185, 16%, 83%, .5)",
-        fill: true,
-        borderColor: "#5f5566",
-        pointRadius: 0,
-      },
-      {
-        label: "Active",
-        data: yearTotals.map((x) => x.active),
-        borderColor: "orange",
-        fill: false,
+        fill: "+1",
+        backgroundColor: editHsl("hsl(275, 9%, 37%)", {
+          s: (s) => (s + 100) / 2,
+          l: (l) => 90,
+        }),
+        borderColor: "hsl(275, 9%, 37%)",
         pointRadius: 0,
       },
       {
         label: "Passive",
         data: yearTotals.map((x) => x.passive),
-        borderColor: "gray",
+        borderColor: "hsla(185, 16%, 83%, .5)",
         fill: true,
-        backgroundColor: "gray",
+        borderColor: "gray",
+        backgroundColor: editHsl("hsla(185, 16%, 83%, 1)", {
+          l: (l) => (l + 100) / 2,
+        }),
         pointRadius: 0,
       },
     ],
@@ -34,7 +34,25 @@ const PatternYear = ({ yLabelWidth, yearTotals }) => {
   const tooltipLabelYear = (tooltipItems) => {
     const labels = dataYear.datasets.map((x) => x.label);
     const label = labels[tooltipItems.datasetIndex];
-    return `${Math.round(tooltipItems.yLabel)} ${label} Whs`;
+    return `${Math.round(tooltipItems.yLabel)} Average ${label} Watt-Hours`;
+  };
+
+  const tooltipTitle = (tooltipItems) => {
+    const i = tooltipItems[0].index;
+    return [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ][i];
   };
 
   const options = {
@@ -48,7 +66,7 @@ const PatternYear = ({ yLabelWidth, yearTotals }) => {
     tooltips: {
       callbacks: {
         label: (tooltipItems) => tooltipLabelYear(tooltipItems),
-        title: () => "Average Usage",
+        title: (tooltipItems) => tooltipTitle(tooltipItems),
       },
       mode: "index",
       intersect: false,

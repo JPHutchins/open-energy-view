@@ -77,7 +77,7 @@ const PatternDay = ({
       {
         label: "Past 4 Weeks",
         data: recentDayTotals,
-        borderColor: "orange",
+        borderColor: "green",
       },
     ],
   };
