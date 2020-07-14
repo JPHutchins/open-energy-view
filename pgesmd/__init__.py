@@ -51,8 +51,6 @@ def create_app() -> Flask:
     bcrypt.init_app(app)
     jwt.init_app(app)
 
-    
-
     with app.app_context():
         # Create the tables for our models
         db.create_all()
@@ -64,17 +62,18 @@ def create_app() -> Flask:
         i = 0
         data_update = []
         for entry in parse_espi_data(xml):
-              data_update.append({
-                  'pge_id': 50916,
-                  'start': entry[0],
-                  'duration': entry[1],
-                  'watt_hours': entry[2]
-              })
+            data_update.append(
+                {
+                    "pge_id": 50916,
+                    "start": entry[0],
+                    "duration": entry[1],
+                    "watt_hours": entry[2],
+                }
+            )
         conn = db.engine.connect()
         print(models.Espi.__table__)
         # x = conn.execute(models.Espi.__table__.insert(), data_update)
         # print(x)
-
 
         @app.route("/")
         def index():
@@ -83,7 +82,9 @@ def create_app() -> Flask:
         @app.route("/pge_false", methods=["GET"])
         def pge_test():
             print(request.data)
-            with open("/home/jp/pgesmd/test/data/espi/Single Days/2019-10-27.xml") as xml_reader:
+            with open(
+                "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-27.xml"
+            ) as xml_reader:
                 xml = xml_reader.read()
             return xml
 
@@ -93,8 +94,11 @@ def create_app() -> Flask:
             try:
                 resource_uri = ET.fromstring(data)[0].text
             except ET.ParseError:
-                #print(f'Could not parse message: {data}')
-                return f'Could not parse message: {data}', 500
+                # print(f'Could not parse message: {data}')
+                return f"Could not parse message: {data}", 500
+            except IndexError as e:
+                print(e, data)
+                return f'No index "0" in parsed XML: {data}', 500
 
             auth = get_auth_file()
             print(auth)
