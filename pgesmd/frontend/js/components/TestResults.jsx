@@ -1,6 +1,4 @@
 import React from "react";
-import { testPerformance } from "../Types.js";
-import { fetchData, fetchHours } from "../FunctionComps";
 
 const TestResults = (props) => {
   Promise.allSettled([fetchHours("PG&E")]).then((p) => {
