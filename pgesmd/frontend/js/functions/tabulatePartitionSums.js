@@ -11,6 +11,7 @@ export const tabulatePartitionSums = (database, partitionOptions) => {
   let previousTableEntry = new Array(partitions.length).fill({
     sumActive: 0,
     sumPassive: 0,
+    sumSpike: 0,
     sumTotal: 0,
   });
 
@@ -31,15 +32,17 @@ export const tabulatePartitionSums = (database, partitionOptions) => {
       start: partitions[_i].start,
       sumActive: previousTableEntry[_i].sumActive + datapoint.get("active"),
       sumPassive: previousTableEntry[_i].sumPassive + datapoint.get("passive"),
+      sumSpike: previousTableEntry[_i].sumSpike + datapoint.get("spike"),
       sumTotal:
         previousTableEntry[_i].sumTotal +
         datapoint.get("active") +
-        datapoint.get("passive"),
+        datapoint.get("passive") +
+        datapoint.get("spike"),
     };
 
     tabulation.push(tableEntry);
     previousTableEntry = tableEntry;
   }
 
-  return fromJS(tabulation)
+  return fromJS(tabulation);
 };

@@ -1,28 +1,29 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
 
-const PatternParts = ({ yLabelWidth, yearParts }) => {
-  const dataYear = {
-    labels: new Array(52).fill("Jan"),
-    datasets: yearParts,
+const TrendSmooth = ({ dataset, smooth }) => {
+  const data = {
+    //labels: new Array(679).fill("Jan"),
+    datasets: [
+      {
+        data: dataset,
+        type: "scatter",
+      },
+      {data: smooth}
+    ],
   };
 
+  console.log(data);
+
   const tooltipLabelYear = (tooltipItems) => {
-    const labels = dataYear.datasets.map((x) => x.label);
+    const labels = data.datasets.map((x) => x.label);
     const label = labels[tooltipItems.datasetIndex];
-    const percentBelowThisData =
-      tooltipItems.datasetIndex === 0
-        ? 0
-        : dataYear.datasets[tooltipItems.datasetIndex - 1].data[
-            tooltipItems.index
-          ];
-    return `${Math.round(tooltipItems.yLabel - percentBelowThisData)}% ${label}`;
+    return `${Math.round(tooltipItems.yLabel)} ${label} Whs`;
   };
 
   const options = {
     legend: {
       display: true,
-      onClick: (e) => e.stopPropagation(),
     },
     hover: {
       mode: "nearest",
@@ -40,7 +41,7 @@ const PatternParts = ({ yLabelWidth, yearParts }) => {
     maintainAspectRatio: false,
     elements: {
       point: {
-        radius: 0,
+        radius: 2,
       },
     },
     scales: {
@@ -52,16 +53,13 @@ const PatternParts = ({ yLabelWidth, yearParts }) => {
           gridLines: {
             display: false,
           },
+          type: "time",
         },
       ],
       yAxes: [
         {
-          afterFit: function (scaleInstance) {
-            scaleInstance.width = yLabelWidth; // sets the width to 100px
-          },
           ticks: {
             min: 0,
-            max: 100,
             maxTicksLimit: 5,
           },
         },
@@ -69,6 +67,13 @@ const PatternParts = ({ yLabelWidth, yearParts }) => {
     },
   };
 
-  return <Line data={dataYear} options={options} />;
+  return (
+    <div className="pattern-flex-1">
+      <h3>Yearly Energy Pattern</h3>
+      <div className="pattern-chartJS-box">
+        <Line data={data} options={options} />
+      </div>
+    </div>
+  );
 };
-export default PatternParts;
+export default TrendSmooth;

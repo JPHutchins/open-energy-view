@@ -29,7 +29,7 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
   };
 
   const handleRangeChange = (startOrEnd) => (date) => {
-    if (!energyHistory.windowMode === "Custom Range") {
+    if (energyHistory.windowMode != "Custom Range") {
       setEnergyHistory(energyHistory.setDate(date));
       return;
     }

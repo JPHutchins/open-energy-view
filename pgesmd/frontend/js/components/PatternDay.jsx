@@ -135,7 +135,6 @@ const PatternDay = ({
           },
           ticks: {
             min: 0,
-            max: suggestedMax,
             maxTicksLimit: 5,
           },
         },

@@ -11,6 +11,7 @@ import { readableWattHours } from "../functions/readableWattHours";
 import { useState } from "react";
 import { lookupPartitionSums } from "../functions/lookupPartitionSums";
 import { differenceInMilliseconds, roundToNearestMinutes } from "date-fns";
+import { editHsl } from "../functions/editHsl";
 
 /**
  * Return a flexibly sized ChartJS pie chart.
@@ -34,8 +35,13 @@ const MiniPie = ({ energyHistory }) => {
 
   const labels = energyHistory.partitionOptions.value
     .map((x) => x.name)
-    .concat("Passive");
-  const colors = energyHistory.partitionOptions.value.map((x) => x.color);
+    .concat(["Passive", "Appliance"]);
+  const colors = energyHistory.partitionOptions.value
+    .map((x) => x.color)
+    .concat([
+      editHsl("hsl(275, 9%, 37%)", { s: (s) => 0, l: (l) => 85 }),
+      editHsl("hsl(275, 9%, 37%)", { s: (s) => Math.min(100, s*2), l: (l) => (l + 200) / 3 }),
+    ]);
 
   // these sums may be made availabe in the DP implementation of passive calc
   const makePieData = (currentView) => {
@@ -45,7 +51,8 @@ const MiniPie = ({ energyHistory }) => {
       case "activity":
         const active = partitionSums.map((x) => x.sumActive);
         const passive = partitionSums.reduce((acc, x) => acc + x.sumPassive, 0);
-        return active.concat(passive);
+        const spike = partitionSums.reduce((acc, x) => acc + x.sumSpike, 0);
+        return active.concat(passive).concat(spike);
       case "average":
         const active2 = partitionSums.map((x) => x.sumTotal);
         const partLengthArray = energyHistory.partitionOptions.value.map(
