@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PatternChart from "./PatternChart";
-import Trends from "./Trends";
+import Trends from "./Trends/Trends";
 import EnergyDisplay from "./EnergyDisplay";
 import { mdiGaugeLow } from "@mdi/js";
 import { mdiChartBellCurve } from "@mdi/js";
@@ -43,11 +43,7 @@ const ViewTabs = ({ energyDisplayItem }) => {
     {
       title: "Trends",
       icon: (
-        <Icon
-          className="sidebar-icon"
-          color="#5f5566"
-          path={mdiTrendingUp}
-        />
+        <Icon className="sidebar-icon" color="#5f5566" path={mdiTrendingUp} />
       ),
       component: (
         <Trends
@@ -94,9 +90,8 @@ const ViewTabs = ({ energyDisplayItem }) => {
   const makeTab = (tabIndex) => {
     if (tabIndex === selectedTab) {
       return (
-        <div className="tab-box">
+        <div className="tab-box" key={tabIndex}>
           <div
-            key={tabIndex}
             className="tab tab-selected"
             value={tabIndex}
             onClick={handleClick}
@@ -108,13 +103,8 @@ const ViewTabs = ({ energyDisplayItem }) => {
       );
     }
     return (
-      <div className="tab-box">
-        <div
-          key={tabIndex}
-          className="tab"
-          value={tabIndex}
-          onClick={handleClick}
-        >
+      <div className="tab-box" key={tabIndex}>
+        <div className="tab" value={tabIndex} onClick={handleClick}>
           {views[tabIndex].icon}
           {views[tabIndex].title}
         </div>
