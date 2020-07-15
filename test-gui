@@ -14,4 +14,4 @@ export DEV_JWT_COOKIE_SECURE=False
 export PROD_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
 export DEV_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
 python3 -m pgesmd.test_gui
-flask run
+flask run --host='0.0.0.0'
