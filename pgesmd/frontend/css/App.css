@@ -123,9 +123,26 @@ footer {
   margin-right: 50px;
 }
 
+.space-around {
+  justify-content: space-around;
+}
+
 .pattern-chartJS-box {
- flex: 1;
- max-height: 100%;
+  flex: 1;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square-228 {
+  height: 228px;
+  width: 228px;
+}
+
+.wide-228 {
+  max-width: 228px;
+  margin: 0;
 }
 
 .pattern-div-2-rectangle {
