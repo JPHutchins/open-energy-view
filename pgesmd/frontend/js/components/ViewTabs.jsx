@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Patterns from "./Patterns/Patterns";
 import Trends from "./Trends/Trends";
-import EnergyDisplay from "./EnergyDisplay";
+import EnergyDisplay from "./History/EnergyDisplay";
 import { mdiGaugeLow } from "@mdi/js";
 import { mdiChartBellCurve } from "@mdi/js";
 import { mdiChartBar } from "@mdi/js";

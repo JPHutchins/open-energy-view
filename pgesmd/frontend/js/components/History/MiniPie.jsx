@@ -7,11 +7,11 @@ import {
 } from "react-bootstrap";
 import { Pie } from "react-chartjs-2";
 import { sum } from "ramda";
-import { readableWattHours } from "../functions/readableWattHours";
+import { readableWattHours } from "../../functions/readableWattHours";
 import { useState } from "react";
-import { lookupPartitionSums } from "../functions/lookupPartitionSums";
+import { lookupPartitionSums } from "../../functions/lookupPartitionSums";
 import { differenceInMilliseconds, roundToNearestMinutes } from "date-fns";
-import { editHsl } from "../functions/editHsl";
+import { editHsl } from "../../functions/editHsl";
 
 /**
  * Return a flexibly sized ChartJS pie chart.

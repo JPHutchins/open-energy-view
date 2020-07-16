@@ -3,9 +3,9 @@ import React from "react";
 import Icon from "@mdi/react";
 import { mdiArrowUp } from "@mdi/js";
 import { sub } from "date-fns";
-import { extract } from "../functions/extract";
-import { calculateTrend, makeTrendDescription } from "./Trends/functions";
-import { endOf } from "../functions/endOf";
+import { extract } from "../../functions/extract";
+import { calculateTrend, makeTrendDescription } from "../Trends/functions";
+import { endOf } from "../../functions/endOf";
 
 const Trendline = ({ energyHistory, activeOrPassive, name }) => {
   const defineDataset = (activeOrPassive, energyHistory) => {

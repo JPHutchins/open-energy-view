@@ -12,7 +12,7 @@ import {
 } from "fluture";
 import AuthService from "./AuthService";
 import { map, compose, mean } from "ramda";
-import EnergyDisplay from "../components/EnergyDisplay";
+import EnergyDisplay from "../components/History/EnergyDisplay";
 import { EnergyHistory } from "../data-structures/EnergyHistory";
 import SourceRegistration from "../components/SourceRegistration";
 import { fromJS as toImmutableJSfromJS } from "immutable";

@@ -1,7 +1,6 @@
 import React from "react";
 import { differenceInHours } from "date-fns";
-import { min } from "ramda";
-import { readableWattHours } from "../functions/readableWattHours";
+import { readableWattHours } from "../../functions/readableWattHours";
 
 const ViewTotal = ({ energyHistory }) => {
   const smallerWindowSize = Math.min(
