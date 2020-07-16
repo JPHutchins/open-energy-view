@@ -10,7 +10,9 @@ import { groupBy } from "../../functions/groupBy";
 const Trends = ({ energyHistory }) => {
   const dateMostRecent = energyHistory.lastDate;
   const dateFourWeeksAgo = endOf("day")(sub(dateMostRecent, { days: 28 }));
-  const sliceRecent = energyHistory.slice(dateFourWeeksAgo, dateMostRecent).toJS();
+  const sliceRecent = energyHistory
+    .slice(dateFourWeeksAgo, dateMostRecent)
+    .toJS();
 
   const yearOfFirstDate = getYear(energyHistory.firstDate);
   const tryFirstYear = set(dateMostRecent, { year: yearOfFirstDate });
@@ -37,28 +39,32 @@ const Trends = ({ energyHistory }) => {
       <h1>{`${energyHistory.friendlyName} Energy Usage Trends`}</h1>
       <h2>Recent Trends</h2>
       <div className="day-week-pattern space-around">
-      <TrendChart
+        <TrendChart
           getArrayArgs={[sliceRecent, "total"]}
           getRollingArrayArgs={[sliceRecent, "total", "day"]}
           title="Total Use"
           cacheKey="trend1"
+          order={0}
         />
         <TrendChart
           getArrayArgs={[sliceRecent, "active"]}
           getRollingArrayArgs={[sliceRecent, "active", "day"]}
           title="Active Use"
           cacheKey="trend2"
+          order={1}
         />
         <TrendChart
           getRollingArrayArgs={[sliceRecent, "passive", "day"]}
           title="Passive Use"
           cacheKey="trend3"
+          order={2}
         />
         <TrendChart
           getArrayArgs={[sliceRecent, "spike"]}
           getRollingArrayArgs={[sliceRecent, "spike", "day"]}
           title="Appliance Use"
           cacheKey="trend4"
+          order={3}
         />
       </div>
       <h2>Longterm Trends</h2>
@@ -68,23 +74,31 @@ const Trends = ({ energyHistory }) => {
           getRollingArrayArgs={[sliceLongterm, "total", "month"]}
           title="Total Use"
           cacheKey="trend5"
+          order={4}
+          hideRawData={false}
         />
         <TrendChart
           getArrayArgs={[sliceLongterm, "active"]}
           getRollingArrayArgs={[sliceLongterm, "active", "month"]}
           title="Active Use"
           cacheKey="trend6"
+          order={5}
+          hideRawData={false}
         />
         <TrendChart
+          getArrayArgs={[sliceLongterm, "passive"]}
           getRollingArrayArgs={[sliceLongterm, "passive", "month"]}
           title="Passive Use"
           cacheKey="trend7"
+          order={6}
+          hideRawData={false}
         />
         <TrendChart
           getArrayArgs={[sliceLongterm, "spike"]}
           getRollingArrayArgs={[sliceLongterm, "spike", "month"]}
           title="Appliance Use"
           cacheKey="trend8"
+          order={7}
         />
       </div>
     </div>

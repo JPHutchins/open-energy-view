@@ -32,10 +32,20 @@ onmessage = function (e) {
   const dataToUseForTrend = rawData ? rawData : rollingData;
   const linearRegressionData = dataToUseForTrend.map((x) => x.y);
 
+  const groupedRawData =
+    !rawData || rawData.length < 675
+      ? rawData
+      : groupBy("week")(rawData).map((x) => {
+          return {
+            x: x[0].x,
+            y: meanOf(x.map((y) => y.y)),
+          };
+        });
+
   const { trendPercent, trendObject } = calculateTrend(linearRegressionData);
   postMessage({
     rollingData: rollingData,
-    rawData: rawData,
+    rawData: groupedRawData,
     trendPercent: trendPercent,
     trendPoints: [
       trendObject.points[0][1],

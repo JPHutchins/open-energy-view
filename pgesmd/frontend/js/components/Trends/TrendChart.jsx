@@ -13,29 +13,35 @@ const TrendChart = ({
   rollingLabel = "Average",
   title,
   cacheKey,
+  order,
+  hideRawData = true
 }) => {
   const [showLine, setShowLine] = useState(false);
   const [workerData, setWorkerData] = useState({
     trendPercent: 0,
     trendPoints: [],
     rawData: null,
-    rollingData: [{}], 
+    rollingData: [{}],
   });
   const { trendPercent, trendPoints, rawData, rollingData } = workerData;
 
   useEffect(() => {
     const trendWorker = new Worker("./trend.worker.js", { type: "module" });
     trendWorker.onmessage = (e) => {
-      setWorkerData({
-        trendPercent: e.data.trendPercent,
-        trendPoints: e.data.trendPoints,
-        rawData: e.data.rawData,
-        rollingData: e.data.rollingData, 
-      });
-      trendWorker.terminate();
-      localStorage.setItem(cacheKey, JSON.stringify(e.data)); 
+      setTimeout(
+        () =>
+          setWorkerData({
+            trendPercent: e.data.trendPercent,
+            trendPoints: e.data.trendPoints,
+            rawData: e.data.rawData,
+            rollingData: e.data.rollingData,
+          }),
+        order * 100
+      );
+      trendWorker.terminate();  
+      localStorage.setItem(cacheKey, JSON.stringify(e.data));
     };
-    const cache = localStorage.getItem(cacheKey);
+    const cache = localStorage.getItem(cacheKey); 
     trendWorker.postMessage({ getArrayArgs, getRollingArrayArgs, cache });
   }, []);
 
@@ -45,7 +51,7 @@ const TrendChart = ({
   const trendData = [
     { x: dataToUseForTrend[0].x, y: trendPoints[0] },
     {
-      x: dataToUseForTrend[dataToUseForTrend.length - 1].x,
+      x: dataToUseForTrend[dataToUseForTrend.length - 1].x, 
       y: trendPoints[1],
     },
   ];
@@ -64,20 +70,22 @@ const TrendChart = ({
       data: rollingData,
       label: rollingLabel,
       borderColor: "#5f5566",
+      pointBackgroundColor: "gray",
       showLine: showLine,
       fill: false,
       hoverRadius: 6,
     },
     {
-      data: rawData,
+      data: rawData,  
       type: "scatter",
       label: "Readings",
-      hidden: true,
+      hidden: hideRawData,
       hoverRadius: 6,
+      
     },
   ];
 
-  if (!rawData) datasets.pop();
+  if (!rawData) datasets.pop(); 
 
   const data = {
     datasets: datasets,
@@ -93,13 +101,12 @@ const TrendChart = ({
     const date = new Date(tooltipItems[0].label);
     if (tooltipItems[0].datasetIndex === 0) {
       return format(date, "eeee, MMM do, ha");
-    }
-    return format(date, "eeee, MMM do");
+    } 
   };
 
   const options = {
     animation: {
-      duration: 0,
+      duration: 500,
     },
     legend: {
       display: true,
@@ -165,8 +172,9 @@ const TrendChart = ({
     ) : (
       <div className="pattern-flex-1 wide-228">
         <h4>{title}</h4>
+        <div className="info-details">loading...</div>
         <div className="pattern-chartJS-box square-228">
-          <Loader type="TailSpin" color="gray" timeout={1000} />
+          <Line data={data} options={options} />
         </div>
       </div>
     );
