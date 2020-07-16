@@ -1,20 +1,21 @@
 import React from "react";
 import { useRef, useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
-import { minZero } from "../functions/minZero";
-import { editHsl } from "../functions/editHsl";
+import { minZero } from "../../functions/minZero";
+import { editHsl } from "../../functions/editHsl";
+import { sum } from "ramda";
 
-const PatternDay = ({
+const PatternWeek = ({
   energyHistory,
   suggestedMin,
   suggestedMax,
   yLabelWidth,
-  dayTotals,
-  recentDayTotals,
+  weekTotals,
+  recentWeekTotals,
 }) => {
   const [gradient, setGradient] = useState("");
 
-  const dayChart = useRef(null);
+  const weekChart = useRef(null);
 
   const makeGradient = (ctx, days, partitionOptions) => {
     const width = ctx.canvas.clientWidth;
@@ -52,8 +53,8 @@ const PatternDay = ({
     setTimeout(() => {
       setGradient(
         makeGradient(
-          dayChart.current.chartInstance.ctx,
-          1,
+          weekChart.current.chartInstance.ctx,
+          7,
           energyHistory.partitionOptions.value
         )
       );
@@ -65,18 +66,18 @@ const PatternDay = ({
     return () => window.removeEventListener("resize", calculateGradient);
   }, []);
 
-  const dataDay = {
-    labels: new Array(24).fill(""),
+  const dataWeek = {
+    labels: new Array(24 * 7).fill(""),
     datasets: [
       {
-        label: "Complete",
-        data: dayTotals,
+        label: "Complete History",
+        data: weekTotals,
         backgroundColor: gradient,
         borderColor: "#5f5566",
       },
       {
         label: "Past 4 Weeks",
-        data: recentDayTotals,
+        data: recentWeekTotals,
         borderColor: "green",
       },
     ],
@@ -85,13 +86,26 @@ const PatternDay = ({
   const intToHour = (int) => {
     int = Math.floor(int) % 24;
     if (int === 0) return "12:00 AM";
-    if (int < 12) return `${int}:00 AM`;
-    if (int === 12) return "12:00 PM";
+    if (int <= 12) return `${int}:00 AM`;
     return `${int - 12}:00 PM`;
   };
 
-  const tooltipLabelDay = (tooltipItems) => {
-    return `${Math.round(tooltipItems.yLabel)} Wh`;
+  const tooltipLabelWeek = (tooltipItems) => {
+    let weekDay = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    weekDay = weekDay[Math.floor(tooltipItems.index / 24)];
+
+    const day = Math.floor(tooltipItems.index / 24);
+    const total = Math.round(sum(weekTotals.slice(day * 24, (day + 1) * 24)));
+
+    return `${Math.round(tooltipItems.yLabel)} Wh\n${total} Whs / day`;
   };
 
   const options = {
@@ -104,7 +118,7 @@ const PatternDay = ({
     },
     tooltips: {
       callbacks: {
-        label: (tooltipItems) => tooltipLabelDay(tooltipItems),
+        label: (tooltipItems) => tooltipLabelWeek(tooltipItems),
         title: (tooltipItems) => intToHour(tooltipItems[0].index),
       },
       mode: "index",
@@ -126,6 +140,9 @@ const PatternDay = ({
           gridLines: {
             display: true,
           },
+          ticks: {
+            maxTicksLimit: 7,
+          },
         },
       ],
       yAxes: [
@@ -142,6 +159,6 @@ const PatternDay = ({
     },
   };
 
-  return <Line ref={dayChart} data={dataDay} options={options} />;
+  return <Line ref={weekChart} data={dataWeek} options={options} />;
 };
-export default PatternDay;
+export default PatternWeek;

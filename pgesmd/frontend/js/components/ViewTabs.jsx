@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import PatternChart from "./PatternChart";
+import Patterns from "./Patterns/Patterns";
 import Trends from "./Trends/Trends";
 import EnergyDisplay from "./EnergyDisplay";
 import { mdiGaugeLow } from "@mdi/js";
@@ -33,7 +33,7 @@ const ViewTabs = ({ energyDisplayItem }) => {
         />
       ),
       component: (
-        <PatternChart
+        <Patterns
           energyHistory={
             energyDisplayItem.component.props.energyHistoryInstance
           }

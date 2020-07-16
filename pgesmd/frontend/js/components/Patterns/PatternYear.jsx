@@ -1,6 +1,6 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
-import { editHsl } from "../functions/editHsl";
+import { editHsl } from "../../functions/editHsl";
 
 const PatternYear = ({ yLabelWidth, yearTotals }) => {
   const dataYear = {

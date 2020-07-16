@@ -1,31 +1,26 @@
 import React from "react";
-import { Line } from "react-chartjs-2";
-import { groupBy } from "../functions/groupBy";
-import { max, sum, min, mean } from "ramda";
-import { maxOf } from "../functions/maxOf";
-import { minOf } from "../functions/minOf";
-import { makeIntervalArray } from "../functions/makeIntervalArray";
-import { removeOutliers } from "../functions/removeOutliers";
-import { EnergyHistory } from "../data-structures/EnergyHistory";
-import { makeChartData } from "../functions/makeChartData";
+import { groupBy } from "../../functions/groupBy";
+import { min } from "ramda";
+import { maxOf } from "../../functions/maxOf";
+import { minOf } from "../../functions/minOf";
+import { makeIntervalArray } from "../../functions/makeIntervalArray";
+import { EnergyHistory } from "../../data-structures/EnergyHistory";
+import { makeChartData } from "../../functions/makeChartData";
 import { add } from "date-fns";
 import { isEqual } from "date-fns/esm";
-import { startOfWeekYear } from "date-fns";
 import PatternDay from "./PatternDay";
 import PatternWeek from "./PatternWeek";
 import PatternYear from "./PatternYear";
 import PatternParts from "./PatternParts";
-import { List, Map, remove } from "immutable";
-import { standardDeviationOf } from "../functions/standardDeviationOf";
+import { Map} from "immutable";
 import { useState } from "react";
-import { ToggleButton } from "react-bootstrap";
-import { lookupPartitionSums } from "../functions/lookupPartitionSums";
-import { indexInDb } from "../functions/indexInDb";
-import { editHsl } from "../functions/editHsl";
-import { startOf } from "../functions/startOf";
-import { endOf } from "../functions/endOf";
+import { lookupPartitionSums } from "../../functions/lookupPartitionSums";
+import { indexInDb } from "../../functions/indexInDb";
+import { editHsl } from "../../functions/editHsl";
+import { startOf } from "../../functions/startOf";
+import { endOf } from "../../functions/endOf";
 
-const PatternChart = ({ energyHistory }) => {
+const Patterns = ({ energyHistory }) => {
   const [showApplianceSpikes, setShowApplianceSpikes] = useState(false);
 
   const daysArray = makeIntervalArray(
@@ -340,4 +335,4 @@ const PatternChart = ({ energyHistory }) => {
     </div>
   );
 };
-export default PatternChart;
+export default Patterns;
