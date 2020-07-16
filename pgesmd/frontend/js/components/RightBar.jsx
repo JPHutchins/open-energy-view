@@ -1,5 +1,5 @@
 import React from "react";
-import Trendline from "./Trends/Trendline";
+import Trendline from "./Trendline";
 import MiniPie from "./MiniPie";
 import ViewTotal from "./ViewTotal";
 import CarbonFootprint from "./CarbonFootprint";
