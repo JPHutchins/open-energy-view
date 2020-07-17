@@ -10,7 +10,8 @@ const PatternDay = ({
   suggestedMax,
   yLabelWidth,
   dayTotals,
-  recentDayTotals,
+  recentDayTotals = null,
+  showLegend = true,
 }) => {
   const [gradient, setGradient] = useState("");
 
@@ -65,6 +66,12 @@ const PatternDay = ({
     return () => window.removeEventListener("resize", calculateGradient);
   }, []);
 
+  const recentDayGraph = {
+    label: "Past 4 Weeks",
+    data: recentDayTotals,
+    borderColor: "green",
+  };
+
   const dataDay = {
     labels: new Array(24).fill(""),
     datasets: [
@@ -74,13 +81,12 @@ const PatternDay = ({
         backgroundColor: gradient,
         borderColor: "#5f5566",
       },
-      {
-        label: "Past 4 Weeks",
-        data: recentDayTotals,
-        borderColor: "green",
-      },
     ],
   };
+
+  if (recentDayTotals) {
+    dataDay.datasets.push(recentDayGraph);
+  }
 
   const intToHour = (int) => {
     int = Math.floor(int) % 24;
@@ -96,7 +102,7 @@ const PatternDay = ({
 
   const options = {
     legend: {
-      display: true,
+      display: showLegend,
     },
     hover: {
       mode: "nearest",

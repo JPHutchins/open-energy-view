@@ -16,6 +16,15 @@ footer {
   justify-self: flex-end;
 }
 
+.main-tab-box {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  position: relative;
+  margin: auto;
+  height: 100%;
+  width: 100%;
+}
 .sidebar-and-contents {
   padding: 0px;
   display: flex;
@@ -76,8 +85,15 @@ footer {
   border-width: 2px;
   padding: 10px;
   flex: 1;
-  overflow: hidden;
   min-height: 300px;
+}
+.dash-primary-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  flex: 1;
+  min-height: 150px;
 }
 
 .pattern-day-labels-container {
@@ -99,17 +115,28 @@ footer {
   justify-content: space-around;
 }
 
+.narrow-row {
+  display: flex;
+  justify-content: space-around;
+}
+
+.short-stack {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+}
+
 .energy-history-flex {
   flex: 1;
-  overflow: hidden;
-  max-height: 80vh;
+  height: 100%;
 }
 
 .pattern-flex-1 {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: hidden;
   text-align: center;
   margin-right: 50px;
 }

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Dashboard from "./Dashboard"
 import Patterns from "./Patterns/Patterns";
 import Trends from "./Trends/Trends";
 import EnergyDisplay from "./History/EnergyDisplay";
@@ -21,7 +22,7 @@ const ViewTabs = ({ energyDisplayItem }) => {
       icon: (
         <Icon className="sidebar-icon" color="#5f5566" path={mdiGaugeLow} />
       ),
-      component: <>Dashboard</>,
+      component: <Dashboard energyHistory={energyHistory} />,
     },
     {
       title: "Patterns",

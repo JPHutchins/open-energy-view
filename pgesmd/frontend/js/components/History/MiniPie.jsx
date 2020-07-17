@@ -16,8 +16,8 @@ import { editHsl } from "../../functions/editHsl";
 /**
  * Return a flexibly sized ChartJS pie chart.
  */
-const MiniPie = ({ energyHistory }) => {
-  const [currentView, setCurrentView] = useState("activity");
+const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" }) => {
+  const [currentView, setCurrentView] = useState(startingView);
   const partitionSums = lookupPartitionSums(
     energyHistory.partitionSums,
     energyHistory.startDateIndex,
@@ -40,7 +40,10 @@ const MiniPie = ({ energyHistory }) => {
     .map((x) => x.color)
     .concat([
       editHsl("hsl(275, 9%, 37%)", { s: (s) => 0, l: (l) => 85 }),
-      editHsl("hsl(275, 9%, 37%)", { s: (s) => Math.min(100, s*2), l: (l) => (l + 200) / 3 }),
+      editHsl("hsl(275, 9%, 37%)", {
+        s: (s) => Math.min(100, s * 2),
+        l: (l) => (l + 200) / 3,
+      }),
     ]);
 
   // these sums may be made availabe in the DP implementation of passive calc
@@ -154,20 +157,24 @@ const MiniPie = ({ energyHistory }) => {
     setCurrentView(e);
   };
 
+  const pieOptions = showOptions ? (
+    <DropdownButton
+      size="sm"
+      title={makeTitle(currentView)}
+      onSelect={(e) => e != currentView && handleClick(e)}
+    >
+      {makeMenuItem("total")}
+      {makeMenuItem("activity")}
+      {makeMenuItem("average")}
+    </DropdownButton>
+  ) : null
+
   return (
-    <div>
+    <>
       <div className="kilowatt-hour">Activities</div>
-      <Pie data={data} options={options} height={null} width={null} />
-      <DropdownButton
-        size="sm"
-        title={makeTitle(currentView)}
-        onSelect={(e) => e != currentView && handleClick(e)}
-      >
-        {makeMenuItem("total")}
-        {makeMenuItem("activity")}
-        {makeMenuItem("average")}
-      </DropdownButton>
-    </div>
+      <Pie data={data} options={options} />
+      {pieOptions}
+    </>
   );
 };
 

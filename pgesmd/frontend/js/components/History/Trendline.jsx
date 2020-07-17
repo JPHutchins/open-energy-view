@@ -7,7 +7,7 @@ import { extract } from "../../functions/extract";
 import { calculateTrend, makeTrendDescription } from "../Trends/functions";
 import { endOf } from "../../functions/endOf";
 
-const Trendline = ({ energyHistory, activeOrPassive, name }) => {
+const Trendline = ({ energyHistory, activeOrPassive, name, customPeriodName=null }) => {
   const defineDataset = (activeOrPassive, energyHistory) => {
     // The trend over the day and week views is useless as the window is
     // too small to be accurate and the trend simply gives an account of
@@ -58,7 +58,7 @@ const Trendline = ({ energyHistory, activeOrPassive, name }) => {
       case "complete":
         return "all time";
       case "custom":
-        return "this period";
+        return customPeriodName ? customPeriodName : "this period";
     }
   };
 

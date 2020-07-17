@@ -12,7 +12,7 @@ import PatternDay from "./PatternDay";
 import PatternWeek from "./PatternWeek";
 import PatternYear from "./PatternYear";
 import PatternParts from "./PatternParts";
-import { Map} from "immutable";
+import { Map } from "immutable";
 import { useState } from "react";
 import { lookupPartitionSums } from "../../functions/lookupPartitionSums";
 import { indexInDb } from "../../functions/indexInDb";
@@ -219,17 +219,7 @@ const Patterns = ({ energyHistory }) => {
   const suggestedMin = min(minOf(dayTotals), minOf(weekTotals));
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        padding: "10px",
-        position: "relative",
-        margin: "auto",
-        height: "100%",
-        width: "100%",
-      }}
-    >
+    <div className="main-tab-box">
       <h1>{`${energyHistory.friendlyName} Energy Usage Patterns`}</h1>
       <div className="pattern-option">
         <input
