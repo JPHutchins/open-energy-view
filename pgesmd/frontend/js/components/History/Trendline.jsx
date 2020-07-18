@@ -2,12 +2,19 @@ import React from "react";
 
 import Icon from "@mdi/react";
 import { mdiArrowUp } from "@mdi/js";
+import { mdiArrowUpCircle } from "@mdi/js";
 import { sub } from "date-fns";
 import { extract } from "../../functions/extract";
 import { calculateTrend, makeTrendDescription } from "../Trends/functions";
 import { endOf } from "../../functions/endOf";
 
-const Trendline = ({ energyHistory, activeOrPassive, name, customPeriodName=null }) => {
+const Trendline = ({
+  energyHistory,
+  activeOrPassive,
+  name,
+  customPeriodName = null,
+  bigStyle = false,
+}) => {
   const defineDataset = (activeOrPassive, energyHistory) => {
     // The trend over the day and week views is useless as the window is
     // too small to be accurate and the trend simply gives an account of
@@ -75,7 +82,23 @@ const Trendline = ({ energyHistory, activeOrPassive, name, customPeriodName=null
   };
   const greenOrOrange = percent <= 0 ? "green" : "orange";
 
-  return (
+  const animation =
+    percent <= 0 ? "rotate-arrow-upside-down" : "rotate-arrow-upside-up";
+
+  const arrowIcon = (
+    <Icon
+      className={animation}
+      path={mdiArrowUpCircle}
+      title="User Profile"
+      size={2}
+      horizontal
+      vertical
+      rotate={upOrDown(percent)}
+      color={greenOrOrange}
+    />
+  );
+
+  const render = !bigStyle ? (
     <div>
       <div className="kilowatt-hour">{name}</div>
       <div className="info-details">{makeTrendDescription(percent)}</div>
@@ -94,7 +117,20 @@ const Trendline = ({ energyHistory, activeOrPassive, name, customPeriodName=null
         {description(energyHistory.windowData.windowSize)}
       </div>
     </div>
+  ) : (
+    <div className="info-wrapper">
+      <div className="kilowatt-hour">{name}</div>
+      <div className="info-big-number">
+        {isNaN(Math.abs(percent)) ? "-" : Math.abs(percent) + "%"}
+        {isNaN(Math.abs(percent)) ? "" : arrowIcon}
+      </div>
+      <div className="info-details">
+        {description(energyHistory.windowData.windowSize)}
+      </div>
+    </div>
   );
+
+  return render;
 };
 
 export default Trendline;

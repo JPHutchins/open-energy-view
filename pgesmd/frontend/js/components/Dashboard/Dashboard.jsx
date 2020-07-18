@@ -1,15 +1,17 @@
 import React from "react";
-import EnergyChart from "./History/EnergyChart";
-import { EnergyHistory } from "../data-structures/EnergyHistory";
+import EnergyChart from "../History/EnergyChart";
+import { EnergyHistory } from "../../data-structures/EnergyHistory";
 import { sub, add, getYear, isBefore, set } from "date-fns";
-import { endOf } from "../functions/endOf";
-import { startOf } from "../functions/startOf";
-import AnnualTrend from "./History/AnnualTrend";
-import MiniPie from "./History/MiniPie";
-import TrendChart from "./Trends/TrendChart";
-import Trendline from "./History/Trendline";
-import PatternDay from "./Patterns/PatternDay";
-import { groupBy } from "../functions/groupBy";
+import { endOf } from "../../functions/endOf";
+import { startOf } from "../../functions/startOf";
+import AnnualTrend from "../History/AnnualTrend";
+import MiniPie from "../History/MiniPie";
+import TrendChart from "../Trends/TrendChart";
+import Trendline from "../History/Trendline";
+import PatternDay from "../Patterns/PatternDay";
+import { groupBy } from "../../functions/groupBy";
+import "./Dashboard.css";
+import CompleteHistoryLine from "./CompleteHistoryLine";
 
 const Dashboard = ({ energyHistory }) => {
   const latestWeek = new EnergyHistory(
@@ -45,19 +47,6 @@ const Dashboard = ({ energyHistory }) => {
     { start: energyHistory.firstDate, end: energyHistory.lastDate },
     "Complete"
   );
-  complete.chartOptions.scales.yAxes[0].ticks.suggestedMax = 1000;
-  complete.chartOptions.scales.yAxes[0].ticks.maxTicksLimit = 4;
-  complete.chartOptions.scales.xAxes[0].scaleLabel.display = false;
-  const colors = ["red", "green", "blue"];
-  complete.data.datasets.map((x, i) => {
-    x.type = "line";
-    if (i === 0) x.fill = true;
-    if (i === 1) x.fill = false;
-    if (i === 2) x.fill = "-1";
-    x.pointRadius = 0;
-    x.borderColor = colors[i];
-    return x;
-  });
 
   const dateMostRecent = energyHistory.lastDate;
   const dateFourWeeksAgo = endOf("day")(sub(dateMostRecent, { days: 28 }));
@@ -86,48 +75,53 @@ const Dashboard = ({ energyHistory }) => {
   };
 
   const dayGroups = groupBy("day")(energyHistory.database);
+  const recentDayGroups = dayGroups.slice(
+    dayGroups.length - 28,
+    dayGroups.length
+  );
   const yLabelWidth = 50;
   const dayTotals = getMeans(dayGroups, "total", 24).slice(0, 24);
+  const recentDayTotals = getMeans(recentDayGroups, "total", 24).slice(0, 24);
 
   return (
     <div className="main-tab-box">
       <h1>{energyHistory.friendlyName} Dashboard</h1>
-      <div className="dash-primary-row space-around">
-        <div className="short-stack">
-          <div className="narrow-row">
+      <hr />
+      <div className="dashboard-container columns dev-border">
+        <div className="recent dev-border">
+          <div className="annual-trend dev-border">
             <AnnualTrend energyHistory={latestMonth} />
+          </div>
+          <div className="active-trend dev-border">
             <Trendline
+              bigStyle={true}
               energyHistory={latestMonth}
               activeOrPassive="active"
-              name="Active Use"
+              name="Active Trend"
               customPeriodName="past 4 weeks"
             />
+          </div>
+          <div className="passive-trend dev-border">
             <Trendline
+              bigStyle={true}
               energyHistory={latestMonth}
               activeOrPassive="passive"
-              name="Passive Use"
+              name="Passive Trend"
               customPeriodName="past 4 weeks"
             />
           </div>
-          <EnergyChart energyHistory={latestWeek} />
-        </div>
-      </div>
-      <div className="dash-primary-row space-around">
-        <div>
-          <div className="short-stack">
-            <h4>Your normal usage each day</h4>
-            <PatternDay
+          <div className="week dev-border">
+            <EnergyChart
               energyHistory={latestWeek}
-              dayTotals={dayTotals}
-              yLabelWidth={yLabelWidth}
-              showLegend={false}
+              labelAxes={false}
+              yTicksLimit={4}
             />
           </div>
         </div>
-        <div>
+        <div className="pie dev-border">
           <MiniPie energyHistory={latestWeek} />
         </div>
-        <div>
+        <div className="insights dev-border">
           <ul>
             <li>Energy is used most intensely in the evenings</li>
             <li>Overall, passive use accounts for the most energy</li>
@@ -137,16 +131,46 @@ const Dashboard = ({ energyHistory }) => {
             </li>
           </ul>
         </div>
-      </div>
-      <div className="dash-primary-row space-around">
-        <div className="narrow-row space-around">
-          <EnergyChart energyHistory={complete} />
+        <div className="day dev-border">
+          <PatternDay
+            energyHistory={latestWeek}
+            dayTotals={dayTotals}
+            recentDayTotals={recentDayTotals}
+            yLabelWidth={yLabelWidth}
+            showLegend={true}
+            displayGridLines={false}
+            title={"Daily Pattern"}
+          />
+        </div>
+        <div className="complete dev-border">
+          <CompleteHistoryLine
+            energyHistory={complete}
+            labelAxes={false}
+            xTicksLimit={8}
+            yTicksLimit={4}
+          />
+        </div>
+        <div className="trend dev-border">
           <TrendChart
             getArrayArgs={[sliceLongTerm, "total"]}
             getRollingArrayArgs={[sliceLongTerm, "total", "month"]}
             title="Total Use"
             cacheKey="trend5" // this needs to be title + args
             order={0}
+            hideRawData={false}
+            widthClass={""}
+            squareClass={""}
+            showXAxesLabels={false}
+            replaceXAxesLabels={
+              <div className="pattern-week-labels-container">
+                <div className="label-complete-history">
+                  <div>
+                    Past {Math.round(sliceLongTerm.length / 24 / 365)} year
+                    {sliceLongTerm.length > 12 ? "s" : ""}
+                  </div>
+                </div>
+              </div>
+            }
           />
         </div>
       </div>

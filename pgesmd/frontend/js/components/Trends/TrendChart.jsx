@@ -14,7 +14,11 @@ const TrendChart = ({
   title,
   cacheKey,
   order,
-  hideRawData = true
+  hideRawData = true,
+  showXAxesLabels = true,
+  replaceXAxesLabels,
+  widthClass = "wide-228",
+  squareClass = "square-228",
 }) => {
   const [showLine, setShowLine] = useState(false);
   const [workerData, setWorkerData] = useState({
@@ -38,10 +42,10 @@ const TrendChart = ({
           }),
         order * 100
       );
-      trendWorker.terminate();  
+      trendWorker.terminate();
       localStorage.setItem(cacheKey, JSON.stringify(e.data));
     };
-    const cache = localStorage.getItem(cacheKey); 
+    const cache = localStorage.getItem(cacheKey);
     trendWorker.postMessage({ getArrayArgs, getRollingArrayArgs, cache });
   }, []);
 
@@ -51,7 +55,7 @@ const TrendChart = ({
   const trendData = [
     { x: dataToUseForTrend[0].x, y: trendPoints[0] },
     {
-      x: dataToUseForTrend[dataToUseForTrend.length - 1].x, 
+      x: dataToUseForTrend[dataToUseForTrend.length - 1].x,
       y: trendPoints[1],
     },
   ];
@@ -76,16 +80,15 @@ const TrendChart = ({
       hoverRadius: 6,
     },
     {
-      data: rawData,  
+      data: rawData,
       type: "scatter",
       label: "Readings",
       hidden: hideRawData,
       hoverRadius: 6,
-      
     },
   ];
 
-  if (!rawData) datasets.pop(); 
+  if (!rawData) datasets.pop();
 
   const data = {
     datasets: datasets,
@@ -101,8 +104,12 @@ const TrendChart = ({
     const date = new Date(tooltipItems[0].label);
     if (tooltipItems[0].datasetIndex === 0) {
       return format(date, "eeee, MMM do, ha");
-    } 
+    }
   };
+
+  const afterFit = showXAxesLabels
+    ? (scaleInstance) => (scaleInstance.height = 50)
+    : (scaleInstance) => (scaleInstance.height = 0);
 
   const options = {
     animation: {
@@ -143,6 +150,7 @@ const TrendChart = ({
     scales: {
       xAxes: [
         {
+          afterFit: afterFit,
           gridLines: {
             display: false,
           },
@@ -162,18 +170,19 @@ const TrendChart = ({
 
   const content =
     rollingData.length > 1 ? (
-      <div className="pattern-flex-1 wide-228">
+      <div className={`pattern-flex-1 ${widthClass}`}>
         <h4>{title}</h4>
         <div className="info-details">{makeTrendDescription(trendPercent)}</div>
-        <div className="pattern-chartJS-box square-228">
+        <div className={`pattern-chartJS-box ${squareClass}`}>
           <Line data={data} options={options} />
         </div>
+        {replaceXAxesLabels}
       </div>
     ) : (
-      <div className="pattern-flex-1 wide-228">
+      <div className={`pattern-flex-1 ${widthClass}`}>
         <h4>{title}</h4>
         <div className="info-details">loading...</div>
-        <div className="pattern-chartJS-box square-228">
+        <div className={`pattern-chartJS-box ${squareClass}`}>
           <Line data={data} options={options} />
         </div>
       </div>

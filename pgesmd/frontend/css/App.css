@@ -34,6 +34,18 @@ footer {
   flex: 1;
 }
 
+.mini-pie {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.pie-dropdown {
+  flex: 1;
+  width: 50%;
+}
+
 .sidebar-icon {
   color: #5f5566;
 }
@@ -51,7 +63,7 @@ footer {
   flex-direction: column;
   padding-top: 20px;
   background-color: #f6f8ff;
-  width: 130px;
+  max-width: 130px;
   padding-right: 20px;
   flex: 1;
 }
@@ -138,7 +150,8 @@ footer {
   flex-direction: column;
   flex: 1;
   text-align: center;
-  margin-right: 50px;
+  margin-right: 40px;
+  height: 100%
 }
 
 .pattern-flex-2 {
@@ -156,6 +169,7 @@ footer {
 
 .pattern-chartJS-box {
   flex: 1;
+  min-height: 0;
   max-height: 100%;
   display: flex;
   align-items: center;
@@ -429,6 +443,10 @@ footer {
   display: flex;
   justify-content: center;
   font-size: 26pt;
+}
+
+.info-big-number > svg {
+  align-self: center;
 }
 
 .info-medium-number {
