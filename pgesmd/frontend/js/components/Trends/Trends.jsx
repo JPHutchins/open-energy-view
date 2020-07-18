@@ -60,7 +60,6 @@ const Trends = ({ energyHistory }) => {
           order={2}
         />
         <TrendChart
-          getArrayArgs={[sliceRecent, "spike"]}
           getRollingArrayArgs={[sliceRecent, "spike", "day"]}
           title="Appliance Use"
           cacheKey="trend4"
@@ -94,7 +93,6 @@ const Trends = ({ energyHistory }) => {
           hideRawData={false}
         />
         <TrendChart
-          getArrayArgs={[sliceLongterm, "spike"]}
           getRollingArrayArgs={[sliceLongterm, "spike", "month"]}
           title="Appliance Use"
           cacheKey="trend8"
