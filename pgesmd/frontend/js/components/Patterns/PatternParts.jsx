@@ -40,6 +40,11 @@ const PatternParts = ({ yLabelWidth, yearParts }) => {
   const options = {
     legend: {
       display: true,
+      position: "top",
+      labels: {
+        boxWidth: 10,
+        fontSize: 10,
+      },
       onClick: (e) => e.stopPropagation(),
     },
     hover: {

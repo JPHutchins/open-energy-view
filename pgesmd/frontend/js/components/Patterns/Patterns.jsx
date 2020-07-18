@@ -231,28 +231,16 @@ const Patterns = ({ energyHistory }) => {
         Show Appliance Usage?
       </div>
       <div className="day-week-pattern">
-        <div className="pattern-flex-1">
-          <h3>Daily Energy Pattern</h3>
-          <div className="pattern-chartJS-box">
-            <PatternDay
-              energyHistory={energyHistory}
-              dayTotals={dayTotals}
-              recentDayTotals={recentDayTotals}
-              suggestedMin={suggestedMin}
-              suggestedMax={suggestedMax}
-              yLabelWidth={yLabelWidth}
-            />
-          </div>
-          <div className="pattern-week-labels-container">
-            <div className="pattern-labels-week">
-              <div>Night</div>
-              <div>Day</div>
-              <div>Evening</div>
-            </div>
-          </div>
-        </div>
+        <PatternDay
+          energyHistory={energyHistory}
+          dayTotals={dayTotals}
+          recentDayTotals={recentDayTotals}
+          suggestedMin={suggestedMin}
+          suggestedMax={suggestedMax}
+          yLabelWidth={yLabelWidth}
+        />
         <div className="pattern-flex-2">
-          <h3>Weekly Energy Pattern</h3>
+          <h4>Weekly Energy Pattern</h4>
           <div className="pattern-chartJS-box">
             <PatternWeek
               energyHistory={energyHistory}
@@ -278,7 +266,7 @@ const Patterns = ({ energyHistory }) => {
       </div>
       <div className="day-week-pattern">
         <div className="pattern-flex-1">
-          <h3>Yearly Energy Pattern</h3>
+          <h4>Yearly Energy Pattern</h4>
           <div className="pattern-chartJS-box">
             <PatternYear yearTotals={yearTotals} yLabelWidth={yLabelWidth} />
           </div>
@@ -300,7 +288,7 @@ const Patterns = ({ energyHistory }) => {
           </div>
         </div>
         <div className="pattern-flex-1">
-          <h3>Yearly Proportion By Activity</h3>
+          <h4>Yearly Proportion By Activity</h4>
           <div className="pattern-chartJS-box">
             <PatternParts yearParts={yearParts} yLabelWidth={yLabelWidth} />
           </div>
