@@ -57,21 +57,31 @@ const title = (tooltipItem, energyHistory) => {
 const activeLabel = (tooltipItem, energyHistory) => {
   const datapoint = energyHistory.chartData.get(tooltipItem.index);
   const active = datapoint.get("active");
-  return `${readableWattHours(active)} average Active Use`;
+  return `${readableWattHours(active)} active`;
 };
 
 const passiveLabel = (tooltipItem, energyHistory) => {
   const datapoint = energyHistory.chartData.get(tooltipItem.index);
   const passive = datapoint.get("passive");
-  return `${readableWattHours(passive)} average Passive Use`;
+  return `${readableWattHours(passive)} passive`;
 };
+
+const spikeLabel = (tooltipItem, energyHistory) => {
+  const datapoint = energyHistory.chartData.get(tooltipItem.index);
+  const spike = datapoint.get("spike");
+  return `${readableWattHours(spike)} appliance`;
+};
+
+const labelCallbacks = [passiveLabel, activeLabel, spikeLabel];
+
 export const chartOptions = (energyHistory) => {
   const tooltip = {
     label: (tooltipItem) => {
       if (!tooltipItem) return;
-      return tooltipItem.datasetIndex
-        ? activeLabel(tooltipItem, energyHistory)
-        : passiveLabel(tooltipItem, energyHistory);
+      return labelCallbacks[tooltipItem.datasetIndex](
+        tooltipItem,
+        energyHistory
+      );
     },
     title: (tooltipItems) => {
       return title(tooltipItems[0], energyHistory);
