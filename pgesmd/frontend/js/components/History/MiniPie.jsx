@@ -123,7 +123,7 @@ const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" })
       case "activity":
         return "Activity";
       case "average":
-        return "Average Activity";
+        return "Intensity";
     }
   };
 
@@ -132,9 +132,9 @@ const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" })
       case "total":
         return "Shows how much energy was used during each daily period";
       case "activity":
-        return "Shows how much energy was actively used during each daily period compared to passive usage (fridge, AC, network, IoT)";
+        return "Shows how much energy each activity used";
       case "average":
-        return "Shows the average energy being actively used during each daily period";
+        return "Shows how intensely energy is used during each daily period";
     }
   };
 
@@ -159,6 +159,7 @@ const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" })
 
   const pieOptions = showOptions ? (
     <DropdownButton
+    className="pie-dropdown"
       size="sm"
       title={makeTitle(currentView)}
       onSelect={(e) => e != currentView && handleClick(e)}
@@ -170,11 +171,10 @@ const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" })
   ) : null
 
   return (
-    <>
-      <div className="kilowatt-hour">Activities</div>
+    <div className="mini-pie">
       <Pie data={data} options={options} />
       {pieOptions}
-    </>
+    </div>
   );
 };
 
