@@ -102,10 +102,12 @@ def create_app() -> Flask:
                 return f"Could not parse message: {data}", 500
             except IndexError as e:
                 print(e, data)
+                auth = get_auth_file()
+                api = SelfAccessApi(*auth)
+                api.async_request_latest_data()
                 return f'No index "0" in parsed XML: {data}', 500
 
             auth = get_auth_file()
-            print(auth)
             api = SelfAccessApi(*auth)
 
             xml = api.get_espi_data(resource_uri)
