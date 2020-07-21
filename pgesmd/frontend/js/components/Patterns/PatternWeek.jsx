@@ -78,7 +78,7 @@ const PatternWeek = ({
       {
         label: "Past 4 Weeks",
         data: recentWeekTotals,
-        borderColor: "green",
+        borderColor: "#5f5566",
       },
     ],
   };
