@@ -92,12 +92,10 @@ footer {
 .day-week-pattern {
   display: flex;
   margin-bottom: 50px;
-  border: solid;
-  border-color: rgb(221, 216, 211);
-  border-width: 2px;
   padding: 10px;
   flex: 1;
   min-height: 300px;
+  min-width: 900px;
 }
 .dash-primary-row {
   display: flex;
@@ -178,12 +176,13 @@ footer {
 
 .square-228 {
   height: 228px;
-  width: 228px;
+  min-width: 208px;
 }
 
 .wide-228 {
-  max-width: 228px;
+  min-width: 228px;
   margin: 0;
+  padding: 10px;
 }
 
 .pattern-div-2-rectangle {
