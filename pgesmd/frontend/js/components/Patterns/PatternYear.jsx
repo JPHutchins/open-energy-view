@@ -56,6 +56,9 @@ const PatternYear = ({ yLabelWidth, yearTotals }) => {
   };
 
   const options = {
+    animation: {
+      duration: 0,
+    },
     legend: {
       display: true,
       position: "top",

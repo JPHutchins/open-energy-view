@@ -129,7 +129,7 @@ const TrendChart = ({
 
   const options = {
     animation: {
-      duration: 500,
+      duration: 0,
     },
     legend: {
       display: true,

@@ -109,6 +109,9 @@ const PatternWeek = ({
   };
 
   const options = {
+    animation: {
+      duration: 0,
+    },
     legend: {
       display: true,
       position: "top",
