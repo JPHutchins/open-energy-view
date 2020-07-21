@@ -13,6 +13,7 @@ const TrendChart = ({
   rollingLabel = "Average",
   title,
   cacheKey,
+  cachePrefix,
   order,
   hideRawData = true,
   showXAxesLabels = true,
@@ -28,6 +29,8 @@ const TrendChart = ({
     rollingData: [{}],
   });
   const { trendPercent, trendPoints, rawData, rollingData } = workerData;
+
+  cacheKey = `${cachePrefix}${cacheKey}`
 
   useEffect(() => {
     const trendWorker = new Worker("./trend.worker.js", { type: "module" });

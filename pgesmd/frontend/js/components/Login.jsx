@@ -16,7 +16,7 @@ const Login = props => {
       if (res.status === 401) {
         setBadCreds("Incorrect email and/or password.");
       } else {
-        cookie.save("logged_in", true, { maxAge: 900 });
+        cookie.save("logged_in", credentials.email, { maxAge: 900 });
         props.callback();
         props.history.push("/");
       }
@@ -24,12 +24,12 @@ const Login = props => {
   }
 
   function handleDemo(e) {
-    const creds = { email: "jph@demo.com", password: "demo" };
-    AuthService.login(creds).then(res => {
+    const credentials = { email: "jph@demo.com", password: "demo" };
+    AuthService.login(credentials).then(res => {
       if (res.status === 401) {
         throw Error("That's weird, the demo credentials are missing.");
       } else {
-        cookie.save("logged_in", true, { maxAge: 900 });
+        cookie.save("logged_in", credentials.email, { maxAge: 900 });
         props.callback();
         props.history.push("/");
       }

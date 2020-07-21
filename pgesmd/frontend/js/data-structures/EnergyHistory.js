@@ -20,6 +20,7 @@ export class EnergyHistory {
     this.response = response;
     this.database = response.database;
     this.hourlyMean = response.hourlyMean;
+    this.email = response.email;
     this.friendlyName = response.friendlyName;
     this.lastUpdate = response.lastUpdate;
     this.partitionOptions = response.partitionOptions;

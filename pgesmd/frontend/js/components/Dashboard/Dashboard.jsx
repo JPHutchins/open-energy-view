@@ -156,6 +156,7 @@ const Dashboard = ({ energyHistory }) => {
             getRollingArrayArgs={[sliceLongTerm, "total", "month"]}
             title="Total Use"
             cacheKey="trend5" // this needs to be title + args
+            cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
             order={0}
             hideRawData={false}
             widthClass={""}
