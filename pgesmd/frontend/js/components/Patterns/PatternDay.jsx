@@ -12,6 +12,9 @@ const PatternDay = ({
   dayTotals,
   recentDayTotals = null,
   showLegend = true,
+  showXAxesLabels = false,
+  displayGridLines=true,
+  title="Daily Energy Pattern"
 }) => {
   const [gradient, setGradient] = useState("");
 
@@ -69,7 +72,7 @@ const PatternDay = ({
   const recentDayGraph = {
     label: "Past 4 Weeks",
     data: recentDayTotals,
-    borderColor: "green",
+    borderColor: "gray",
   };
 
   const dataDay = {
@@ -100,9 +103,18 @@ const PatternDay = ({
     return `${Math.round(tooltipItems.yLabel)} Wh`;
   };
 
+  const afterFit = showXAxesLabels
+    ? (scaleInstance) => (scaleInstance.height = 50)
+    : (scaleInstance) => (scaleInstance.height = 0);
+
   const options = {
     legend: {
       display: showLegend,
+      position: "top",
+      labels: {
+        boxWidth: 10,
+        fontSize: 10,
+      },
     },
     hover: {
       mode: "nearest",
@@ -126,11 +138,9 @@ const PatternDay = ({
     scales: {
       xAxes: [
         {
-          afterFit: function (scaleInstance) {
-            scaleInstance.height = 0;
-          },
+          afterFit: afterFit,
           gridLines: {
-            display: true,
+            display: displayGridLines,
           },
         },
       ],
@@ -148,6 +158,21 @@ const PatternDay = ({
     },
   };
 
-  return <Line ref={dayChart} data={dataDay} options={options} />;
+  return (
+    <div className="pattern-flex-1">
+      <h4>{title}</h4>
+      <div className="pattern-chartJS-box">
+        <Line ref={dayChart} data={dataDay} options={options} />
+      </div>
+
+      <div className="pattern-week-labels-container">
+        <div className="pattern-labels-week">
+          <div>Night</div>
+          <div>Day</div>
+          <div>Evening</div>
+        </div>
+      </div>
+    </div>
+  );
 };
 export default PatternDay;

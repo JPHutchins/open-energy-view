@@ -20,6 +20,7 @@ export class EnergyHistory {
     this.response = response;
     this.database = response.database;
     this.hourlyMean = response.hourlyMean;
+    this.email = response.email;
     this.friendlyName = response.friendlyName;
     this.lastUpdate = response.lastUpdate;
     this.partitionOptions = response.partitionOptions;
@@ -97,29 +98,28 @@ export class EnergyHistory {
       ),
       datasets: [
         {
-          label: "Passive Consumption",
-          //type: "bar",
+          label: "Passive",
           data: this.passiveGraph,
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
           )
             .toArray()
             .map((x) => editHsl(x, { s: (s) => s / 2, l: (l) => l + 20 })),
-          // options
           pointRadius: 0,
           barThickness: "flex",
+          order: 0,
         },
         {
-          label: "Active Consumption",
-          //type: "bar",
+          label: "Active",
           data: this.activeGraph,
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
           ).toArray(),
           barThickness: "flex",
+          order: 1,
         },
         {
-          label: "Spike Consumption",
+          label: "Appliance",
           data: this.spikeGraph,
           backgroundColor: makeColorsArray(this.partitionOptions)(
             this._graphData
@@ -132,6 +132,7 @@ export class EnergyHistory {
               })
             ),
           barThickness: "flex",
+          order: 2,
         },
       ],
     };

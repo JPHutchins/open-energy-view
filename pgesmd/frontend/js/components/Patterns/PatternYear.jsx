@@ -58,6 +58,11 @@ const PatternYear = ({ yLabelWidth, yearTotals }) => {
   const options = {
     legend: {
       display: true,
+      position: "top",
+      labels: {
+        boxWidth: 10,
+        fontSize: 10,
+      },
     },
     hover: {
       mode: "nearest",

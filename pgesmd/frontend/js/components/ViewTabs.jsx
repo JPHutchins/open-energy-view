@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Dashboard from "./Dashboard"
+import Dashboard from "./Dashboard/Dashboard"
 import Patterns from "./Patterns/Patterns";
 import Trends from "./Trends/Trends";
 import EnergyDisplay from "./History/EnergyDisplay";

@@ -1,5 +1,6 @@
 """API endpoints for viewing data."""
 from flask import jsonify
+from time import time
 import json
 from flask_restful import Resource, reqparse
 from flask_jwt_extended import (
@@ -26,6 +27,7 @@ auth_parser.add_argument("password", help="Cannot be blank", required=True)
 
 get_data_parser = reqparse.RequestParser()
 get_data_parser.add_argument("source", required=False)
+get_data_parser.add_argument("lastUpdate", required=False)
 get_data_parser.add_argument("name", required=False)
 get_data_parser.add_argument("thirdPartyId", required=False)
 get_data_parser.add_argument("clientId", required=False)
@@ -158,6 +160,7 @@ class GetEnergyHistoryHours(Resource):
         data = get_data_parser.parse_args()
         if not data["source"] or data["source"] == "None":
             return
+
         user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
         source = (
             db.session.query(models.PgeSmd)
@@ -165,6 +168,17 @@ class GetEnergyHistoryHours(Resource):
             .with_parent(user)
             .first()
         )
+
+        if (data["lastUpdate"]) and (int(data["lastUpdate"]) == source.last_update):
+            return (
+                {
+                    "useLocalStorage": True,
+                    "email": user.email,
+                    "friendlyName": source.friendly_name,
+                },
+                200,
+            )
+
         hours = (
             db.session.query(models.Espi)
             .filter_by(pge_id=source.third_party_id, duration=3600)
@@ -174,33 +188,16 @@ class GetEnergyHistoryHours(Resource):
             [f"{entry.start//3600}{entry.watt_hours}" for entry in hours]
         )
         response = {
+            "useLocalStorage": False,
             "utility": "pge",
             "interval": 3600,
+            "email": user.email,
             "friendlyName": data["source"],
-            "lastUpdate": None,
+            "lastUpdate": source.last_update,
             "partitionOptions": source.partition_options,
             "database": database,
         }
-        return response
-
-
-class GetHours(Resource):
-    @jwt_required
-    def post(self):
-        data = get_data_parser.parse_args()
-        if not data["source"] or data["source"] == "None":
-            return
-        user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
-        source = (
-            db.session.query(models.PgeSmd)
-            .filter_by(friendly_name=data["source"])
-            .with_parent(user)
-            .first()
-        )
-        hours = (
-            db.session.query(models.Hour).filter_by(pge_id=source.third_party_id).all()
-        )
-        return ",".join([f"{entry.start//3600}{entry.watt_hours}" for entry in hours])
+        return response, 200
 
 
 class AddDemoPge(Resource):
@@ -234,6 +231,7 @@ class TestAddXml(Resource):
         bulk_id = get_bulk_id_from_xml(xml)
 
         data_update = []
+        last_entry = ""
         for entry in parse_espi_data(xml):
             data_update.append(
                 {
@@ -243,11 +241,24 @@ class TestAddXml(Resource):
                     "watt_hours": entry[2],
                 }
             )
+            last_entry = entry[0]
         try:
             db.session.bulk_insert_mappings(models.Espi, data_update)
             db.session.commit()
         except exc.IntegrityError:
+            db.session.rollback()
             db.engine.execute(
                 "INSERT OR IGNORE INTO espi (pge_id, start, duration, watt_hours) VALUES (:pge_id, :start, :duration, :watt_hours)",
                 data_update,
             )
+        finally:
+            timestamp = int(time() * 1000)
+            pgesmd_row = db.session.query(models.PgeSmd).filter_by(
+                third_party_id=bulk_id
+            )
+            print(pgesmd_row.update({"last_entry": last_entry}))
+            pgesmd_row.update({"last_update": timestamp})
+            db.session.commit()
+
+        return {}, 200
+

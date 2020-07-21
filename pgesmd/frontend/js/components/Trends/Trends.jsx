@@ -44,6 +44,7 @@ const Trends = ({ energyHistory }) => {
           getRollingArrayArgs={[sliceRecent, "total", "day"]}
           title="Total Use"
           cacheKey="trend1"
+          cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
           order={0}
         />
         <TrendChart
@@ -51,19 +52,21 @@ const Trends = ({ energyHistory }) => {
           getRollingArrayArgs={[sliceRecent, "active", "day"]}
           title="Active Use"
           cacheKey="trend2"
+          cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
           order={1}
         />
         <TrendChart
           getRollingArrayArgs={[sliceRecent, "passive", "day"]}
           title="Passive Use"
           cacheKey="trend3"
+          cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
           order={2}
         />
         <TrendChart
-          getArrayArgs={[sliceRecent, "spike"]}
           getRollingArrayArgs={[sliceRecent, "spike", "day"]}
           title="Appliance Use"
           cacheKey="trend4"
+          cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
           order={3}
         />
       </div>
@@ -74,6 +77,7 @@ const Trends = ({ energyHistory }) => {
           getRollingArrayArgs={[sliceLongterm, "total", "month"]}
           title="Total Use"
           cacheKey="trend5"
+          cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
           order={4}
           hideRawData={false}
         />
@@ -82,6 +86,7 @@ const Trends = ({ energyHistory }) => {
           getRollingArrayArgs={[sliceLongterm, "active", "month"]}
           title="Active Use"
           cacheKey="trend6"
+          cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
           order={5}
           hideRawData={false}
         />
@@ -90,14 +95,15 @@ const Trends = ({ energyHistory }) => {
           getRollingArrayArgs={[sliceLongterm, "passive", "month"]}
           title="Passive Use"
           cacheKey="trend7"
+          cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
           order={6}
           hideRawData={false}
         />
         <TrendChart
-          getArrayArgs={[sliceLongterm, "spike"]}
           getRollingArrayArgs={[sliceLongterm, "spike", "month"]}
           title="Appliance Use"
           cacheKey="trend8"
+          cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
           order={7}
         />
       </div>
