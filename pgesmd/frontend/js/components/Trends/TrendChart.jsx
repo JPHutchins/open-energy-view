@@ -35,8 +35,9 @@ const TrendChart = ({
 
   useEffect(() => {
     const trendWorker = new Worker("./trend.worker.js", { type: "module" });
+    let timeoutInstance = "";
     trendWorker.onmessage = (e) => {
-      setTimeout(
+      timeoutInstance = setTimeout(
         () =>
           setWorkerData({
             trendPercent: e.data.trendPercent,
@@ -57,6 +58,11 @@ const TrendChart = ({
     };
     const cache = localStorage.getItem(cacheKey);
     trendWorker.postMessage({ getArrayArgs, getRollingArrayArgs, cache });
+
+    return () => {
+      trendWorker.terminate();
+      clearTimeout(timeoutInstance)
+    }
   }, []);
 
   const greenOrOrange = trendPercent <= 0 ? "green" : "orange";
