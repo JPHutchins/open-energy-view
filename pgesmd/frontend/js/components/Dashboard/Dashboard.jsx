@@ -12,8 +12,14 @@ import PatternDay from "../Patterns/PatternDay";
 import { groupBy } from "../../functions/groupBy";
 import "./Dashboard.css";
 import CompleteHistoryLine from "./CompleteHistoryLine";
+import Insights from "./Insights";
+import { useState } from "react";
 
 const Dashboard = ({ energyHistory }) => {
+  const [mostIntensePart, setMostIntensePart] = useState("");
+  const [mostUsedPart, setMostUsedPart] = useState("");
+  const [trendingDescription, setTrendingDescription] = useState("");
+
   const latestWeek = new EnergyHistory(
     energyHistory.response,
     {
@@ -119,18 +125,17 @@ const Dashboard = ({ energyHistory }) => {
           </div>
         </div>
         <div className="pie dev-border">
-          <MiniPie energyHistory={latestWeek} />
+          <MiniPie
+            energyHistory={energyHistory}
+            setMostIntensePart={setMostIntensePart}
+            setMostUsedPart={setMostUsedPart}
+          />
         </div>
-        <div className="insights dev-border">
-          <ul>
-            <li>Energy is used most intensely in the evenings</li>
-            <li>Overall, passive use accounts for the most energy</li>
-            <li>
-              Energy use is trending up year over year mostly due to increase
-              passive use
-            </li>
-          </ul>
-        </div>
+        <Insights
+          mostIntensePart={mostIntensePart}
+          mostUsedPart={mostUsedPart}
+          trendingDescription={trendingDescription}
+        />
         <div className="day dev-border">
           <PatternDay
             energyHistory={latestWeek}
@@ -158,6 +163,7 @@ const Dashboard = ({ energyHistory }) => {
             cacheKey="trend5" // this needs to be title + args
             cachePrefix={`${energyHistory.email}${energyHistory.friendlyName}`}
             order={0}
+            setTrendingDescription={setTrendingDescription}
             hideRawData={false}
             widthClass={""}
             squareClass={""}

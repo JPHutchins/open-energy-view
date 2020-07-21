@@ -6,17 +6,24 @@ import {
   Tooltip,
 } from "react-bootstrap";
 import { Pie } from "react-chartjs-2";
-import { sum } from "ramda";
+import { sum, max } from "ramda";
 import { readableWattHours } from "../../functions/readableWattHours";
 import { useState } from "react";
 import { lookupPartitionSums } from "../../functions/lookupPartitionSums";
 import { differenceInMilliseconds, roundToNearestMinutes } from "date-fns";
 import { editHsl } from "../../functions/editHsl";
+import { useEffect } from "react";
 
 /**
  * Return a flexibly sized ChartJS pie chart.
  */
-const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" }) => {
+const MiniPie = ({
+  energyHistory,
+  showOptions = true,
+  startingView = "activity",
+  setMostIntensePart = () => null,
+  setMostUsedPart = () => null,
+}) => {
   const [currentView, setCurrentView] = useState(startingView);
   const partitionSums = lookupPartitionSums(
     energyHistory.partitionSums,
@@ -76,6 +83,27 @@ const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" })
         return;
     }
   };
+
+  const mostIntense = makePieData("average").reduce(
+    (acc, x, i) => {
+      if (x > acc.value) return { value: x, index: i };
+      return acc;
+    },
+    { value: -Infinity }
+  );
+
+  const mostUsed = makePieData("activity").reduce(
+    (acc, x, i) => {
+      if (x > acc.value) return { value: x, index: i };
+      return acc;
+    },
+    { value: -Infinity }
+  );
+
+  useEffect(() => {
+    setMostUsedPart(labels[mostUsed.index]);
+    setMostIntensePart(labels[mostIntense.index]);
+  }, []);
 
   const pieData = makePieData(currentView);
 
@@ -159,7 +187,7 @@ const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" })
 
   const pieOptions = showOptions ? (
     <DropdownButton
-    className="pie-dropdown"
+      className="pie-dropdown"
       size="sm"
       title={makeTitle(currentView)}
       onSelect={(e) => e != currentView && handleClick(e)}
@@ -168,7 +196,7 @@ const MiniPie = ({ energyHistory, showOptions = true, startingView="activity" })
       {makeMenuItem("activity")}
       {makeMenuItem("average")}
     </DropdownButton>
-  ) : null
+  ) : null;
 
   return (
     <div className="mini-pie">

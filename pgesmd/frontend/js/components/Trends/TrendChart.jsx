@@ -15,6 +15,7 @@ const TrendChart = ({
   cacheKey,
   cachePrefix,
   order,
+  setTrendingDescription = () => null,
   hideRawData = true,
   showXAxesLabels = true,
   replaceXAxesLabels,
@@ -30,7 +31,7 @@ const TrendChart = ({
   });
   const { trendPercent, trendPoints, rawData, rollingData } = workerData;
 
-  cacheKey = `${cachePrefix}${cacheKey}`
+  cacheKey = `${cachePrefix}${cacheKey}`;
 
   useEffect(() => {
     const trendWorker = new Worker("./trend.worker.js", { type: "module" });
@@ -45,6 +46,12 @@ const TrendChart = ({
           }),
         order * 100
       );
+      if (e.data.trendPercent === 0)
+        setTrendingDescription({ upDownFlat: "flat" });
+      else if (e.data.trendPercent > 0)
+        setTrendingDescription({ upDownFlat: "up" });
+      else if (e.data.trendPercent < 0)
+        setTrendingDescription({ upDownFlat: "down" });
       trendWorker.terminate();
       localStorage.setItem(cacheKey, JSON.stringify(e.data));
     };
