@@ -75,9 +75,13 @@ def create_app() -> Flask:
         # x = conn.execute(models.Espi.__table__.insert(), data_update)
         # print(x)
 
-        @app.route("/")
-        def index():
-            return render_template("index.html")
+        # @app.route("/")
+        # def index():
+        #     return render_template("index.html")
+
+        # @app.route("/58.bundle.worker.js")
+        # def worker():
+        #     return send_from_directory(app.static_folder, "58.bundle.worker.js")
 
         @app.route("/pge_false", methods=["GET"])
         def pge_test():

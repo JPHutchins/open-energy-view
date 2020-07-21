@@ -157,6 +157,6 @@ const displayFormats = {
     month: "MMMM",
   },
   month: {
-    month: "MMMM YYYY",
+    month: "MMM YYYY",
   },
 };

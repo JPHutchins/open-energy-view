@@ -2,11 +2,14 @@ import { getTime, add } from "date-fns";
 import { prepend, slice } from "ramda";
 import { toDateInterval } from "./toDateInterval";
 import { indexInDb } from "./indexInDb";
-import { startOf } from "./startOf"
+import { startOf } from "./startOf";
 
 export const groupBy = (windowSize) => (list) => {
-  if (list.size <= 0) {
-    return [];
+  const immutable = list.size != undefined ? true : false;
+
+  const length = immutable ? list.size : list.length;
+  if (length <= 0) {
+    return []; 
   }
 
   const guess = {
@@ -17,13 +20,17 @@ export const groupBy = (windowSize) => (list) => {
     year: 8760,
   }[windowSize];
 
-  const start = startOf(windowSize)(new Date(list.first().get("x")));
+  const first = immutable
+    ? new Date(list.first().get("x"))
+    : new Date(list[0].x);
+
+  const start = startOf(windowSize)(first);
   const endTime = getTime(add(start, toDateInterval(windowSize)));
 
   const endIndex = list[guess] === endTime ? guess : indexInDb(list)(endTime);
 
   return prepend(
     slice(0, endIndex, list),
-    groupBy(windowSize)(list.slice(endIndex, list.size))
+    groupBy(windowSize)(list.slice(endIndex, length))
   );
 };

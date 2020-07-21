@@ -1,15 +1,17 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
+import { format } from "date-fns/esm";
 
-const TrendSmooth = ({ dataset, smooth }) => {
+const TrendPassive = ({ chartData }) => {
   const data = {
     //labels: new Array(679).fill("Jan"),
     datasets: [
       {
-        data: dataset,
-        type: "scatter",
+        data: chartData,
+        label: "Day to Day Average",
+        borderColor: "#5f5566",
+        fill: false,
       },
-      {data: smooth}
     ],
   };
 
@@ -19,6 +21,14 @@ const TrendSmooth = ({ dataset, smooth }) => {
     const labels = data.datasets.map((x) => x.label);
     const label = labels[tooltipItems.datasetIndex];
     return `${Math.round(tooltipItems.yLabel)} ${label} Whs`;
+  };
+
+  const tooltipTitle = (tooltipItems) => {
+    const date = new Date(tooltipItems[0].label);
+    if (tooltipItems[0].datasetIndex === 0) {
+      return format(date, "eeee, MMM do, ha");
+    }
+    return format(date, "eeee, MMM do");
   };
 
   const options = {
@@ -32,7 +42,7 @@ const TrendSmooth = ({ dataset, smooth }) => {
     tooltips: {
       callbacks: {
         label: (tooltipItems) => tooltipLabelYear(tooltipItems),
-        title: () => "Average Usage",
+        title: (tooltipItems) => tooltipTitle(tooltipItems),
       },
       mode: "index",
       intersect: false,
@@ -47,9 +57,6 @@ const TrendSmooth = ({ dataset, smooth }) => {
     scales: {
       xAxes: [
         {
-          afterFit: function (scaleInstance) {
-            scaleInstance.height = 0;
-          },
           gridLines: {
             display: false,
           },
@@ -68,12 +75,12 @@ const TrendSmooth = ({ dataset, smooth }) => {
   };
 
   return (
-    <div className="pattern-flex-1">
-      <h3>Yearly Energy Pattern</h3>
-      <div className="pattern-chartJS-box">
+    <div className="pattern-flex-1 wide-228">
+      <h3>Active Usage</h3>
+      <div className="pattern-chartJS-box square-228">
         <Line data={data} options={options} />
       </div>
     </div>
   );
 };
-export default TrendSmooth;
+export default TrendPassive;

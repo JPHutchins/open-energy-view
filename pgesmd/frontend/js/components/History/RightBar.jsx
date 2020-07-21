@@ -3,7 +3,7 @@ import Trendline from "./Trendline";
 import MiniPie from "./MiniPie";
 import ViewTotal from "./ViewTotal";
 import CarbonFootprint from "./CarbonFootprint";
-import "../../css/App.css";
+import "../../../css/App.css";
 import AnnualTrend from "./AnnualTrend";
 
 const RightBar = ({ energyHistory }) => {

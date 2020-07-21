@@ -1,5 +1,5 @@
 import React from "react";
-import { truncateNumerals } from "../functions/truncateNumerals";
+import { truncateNumerals } from "../../functions/truncateNumerals";
 
 /**
  * Returns a div displaying the lbs of carbon used during the view window.

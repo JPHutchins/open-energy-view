@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import PatternChart from "./PatternChart";
-import Trends from "./Trends";
-import EnergyDisplay from "./EnergyDisplay";
+import Dashboard from "./Dashboard"
+import Patterns from "./Patterns/Patterns";
+import Trends from "./Trends/Trends";
+import EnergyDisplay from "./History/EnergyDisplay";
 import { mdiGaugeLow } from "@mdi/js";
 import { mdiChartBellCurve } from "@mdi/js";
 import { mdiChartBar } from "@mdi/js";
@@ -21,7 +22,7 @@ const ViewTabs = ({ energyDisplayItem }) => {
       icon: (
         <Icon className="sidebar-icon" color="#5f5566" path={mdiGaugeLow} />
       ),
-      component: <>Dashboard</>,
+      component: <Dashboard energyHistory={energyHistory} />,
     },
     {
       title: "Patterns",
@@ -33,7 +34,7 @@ const ViewTabs = ({ energyDisplayItem }) => {
         />
       ),
       component: (
-        <PatternChart
+        <Patterns
           energyHistory={
             energyDisplayItem.component.props.energyHistoryInstance
           }
@@ -43,11 +44,7 @@ const ViewTabs = ({ energyDisplayItem }) => {
     {
       title: "Trends",
       icon: (
-        <Icon
-          className="sidebar-icon"
-          color="#5f5566"
-          path={mdiTrendingUp}
-        />
+        <Icon className="sidebar-icon" color="#5f5566" path={mdiTrendingUp} />
       ),
       component: (
         <Trends
@@ -94,9 +91,8 @@ const ViewTabs = ({ energyDisplayItem }) => {
   const makeTab = (tabIndex) => {
     if (tabIndex === selectedTab) {
       return (
-        <div className="tab-box">
+        <div className="tab-box" key={tabIndex}>
           <div
-            key={tabIndex}
             className="tab tab-selected"
             value={tabIndex}
             onClick={handleClick}
@@ -108,13 +104,8 @@ const ViewTabs = ({ energyDisplayItem }) => {
       );
     }
     return (
-      <div className="tab-box">
-        <div
-          key={tabIndex}
-          className="tab"
-          value={tabIndex}
-          onClick={handleClick}
-        >
+      <div className="tab-box" key={tabIndex}>
+        <div className="tab" value={tabIndex} onClick={handleClick}>
           {views[tabIndex].icon}
           {views[tabIndex].title}
         </div>

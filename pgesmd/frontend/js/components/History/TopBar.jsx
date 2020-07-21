@@ -23,17 +23,19 @@ const TopBar = ({ energyHistory }) => {
           "MMMM do, yyyy"
         )}`;
       default:
-        return `${format(energyHistory.startDate, "MMM do, yy")} - ${format(
+        return `${format(energyHistory.startDate, "MMM do, yyyy")} - ${format(
           energyHistory.endDate,
-          "MMMM do, yy"
+          "MMM do, yyyy"
         )}`;
     }
   };
 
   return (
-    <div className="energy-chart-header-container">
-      <div className="friendly-name-title">{energyHistory.friendlyName}</div>
-      <div id="window-date">{formatDate(energyHistory)}</div>
+    <div>
+      <h1>{energyHistory.friendlyName} Energy History</h1>
+      <div className="energy-chart-header-container">
+        <div id="window-date">{formatDate(energyHistory)}</div>
+      </div>
     </div>
   );
 };

@@ -2,7 +2,7 @@ import React from "react";
 import Icon from "@mdi/react";
 import { sub, add, isBefore } from "date-fns";
 import { sum } from "ramda";
-import { extract } from "../functions/extract";
+import { extract } from "../../functions/extract";
 import { mdiArrowUpCircle } from "@mdi/js";
 
 const AnnualTrend = ({ energyHistory }) => {

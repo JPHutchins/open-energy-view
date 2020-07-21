@@ -3,7 +3,7 @@ import { Line } from "react-chartjs-2";
 
 const PatternParts = ({ yLabelWidth, yearParts }) => {
   const dataYear = {
-    labels: new Array(52).fill("Jan"),
+    labels: new Array(12).fill("Jan"),
     datasets: yearParts,
   };
 
@@ -19,6 +19,24 @@ const PatternParts = ({ yLabelWidth, yearParts }) => {
     return `${Math.round(tooltipItems.yLabel - percentBelowThisData)}% ${label}`;
   };
 
+  const tooltipTitle = (tooltipItems) => {
+    const i = tooltipItems[0].index;
+    return [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ][i];
+  };
+
   const options = {
     legend: {
       display: true,
@@ -31,7 +49,7 @@ const PatternParts = ({ yLabelWidth, yearParts }) => {
     tooltips: {
       callbacks: {
         label: (tooltipItems) => tooltipLabelYear(tooltipItems),
-        title: () => "Average Usage",
+        title: (tooltipItems) => tooltipTitle(tooltipItems),
       },
       mode: "index",
       intersect: false,
