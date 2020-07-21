@@ -4,17 +4,20 @@ import cookie from "react-cookies";
 import AuthService from "../api/AuthService";
 import { withRouter, Link } from "react-router-dom";
 
-const Login = props => {
+const Login = (props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [badCreds, setBadCreds] = useState("");
+  const [loginDisabled, setLoginDisabled] = useState(false);
 
   function handleSubmit(e) {
     e.preventDefault();
+    setLoginDisabled(true);
     const credentials = { email: email, password: password };
-    AuthService.login(credentials).then(res => {
+    AuthService.login(credentials).then((res) => {
       if (res.status === 401) {
         setBadCreds("Incorrect email and/or password.");
+        setLoginDisabled(false);
       } else {
         cookie.save("logged_in", credentials.email, { maxAge: 900 });
         props.callback();
@@ -25,8 +28,10 @@ const Login = props => {
 
   function handleDemo(e) {
     const credentials = { email: "jph@demo.com", password: "demo" };
-    AuthService.login(credentials).then(res => {
+    setLoginDisabled(true);
+    AuthService.login(credentials).then((res) => {
       if (res.status === 401) {
+        setLoginDisabled(false);
         throw Error("That's weird, the demo credentials are missing.");
       } else {
         cookie.save("logged_in", credentials.email, { maxAge: 900 });
@@ -47,7 +52,7 @@ const Login = props => {
             className="login-form"
             type="email"
             placeholder="Enter email"
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </Form.Group>
 
@@ -57,20 +62,31 @@ const Login = props => {
             className="login-form"
             type="password"
             placeholder="Password"
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </Form.Group>
         <Form.Text className="bad-creds">{badCreds}</Form.Text>
-        <Button variant="primary" type="submit">
-          Submit
+        <Button
+          disabled={loginDisabled}
+          className="login-submit-button"
+          variant="primary"
+          type="submit"
+        >
+          Login
         </Button>
         <hr />
         <Form.Text className="default-text">
           No account? <Link to="/create_account">Register now!</Link>
           <br />
-          <a className="demo-link" onClick={handleDemo}>
-            Or use the demo
-          </a>
+          <hr />
+          <Button
+            disabled={loginDisabled}
+            variant="primary"
+            className="login-submit-button"
+            onClick={handleDemo}
+          >
+            Try the demo account
+          </Button>
         </Form.Text>
       </Form>
     </div>

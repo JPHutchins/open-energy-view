@@ -364,6 +364,10 @@ footer {
   cursor: pointer;
 }
 
+.login-submit-button {
+  width: 100%;
+}
+
 .demo-link:hover {
   text-decoration: underline;
 }
