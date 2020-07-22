@@ -108,6 +108,9 @@ const PatternDay = ({
     : (scaleInstance) => (scaleInstance.height = 0);
 
   const options = {
+    animation: {
+      duration: 0,
+    },
     legend: {
       display: showLegend,
       position: "top",

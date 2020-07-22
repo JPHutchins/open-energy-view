@@ -364,6 +364,10 @@ footer {
   cursor: pointer;
 }
 
+.login-submit-button {
+  width: 100%;
+}
+
 .demo-link:hover {
   text-decoration: underline;
 }
@@ -500,36 +504,4 @@ footer {
 
 .mdi-trendline {
   z-index: -10;
-}
-
-@keyframes rotate-arrow-upside-down {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(180deg);
-  }
-}
-
-@keyframes rotate-arrow-upside-up {
-  from {
-    transform: rotate(180deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.rotate-arrow-upside-down {
-  animation-name: rotate-arrow-upside-down;
-  animation-duration: 500ms;
-  animation-iteration-count: 1;
-  animation-timing-function: ease-out;
-}
-
-.rotate-arrow-upside-up {
-  animation-name: rotate-arrow-upside-up;
-  animation-duration: 500ms;
-  animation-iteration-count: 1;
-  animation-timing-function: ease-out;
 }

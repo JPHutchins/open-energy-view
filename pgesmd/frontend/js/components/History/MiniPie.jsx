@@ -118,6 +118,9 @@ const MiniPie = ({
   };
 
   const options = {
+    animation: {
+      duration: 0,
+    },
     maintainAspectRatio: true,
     aspectRatio: 1,
     legend: {

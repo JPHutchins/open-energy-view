@@ -64,6 +64,9 @@ const CompleteHistoryLine = ({
     return `${date}\n${total} average total`;
   };
   const options = {
+    animation: {
+      duration: 0,
+    },
     legend: {
       display: true,
       position: "top",

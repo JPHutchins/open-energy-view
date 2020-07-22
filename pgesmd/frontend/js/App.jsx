@@ -12,11 +12,16 @@ import { HashRouter as Router } from "react-router-dom";
 import { fork } from "fluture";
 import { theFuture } from "./api/DatabaseService";
 import SourceRegistration from "./components/SourceRegistration";
+import { useEffect } from "react";
 
 const App = () => {
-  const [view, setView] = useState(<Redirect to="/login" />);
-  const [sources, setSources] = useState([]);
   const [loggedIn, setLoggedIn] = useState(cookie.load("logged_in"));
+  const [view, setView] = useState(<Redirect to="/" />);
+  const [sources, setSources] = useState([]);
+
+  useEffect(() => {
+    restrictView()
+  }, []);
 
   const restrictView = (selectedItem = null) => {
     setLoggedIn(cookie.load("logged_in"));
@@ -37,8 +42,12 @@ const App = () => {
 
   const sourceRegistration = () => {
     if (!loggedIn) setView(<Redirect to="/login" />);
-
     setView(<SourceRegistration />);
+  };
+
+  const bypassLogin = () => {
+    if (loggedIn) return view;
+    return <Login callback={restrictView} />;
   };
 
   return (
@@ -52,7 +61,7 @@ const App = () => {
       <Switch>
         <Route path="/test" component={TestResults} />
         <Route path="/login">
-          <Login callback={restrictView} />
+          {bypassLogin()}
         </Route>
         <Route exact path="/">
           {view}

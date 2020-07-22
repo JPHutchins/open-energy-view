@@ -11,3 +11,4 @@ energy_history_test.json
 venv/
 pgesmd/static/dist/
 pgesmd/frontend/npm-debug.log
+*/old_python

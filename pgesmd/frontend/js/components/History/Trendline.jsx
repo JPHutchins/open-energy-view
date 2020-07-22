@@ -82,12 +82,8 @@ const Trendline = ({
   };
   const greenOrOrange = percent <= 0 ? "green" : "orange";
 
-  const animation =
-    percent <= 0 ? "rotate-arrow-upside-down" : "rotate-arrow-upside-up";
-
   const arrowIcon = (
     <Icon
-      className={animation}
       path={mdiArrowUpCircle}
       title="User Profile"
       size={2}

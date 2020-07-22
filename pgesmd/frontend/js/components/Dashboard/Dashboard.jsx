@@ -126,7 +126,7 @@ const Dashboard = ({ energyHistory }) => {
         </div>
         <div className="pie dev-border">
           <MiniPie
-            energyHistory={energyHistory}
+            energyHistory={latestWeek}
             setMostIntensePart={setMostIntensePart}
             setMostUsedPart={setMostUsedPart}
           />

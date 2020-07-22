@@ -48,13 +48,10 @@ const AnnualTrend = ({ energyHistory }) => {
   const percent = Math.round((currentSliceSum / oldSliceSum - 1) * 100);
   const aboveOrBelow = percent <= 0 ? "less than" : "more than";
   const upOrDown = percent <= 0 ? 0 : 180;
-  const animation =
-    percent <= 0 ? "rotate-arrow-upside-down" : "rotate-arrow-upside-up";
   const greenOrOrange = percent <= 0 ? "green" : "orange";
 
   const arrowIcon = (
     <Icon
-      className={animation}
       path={mdiArrowUpCircle}
       title="User Profile"
       size={2}
