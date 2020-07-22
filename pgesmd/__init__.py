@@ -7,8 +7,8 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from xml.etree import cElementTree as ET
 from sqlalchemy import exc
-from .helpers import parse_espi_data, get_auth_file, get_bulk_id_from_xml
-from .api import SelfAccessApi
+from pgesmd_self_access.helpers import parse_espi_data, get_auth_file, get_bulk_id_from_xml
+from pgesmd_self_access.api import SelfAccessApi
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INIT_DEMO_DB = False
@@ -95,12 +95,12 @@ def create_app() -> Flask:
                 return f"Could not parse message: {data}", 500
             except IndexError as e:
                 print(e, data)
-                auth = get_auth_file()
+                auth = get_auth_file(f"{PROJECT_PATH}/auth/auth.json")
                 api = SelfAccessApi(*auth)
-                api.async_request_latest_data()
+                api.request_latest_data()
                 return f'No index "0" in parsed XML: {data}', 500
 
-            auth = get_auth_file()
+            auth = get_auth_file(f"{PROJECT_PATH}/auth/auth.json")
             api = SelfAccessApi(*auth)
 
             xml = api.get_espi_data(resource_uri)

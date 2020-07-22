@@ -19,7 +19,7 @@ from sqlalchemy import exc
 from . import models
 from . import bcrypt
 from . import db
-from .helpers import parse_espi_data, get_bulk_id_from_xml
+from pgesmd_self_access.helpers import parse_espi_data, get_bulk_id_from_xml
 
 auth_parser = reqparse.RequestParser()
 auth_parser.add_argument("email", help="Cannot be blank", required=True)
