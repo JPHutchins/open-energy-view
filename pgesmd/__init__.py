@@ -34,17 +34,17 @@ def create_app() -> Flask:
 
     # Rest API endpoints
     rest.add_resource(resources.Register, "/api/register")
-    rest.add_resource(resources.UserLogin, "/token/auth")
-    rest.add_resource(resources.UserLogout, "/token/remove")
-    rest.add_resource(resources.TokenRefresh, "/token/refresh")
-    rest.add_resource(resources.AllUsers, "/users")
+    rest.add_resource(resources.UserLogin, "/api/token/auth")
+    rest.add_resource(resources.UserLogout, "/api/token/remove")
+    rest.add_resource(resources.TokenRefresh, "/api/token/refresh")
+    rest.add_resource(resources.AllUsers, "/api/users")
     rest.add_resource(resources.SecretResource, "/api/secret")
     rest.add_resource(resources.AddDemoPge, "/api/addpge")
     rest.add_resource(resources.AddPgeSource, "/api/add/pge")
     rest.add_resource(resources.GetSources, "/api/sources")
     rest.add_resource(resources.GetPartitionOptions, "/api/partitionOptions")
     rest.add_resource(resources.GetEnergyHistoryHours, "/api/energyHistory")
-    rest.add_resource(resources.TestAddXml, "/test/add/xml")
+    rest.add_resource(resources.TestAddXml, "/api/test/add/xml")
 
     # Initialize extensions with the Flask app
     db.init_app(app)

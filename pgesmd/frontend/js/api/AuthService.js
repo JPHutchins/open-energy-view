@@ -12,7 +12,7 @@ class AuthService {
         }
       }
     );
-    return getToken.post("/token/auth", credentials);
+    return getToken.post("/api/token/auth", credentials);
   }
 
   register(credentials) {
