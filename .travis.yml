@@ -18,3 +18,5 @@ before_script:
   - export DEV_JWT_COOKIE_SECURE=False
   - export PROD_DATABASE_URI=sqlite:///../data/energy_history.db
   - export DEV_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
+script:
+  
