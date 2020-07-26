@@ -35,7 +35,6 @@ const config = {
           options: {
             presets: [
               "@babel/react",
-              "@babel/typescript",
               ["@babel/env", { modules: false }],
             ],
           },

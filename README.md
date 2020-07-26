@@ -1,15 +1,14 @@
-# pgesmd
-## PG&amp;E Share My Data API for Self Access Users
+# Open Energy Viewer
 
-The goal of this project is to analyze and present resource consumption data to users, empowering them to conserve electricity and save money. 
+The goal of this project is to analyze and present resource consumption data to users empowering them to conserve and save money. 
 
 ## User Interface
 
-![PGESMD](/docs/energy-history-screenshot.png)
+![Interface](/docs/energy-history-screenshot.png)
 
 ## Design
 
-![PGESMD](/docs/PGESMD_sketch_full.png)
+![Design](/docs/PGESMD_sketch_full.png)
 
 ## Data Analysis
 
@@ -18,9 +17,9 @@ Data is presented always by Watt hour (Wh).  This is so that the user can compar
 
 ### Partitions
 A partition is a time interval that recurs each day.  The default partitions are:
-- Night: 1AM -> 7AM
+- Night: 12AM -> 7AM
 - Day: 7AM -> 6PM
-- Evening: 6PM -> 1AM
+- Evening: 6PM -> 12AM
 
 These partitions allow the user to develop conclusions about what activities are using the most resources.
 
@@ -61,3 +60,5 @@ https://green-button.github.io/developers/
 http://www.greenbuttondata.org/
 
 https://github.com/GreenButtonAlliance
+
+https://github.com/JPHutchins/pgesmd_self_access

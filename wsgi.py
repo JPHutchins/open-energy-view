@@ -1,4 +1,4 @@
-from pgesmd import create_app
+from open_energy_view import create_app
 
 app = create_app()
 
