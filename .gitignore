@@ -4,6 +4,7 @@ log
 __pycache__/
 instance/
 node_modules/
+energy_history.db
 energy_history_test.db
 energy_history_test.db-journal
 energy_history_test.json
@@ -12,3 +13,8 @@ venv/
 pgesmd/static/dist/
 pgesmd/frontend/npm-debug.log
 */old_python
+auth/
+cert/
+data/
+venv.bak
+requirements.txt.bak
