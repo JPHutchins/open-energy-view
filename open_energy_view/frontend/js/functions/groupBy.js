@@ -1,5 +1,4 @@
 import { getTime, add } from "date-fns";
-import { prepend, slice } from "ramda";
 import { toDateInterval } from "./toDateInterval";
 import { indexInDb } from "./indexInDb";
 import { startOf } from "./startOf";
@@ -9,7 +8,7 @@ export const groupBy = (windowSize) => (list) => {
 
   const length = immutable ? list.size : list.length;
   if (length <= 0) {
-    return []; 
+    return [];
   }
 
   const guess = {
@@ -20,17 +19,28 @@ export const groupBy = (windowSize) => (list) => {
     year: 8760,
   }[windowSize];
 
-  const first = immutable
-    ? new Date(list.first().get("x"))
-    : new Date(list[0].x);
+  const findIndex = indexInDb(list);
 
-  const start = startOf(windowSize)(first);
-  const endTime = getTime(add(start, toDateInterval(windowSize)));
+  const groups = [];
+  let startIndex = 0;
+  while (startIndex < length) {
+    const first = immutable
+      ? new Date(list.get(startIndex).get("x"))
+      : new Date(list[startIndex].x);
 
-  const endIndex = list[guess] === endTime ? guess : indexInDb(list)(endTime);
+    const start = startOf(windowSize)(first);
+    const endTime = getTime(add(start, toDateInterval(windowSize)));
 
-  return prepend(
-    slice(0, endIndex, list),
-    groupBy(windowSize)(list.slice(endIndex, length))
-  );
+    const guessIndex = Math.min(startIndex + guess, length - 1);
+    const guessEndTime = immutable
+      ? list.get(guessIndex).get("x")
+      : list[guessIndex].x;
+
+    const endIndex = guessEndTime === endTime ? guessIndex : findIndex(endTime);
+
+    groups.push(list.slice(startIndex, endIndex));
+    startIndex = endIndex;
+  }
+
+  return groups;
 };
