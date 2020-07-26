@@ -1,4 +1,4 @@
-# Open Energy Viewer
+# Open Energy View
 
 The goal of this project is to analyze and present resource consumption data to users empowering them to conserve and save money. 
 
