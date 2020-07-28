@@ -65,6 +65,8 @@
     "ramda-fantasy": "^0.8.0",
     "react-bootstrap": "^1.0.0-beta.16",
     "react-chartjs-2": "^2.8.0",
+    "react-color": "^2.18.1",
+    "react-compound-slider": "^2.5.0",
     "react-cookies": "^0.1.1",
     "react-datepicker": "^3.0.0",
     "react-loader-spinner": "^3.1.5",
