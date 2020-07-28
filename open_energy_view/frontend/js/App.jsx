@@ -13,6 +13,7 @@ import { fork } from "fluture";
 import { theFuture } from "./api/DatabaseService";
 import SourceRegistration from "./components/SourceRegistration";
 import { useEffect } from "react";
+import AuthService from "./api/AuthService";
 
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(cookie.load("logged_in"));
@@ -24,6 +25,9 @@ const App = () => {
   }, []);
 
   const restrictView = (selectedItem = null, partitionUpdate = null) => {
+    if (!cookie.load("logged_in") && cookie.load("csrf_refresh_token")) {
+      AuthService.refreshToken();
+    }
     setLoggedIn(cookie.load("logged_in"));
 
     if (cookie.load("logged_in")) {
@@ -32,12 +36,16 @@ const App = () => {
         fork((x) => setView(<div>{JSON.stringify(x)}</div>))((x) => {
           setSources(x);
           selectedItem = selectedItem ? selectedItem : x[0];
-          setView(
+
+          const initView = selectedItem ? (
             <ViewTabs
               energyDisplayItem={selectedItem}
               restrictView={restrictView}
             />
+          ) : (
+            <SourceRegistration restrictView={restrictView} />
           );
+          setView(initView);
         })
       );
     } else {
@@ -47,7 +55,7 @@ const App = () => {
 
   const sourceRegistration = () => {
     if (!loggedIn) setView(<Redirect to="/login" />);
-    setView(<SourceRegistration />);
+    setView(<SourceRegistration restrictView={restrictView} />);
   };
 
   const bypassLogin = () => {

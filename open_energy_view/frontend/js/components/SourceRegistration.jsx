@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
 import cookie from "react-cookies";
 import { Form, Button, DropdownButton, Dropdown } from "react-bootstrap";
-import { addPgeSource } from "../api/DatabaseService";
+import { addPgeDemoSource } from "../api/DatabaseService";
 
-const SourceRegistration = (props) => {
+const SourceRegistration = ({ history, restrictView }) => {
   const [form, setForm] = useState("");
   const [name, setName] = useState("");
   const [thirdPartyId, setThirdPartyId] = useState("");
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
+
+  // TODO: server will respond 500 on failing UniqueConstraint for
+  // "Provider ID" (third party ID) or name - update UI on promise reject
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -18,7 +21,10 @@ const SourceRegistration = (props) => {
       clientId: clientId,
       clientSecret: clientSecret,
     };
-    console.log(addPgeSource(regInfo));
+    addPgeDemoSource(regInfo).then(() => {
+      restrictView();
+      history.push("/");
+    });
   };
 
   const initialForm = (

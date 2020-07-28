@@ -9,6 +9,7 @@ import { List } from "immutable";
  * @param {List} data The EnergyHistory data of the current window.
  */
 export const makeColorsArray = (partitions) => (data) => {
+  if (!data.first()) return List(["gray"])
   const first = new Date(data.first().get("x"));
   const last = new Date(data.last().get("x"));
   // TODO: refactor once userOptions object is ready - should take userOptions

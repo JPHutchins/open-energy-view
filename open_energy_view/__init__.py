@@ -7,11 +7,14 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from xml.etree import cElementTree as ET
 from sqlalchemy import exc
-from pgesmd_self_access.helpers import parse_espi_data, get_auth_file, get_bulk_id_from_xml
+from pgesmd_self_access.helpers import (
+    parse_espi_data,
+    get_auth_file,
+    get_bulk_id_from_xml,
+)
 from pgesmd_self_access.api import SelfAccessApi
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-INIT_DEMO_DB = False
 
 
 db = SQLAlchemy()
@@ -32,18 +35,25 @@ def create_app() -> Flask:
 
     from . import resources
 
-    # Rest API endpoints
-    rest.add_resource(resources.Register, "/api/register")
-    rest.add_resource(resources.UserLogin, "/api/token/auth")
-    rest.add_resource(resources.UserLogout, "/api/token/remove")
-    rest.add_resource(resources.TokenRefresh, "/api/token/refresh")
-    rest.add_resource(resources.AllUsers, "/api/users")
-    rest.add_resource(resources.SecretResource, "/api/secret")
-    rest.add_resource(resources.AddDemoPge, "/api/addpge")
-    rest.add_resource(resources.AddPgeSource, "/api/add/pge")
-    rest.add_resource(resources.GetSources, "/api/sources")
-    rest.add_resource(resources.GetPartitionOptions, "/api/partitionOptions")
-    rest.add_resource(resources.GetEnergyHistoryHours, "/api/energyHistory")
+    # Authentication
+    rest.add_resource(resources.Register, "/api/web/register")
+    rest.add_resource(resources.UserLogin, "/api/web/token/auth")
+    rest.add_resource(resources.UserLogout, "/api/web/token/remove")
+    rest.add_resource(resources.TokenRefresh, "/api/web/token/refresh")
+
+    # Utility OAuth
+    rest.add_resource(resources.PgeOAuthRedirect, "/api/utility/pge/redirect_url")
+
+    # Get data
+    rest.add_resource(resources.GetSources, "/api/web/sources")
+    rest.add_resource(resources.GetPartitionOptions, "/api/web/partition-options")
+    rest.add_resource(resources.GetHourlyData, "/api/web/data/hours")
+
+    # Utility or device notify endpoints
+    rest.add_resource(resources.PgeNotify, "/api/utility/pge/notify")
+
+    # Initialize demo data
+    rest.add_resource(resources.AddPgeDemoSource, "/api/add/pge-demo")
     rest.add_resource(resources.TestAddXml, "/api/test/add/xml")
 
     # Initialize extensions with the Flask app
@@ -55,38 +65,9 @@ def create_app() -> Flask:
     with app.app_context():
         db.create_all()
 
-        # Add the demo data to the database
-        if INIT_DEMO_DB:
-            xml_fp = open(f"{PROJECT_PATH}/test/data/espi/espi_2_years.xml")
-            xml = xml_fp.read()
-            xml_fp.close()
-
-            data_update = []
-            for entry in parse_espi_data(xml):
-                data_update.append(
-                    {
-                        "pge_id": 50916,
-                        "start": entry[0],
-                        "duration": entry[1],
-                        "watt_hours": entry[2],
-                    }
-                )
-            conn = db.engine.connect()
-            print(models.Espi.__table__)
-            x = conn.execute(models.Espi.__table__.insert(), data_update)
-            print(x)
-
-        @app.route("/pge_false", methods=["GET"])
-        def pge_test():
-            print(request.data)
-            with open(
-                "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-27.xml"
-            ) as xml_reader:
-                xml = xml_reader.read()
-            return xml
-
         @app.route("/pgesmd", methods=["POST"])
         def handle_pgesmd_post():
+            # legacy for Self Access API testing
             data = request.data
             try:
                 resource_uri = ET.fromstring(data)[0].text
@@ -105,13 +86,19 @@ def create_app() -> Flask:
 
             xml = api.get_espi_data(resource_uri)
             bulk_id = get_bulk_id_from_xml(xml)
+            source_id = (
+                db.session.query(models.Source)
+                .filter_by(provider_id=bulk_id)
+                .first()
+                .id
+            )
 
             data_update = []
             last_entry = ""
             for entry in parse_espi_data(xml):
                 data_update.append(
                     {
-                        "pge_id": bulk_id,
+                        "source_id": source_id,
                         "start": entry[0],
                         "duration": entry[1],
                         "watt_hours": entry[2],
@@ -124,16 +111,14 @@ def create_app() -> Flask:
             except exc.IntegrityError:
                 db.session.rollback()
                 db.engine.execute(
-                    "INSERT OR IGNORE INTO espi (pge_id, start, duration, watt_hours) VALUES (:pge_id, :start, :duration, :watt_hours)",
+                    "INSERT OR IGNORE INTO espi (source_id, start, duration, watt_hours) VALUES (:source_id, :start, :duration, :watt_hours)",
                     data_update,
                 )
             finally:
                 timestamp = int(time() * 1000)
-                pgesmd_row = db.session.query(models.PgeSmd).filter_by(
-                    third_party_id=bulk_id
-                )
-                pgesmd_row.update({"last_entry": last_entry})
-                pgesmd_row.update({"last_update": timestamp})
+                source_row = db.session.query(models.Source).filter_by(id=source_id)
+                source_row.update({"last_entry": last_entry})
+                source_row.update({"last_update": timestamp})
                 db.session.commit()
 
             return {}, 200

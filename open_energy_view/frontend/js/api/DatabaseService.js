@@ -27,35 +27,15 @@ import { meanOf } from "../functions/meanOf";
 import { tabulatePartitionSums } from "../functions/tabulatePartitionSums";
 import { calculateSpikeUse } from "../data-structures/helpers/calculateSpikeUse";
 
-export const addPgeSource = (regInfo) => {
-  return axios.post("/api/add/pge", regInfo, AuthService.getAuthHeader());
-};
-
-export const getData = (source) => {
-  return axios.post(
-    "/api/data",
-    { source: source },
-    AuthService.getAuthHeader()
-  );
-};
-
 export const getSourcesF = () => {
-  return attemptP(() =>
-    axios.post("/api/sources", {}, AuthService.getAuthHeader())
-  );
-};
-
-export const getHours = (source) => {
-  return axios.post(
-    "/api/hours",
-    { source: source },
-    AuthService.getAuthHeader()
-  );
+  return attemptP(() => {
+    return axios.post("/api/web/sources", {}, AuthService.getAuthHeader());
+  });
 };
 
 export const getPartitionOptions = (source) => {
   return axios.post(
-    "/api/partitionOptions",
+    "/api/web/partition-options",
     { source: source },
     AuthService.getAuthHeader()
   );
@@ -85,14 +65,12 @@ export const parseHourResponse = (partitions) => (res) => {
   const passiveUse = calculatePassiveUse(data);
   const zippedPassive = zipPassiveCalculation(data, passiveUse.value);
 
-  
-
   let partitionOptions = res.data.partitionOptions
     ? Either.Right(res.data.partitionOptions)
     : Either.Right(defaultPartitions);
 
   if (partitions) {
-    partitionOptions = Either.Right(partitions)
+    partitionOptions = Either.Right(partitions);
   }
 
   const spikes = calculateSpikeUse(zippedPassive);
@@ -141,19 +119,13 @@ const makeSources = (energyHistoryInstance) => {
 
 const sourcesF = getSourcesF().pipe(map((x) => x.data));
 
-
 export const theFuture = (partitions) => {
   return sourcesF
-  .pipe(map((x) => x.map(getEnergyHistory)))
-  .pipe(chain(parallel(10)))
-  .pipe(map(map(parseHourResponse(partitions))))
-  .pipe(map(map((x) => new EnergyHistory(x))))
-  .pipe(map(map(makeSources)))}
-
-export const getHoursF = (source) => {
-  return attemptP(() =>
-    axios.post("/api/hours", { source: source }, AuthService.getAuthHeader())
-  );
+    .pipe(map((x) => x.map(getHourlyData)))
+    .pipe(chain(parallel(10)))
+    .pipe(map(map(parseHourResponse(partitions))))
+    .pipe(map(map((x) => new EnergyHistory(x))))
+    .pipe(map(map(makeSources)));
 };
 
 const getLocalStorage = (email, source) => {
@@ -164,7 +136,7 @@ const updateLocalStorage = (email, source, energyHistoryString, lastUpdate) => {
   const keyString = `${email}${source}`;
   for (let i = 0; i < localStorage.length; i++) {
     if (localStorage.key(i).slice(0, keyString.length) === keyString) {
-      console.log("clearing ", localStorage.key(i))
+      console.log("clearing ", localStorage.key(i));
       localStorage.removeItem(localStorage.key(i));
     }
   }
@@ -185,7 +157,7 @@ const sliceEnergyHistoryString = (updateOrData) => (response) => {
 const sliceLastUpdateFromResponse = sliceEnergyHistoryString("update");
 const sliceEnergyHistoryStringFromResponse = sliceEnergyHistoryString("data");
 
-export const getEnergyHistory = (source) => {
+export const getHourlyData = (source) => {
   const email = cookie.load("logged_in");
   const localStorageString = getLocalStorage(email, source);
   const lastUpdate = localStorageString
@@ -194,17 +166,9 @@ export const getEnergyHistory = (source) => {
 
   return attemptP(() =>
     axios.post(
-      "/api/energyHistory",
+      "/api/web/data/hours",
       { source, lastUpdate },
       AuthService.getAuthHeader()
     )
   );
-};
-
-export const getDatabase = getHoursF(
-  getSourcesF().pipe(map((x) => console.log(x)))
-);
-
-export const future = () => {
-  return getSourcesF().pipe(fork(() => console.log("error"))(console.log));
 };

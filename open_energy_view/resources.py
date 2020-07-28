@@ -66,24 +66,6 @@ class Register(AuthToken):
             pass
 
 
-class AddPgeSource(AuthToken):
-    @jwt_required
-    def post(self):
-        print(get_data_parser.parse_args())
-        user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
-        data = get_data_parser.parse_args()
-        new_account = models.PgeSmd(
-            u_id=user.id,
-            friendly_name=data["name"],
-            reg_type="self",
-            third_party_id=data["thirdPartyId"],
-            client_id=data["clientId"],
-            client_secret=data["clientSecret"],
-        )
-        new_account.save_to_db()
-        print(new_account.id)
-
-
 class UserLogin(AuthToken):
     def post(self):
         data = auth_parser.parse_args()
@@ -109,12 +91,19 @@ class TokenRefresh(Resource):
     def post(self):
         current_user = get_jwt_identity()
         access_token = create_access_token(identity=current_user)
+        print(current_user)
         resp = jsonify({"refresh": True})
         set_access_cookies(resp, access_token)
         return resp
 
 
+class PgeOAuthRedirect(Resource):
+    def post(self):
+        return {}, 200
+
+
 class AllUsers(Resource):
+    # TODO: secure and add to admin panel
     def get(self):
         return models.User.return_all()
 
@@ -122,18 +111,11 @@ class AllUsers(Resource):
         return models.User.delete_all()
 
 
-class SecretResource(Resource):
-    @jwt_required
-    def get(self):
-        username = get_jwt_identity()
-        return jsonify({"hello": "from {}".format(username)})
-
-
 class GetSources(Resource):
     @jwt_required
     def post(self):
         user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
-        sources_entries = db.session.query(models.PgeSmd).with_parent(user).all()
+        sources_entries = db.session.query(models.Source).with_parent(user).all()
         sources = list(map(lambda x: x.friendly_name, sources_entries))
         return sources
 
@@ -146,7 +128,7 @@ class GetPartitionOptions(Resource):
             return
         user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
         source = (
-            db.session.query(models.PgeSmd)
+            db.session.query(models.Source)
             .filter_by(friendly_name=data["source"])
             .with_parent(user)
             .first()
@@ -154,7 +136,7 @@ class GetPartitionOptions(Resource):
         return source.partition_options
 
 
-class GetEnergyHistoryHours(Resource):
+class GetHourlyData(Resource):
     @jwt_required
     def post(self):
         data = get_data_parser.parse_args()
@@ -163,7 +145,7 @@ class GetEnergyHistoryHours(Resource):
 
         user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
         source = (
-            db.session.query(models.PgeSmd)
+            db.session.query(models.Source)
             .filter_by(friendly_name=data["source"])
             .with_parent(user)
             .first()
@@ -181,7 +163,7 @@ class GetEnergyHistoryHours(Resource):
 
         hours = (
             db.session.query(models.Espi)
-            .filter_by(pge_id=source.third_party_id, duration=3600)
+            .filter_by(source_id=source.id, duration=3600)
             .all()
         )
         database = ",".join(
@@ -200,18 +182,31 @@ class GetEnergyHistoryHours(Resource):
         return response, 200
 
 
-class AddDemoPge(Resource):
+class PgeNotify(Resource):
+    def post(self):
+        return {}, 200
+
+
+class AddPgeDemoSource(AuthToken):
     @jwt_required
-    def post(self, friendly_name="PG&E", reg_type="Self Access"):
+    def post(self):
         user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
-        new_account = models.PgeSmd(id=50916, u_id=user.id, friendly_name=friendly_name)
+        data = get_data_parser.parse_args()
+        new_account = models.Source(
+            u_id=user.id,
+            friendly_name=data["name"],
+            reg_type="self",
+            provider_id=data["thirdPartyId"],
+            client_id=data["clientId"],
+            client_secret=data["clientSecret"],
+        )
         new_account.save_to_db()
-        print(new_account.id)
 
 
 class TestAddXml(Resource):
     def post(self):
         test_xml = [
+            "/home/jp/pgesmd/test/data/espi/espi_2_years.xml",
             "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-16.xml",
             "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-17.xml",
             "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-18.xml",
@@ -230,12 +225,16 @@ class TestAddXml(Resource):
             xml = xml_reader.read()
         bulk_id = get_bulk_id_from_xml(xml)
 
+        source_id = (
+            db.session.query(models.Source).filter_by(provider_id=bulk_id).first().id
+        )
+
         data_update = []
         last_entry = ""
         for entry in parse_espi_data(xml):
             data_update.append(
                 {
-                    "pge_id": bulk_id,
+                    "source_id": source_id,
                     "start": entry[0],
                     "duration": entry[1],
                     "watt_hours": entry[2],
@@ -248,17 +247,13 @@ class TestAddXml(Resource):
         except exc.IntegrityError:
             db.session.rollback()
             db.engine.execute(
-                "INSERT OR IGNORE INTO espi (pge_id, start, duration, watt_hours) VALUES (:pge_id, :start, :duration, :watt_hours)",
+                "INSERT OR IGNORE INTO espi (source_id, start, duration, watt_hours) VALUES (:source_id, :start, :duration, :watt_hours)",
                 data_update,
             )
         finally:
             timestamp = int(time() * 1000)
-            pgesmd_row = db.session.query(models.PgeSmd).filter_by(
-                third_party_id=bulk_id
-            )
-            print(pgesmd_row.update({"last_entry": last_entry}))
-            pgesmd_row.update({"last_update": timestamp})
+            source_row = db.session.query(models.Source).filter_by(id=source_id)
+            source_row.update({"last_update": timestamp})
             db.session.commit()
 
         return {}, 200
-
