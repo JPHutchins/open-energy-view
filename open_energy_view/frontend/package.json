@@ -75,6 +75,7 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "regression": "^2.0.1",
+    "rollup": "^2.23.0",
     "source-map-loader": "^0.2.4",
     "zebras": "0.0.18"
   },
