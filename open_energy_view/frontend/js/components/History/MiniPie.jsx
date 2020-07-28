@@ -184,7 +184,6 @@ const MiniPie = ({
   );
 
   const handleClick = (e) => {
-    console.log(e);
     setCurrentView(e);
   };
 

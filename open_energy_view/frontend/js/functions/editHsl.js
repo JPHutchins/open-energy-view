@@ -2,7 +2,7 @@ import { compose } from "ramda";
 
 export const editHsl = (hsl, editObject) => {
   if (hsl.slice(0, 3) != "hsl") {
-    console.log(`Bargraph colors should be in HSL, got ${hsl} instead.`);
+    // console.log(`Bargraph colors should be in HSL, got ${hsl} instead.`);
     return hsl;
   }
 

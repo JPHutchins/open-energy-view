@@ -136,7 +136,6 @@ const updateLocalStorage = (email, source, energyHistoryString, lastUpdate) => {
   const keyString = `${email}${source}`;
   for (let i = 0; i < localStorage.length; i++) {
     if (localStorage.key(i).slice(0, keyString.length) === keyString) {
-      console.log("clearing ", localStorage.key(i));
       localStorage.removeItem(localStorage.key(i));
     }
   }

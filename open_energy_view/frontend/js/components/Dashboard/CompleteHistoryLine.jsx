@@ -49,7 +49,6 @@ const CompleteHistoryLine = ({
   const tooltipTitle = (tooltipItems) => {
     const dataset = tooltipItems[0].datasetIndex;
     const i = tooltipItems[0].index;
-    console.log(energyHistory.data.datasets[dataset]);
     const date = format(
       new Date(energyHistory.data.datasets[dataset].data[i].x),
       "MMMM yyyy"
