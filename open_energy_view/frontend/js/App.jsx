@@ -20,19 +20,24 @@ const App = () => {
   const [sources, setSources] = useState([]);
 
   useEffect(() => {
-    restrictView()
+    restrictView();
   }, []);
 
-  const restrictView = (selectedItem = null) => {
+  const restrictView = (selectedItem = null, partitionUpdate = null) => {
     setLoggedIn(cookie.load("logged_in"));
 
     if (cookie.load("logged_in")) {
       setView(<DataLoader />);
-      theFuture.pipe(
+      theFuture(partitionUpdate).pipe(
         fork((x) => setView(<div>{JSON.stringify(x)}</div>))((x) => {
           setSources(x);
           selectedItem = selectedItem ? selectedItem : x[0];
-          setView(<ViewTabs energyDisplayItem={selectedItem} />);
+          setView(
+            <ViewTabs
+              energyDisplayItem={selectedItem}
+              restrictView={restrictView}
+            />
+          );
         })
       );
     } else {
@@ -60,9 +65,7 @@ const App = () => {
       />
       <Switch>
         <Route path="/test" component={TestResults} />
-        <Route path="/login">
-          {bypassLogin()}
-        </Route>
+        <Route path="/login">{bypassLogin()}</Route>
         <Route exact path="/">
           {view}
         </Route>

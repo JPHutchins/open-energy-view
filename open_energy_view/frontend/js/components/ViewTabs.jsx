@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import Dashboard from "./Dashboard/Dashboard"
+import Dashboard from "./Dashboard/Dashboard";
 import Patterns from "./Patterns/Patterns";
 import Trends from "./Trends/Trends";
+import Settings from "./Settings/Settings";
 import EnergyDisplay from "./History/EnergyDisplay";
 import { mdiGaugeLow } from "@mdi/js";
 import { mdiChartBellCurve } from "@mdi/js";
@@ -10,7 +11,7 @@ import { mdiTrendingUp } from "@mdi/js";
 import { mdiCogs } from "@mdi/js";
 import Icon from "@mdi/react";
 
-const ViewTabs = ({ energyDisplayItem }) => {
+const ViewTabs = ({ energyDisplayItem, restrictView }) => {
   const [selectedTab, setSelectedTab] = useState(0); // always preselect first tab
   const [energyHistory, setEnergyHistory] = useState(
     energyDisplayItem.component.props.energyHistoryInstance
@@ -69,7 +70,9 @@ const ViewTabs = ({ energyDisplayItem }) => {
     {
       title: "Settings",
       icon: <Icon className="sidebar-icon" color="#5f5566" path={mdiCogs} />,
-      component: <>Settings</>,
+      component: (
+        <Settings energyHistory={energyHistory} restrictView={restrictView} />
+      ),
     },
   ];
 
