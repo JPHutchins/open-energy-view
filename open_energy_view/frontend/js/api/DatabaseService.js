@@ -61,7 +61,7 @@ export const getPartitionOptions = (source) => {
   );
 };
 
-export const parseHourResponse = (res) => {
+export const parseHourResponse = (partitions) => (res) => {
   const parseDatabaseResponse = compose(
     toImmutableJSfromJS,
     map(formatPGEHourDB),
@@ -85,9 +85,15 @@ export const parseHourResponse = (res) => {
   const passiveUse = calculatePassiveUse(data);
   const zippedPassive = zipPassiveCalculation(data, passiveUse.value);
 
-  const partitionOptions = res.data.partitionOptions
+  
+
+  let partitionOptions = res.data.partitionOptions
     ? Either.Right(res.data.partitionOptions)
     : Either.Right(defaultPartitions);
+
+  if (partitions) {
+    partitionOptions = Either.Right(partitions)
+  }
 
   const spikes = calculateSpikeUse(zippedPassive);
 
@@ -135,12 +141,14 @@ const makeSources = (energyHistoryInstance) => {
 
 const sourcesF = getSourcesF().pipe(map((x) => x.data));
 
-export const theFuture = sourcesF
+
+export const theFuture = (partitions) => {
+  return sourcesF
   .pipe(map((x) => x.map(getEnergyHistory)))
   .pipe(chain(parallel(10)))
-  .pipe(map(map(parseHourResponse)))
+  .pipe(map(map(parseHourResponse(partitions))))
   .pipe(map(map((x) => new EnergyHistory(x))))
-  .pipe(map(map(makeSources)));
+  .pipe(map(map(makeSources)))}
 
 export const getHoursF = (source) => {
   return attemptP(() =>
