@@ -3,7 +3,8 @@ import React from "react";
 const Insights = ({ mostIntensePart, mostUsedPart, trendingDescription }) => {
   return (
     <div className="insights dev-border">
-      <ul>
+      <h2 style={{ marginLeft: 20 }}>Insights</h2>
+      <ul style={{ marginRight: 20 }}>
         <li>
           Energy is used most intensely during the{" "}
           <strong>{` ${mostIntensePart.toLowerCase()}`}</strong>

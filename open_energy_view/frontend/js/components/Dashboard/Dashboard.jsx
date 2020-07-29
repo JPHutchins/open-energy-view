@@ -13,6 +13,7 @@ import { groupBy } from "../../functions/groupBy";
 import "./Dashboard.css";
 import CompleteHistoryLine from "./CompleteHistoryLine";
 import Insights from "./Insights";
+import Key from "./Key";
 import { useState } from "react";
 
 const Dashboard = ({ energyHistory }) => {
@@ -131,6 +132,7 @@ const Dashboard = ({ energyHistory }) => {
             setMostUsedPart={setMostUsedPart}
           />
         </div>
+        <Key energyHistory={energyHistory} />
         <Insights
           mostIntensePart={mostIntensePart}
           mostUsedPart={mostUsedPart}

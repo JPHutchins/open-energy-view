@@ -8,7 +8,7 @@
   grid-template-rows: repeat(3, minmax(0, 1fr));
   grid-template-areas:
     "recent recent recent recent"
-    "pie insights insights insights"
+    "insights insights key pie"
     "day complete complete trend";
   width: 100%;
   max-height: 100%;
@@ -52,6 +52,17 @@
 .insights {
   grid-area: insights;
   align-self: center;
+  justify-self: center;
+  box-shadow: 5px 5px 18px -7px;
+  background-color: rgb(241, 240, 237);
+  width: max-content;
+  padding: 15;
+}
+
+.key {
+  grid-area: key;
+  align-self: center;
+  justify-self: center;
 }
 
 .day {
@@ -64,8 +75,8 @@
 }
 
 .label-complete-history {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .trend {
