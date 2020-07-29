@@ -75,6 +75,8 @@ const Login = (props) => {
           Login
         </Button>
         <hr />
+        <div className="g-signin2" dataOnsuccess="onSignIn"></div>
+        <hr />
         <Form.Text className="default-text">
           No account? <Link to="/create_account">Register now!</Link>
           <br />
