@@ -37,7 +37,10 @@ class AuthService {
   refreshToken() {
     return axios.post(
       "/api/web/token/refresh",
-      cookie.load("csrf_refresh_token")
+      {},
+      {
+        headers: { "X-CSRF-TOKEN": cookie.load("csrf_refresh_token") },
+      }
     );
   }
 
