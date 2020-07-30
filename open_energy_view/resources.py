@@ -2,6 +2,7 @@
 from flask import jsonify, redirect
 from time import time
 from base64 import b64encode
+from os import environ
 import json
 import requests
 from flask_restful import Resource, reqparse, request
@@ -15,13 +16,16 @@ from flask_jwt_extended import (
     set_refresh_cookies,
     unset_jwt_cookies,
 )
-
 from sqlalchemy import exc
 
 from . import models
 from . import bcrypt
 from . import db
 from pgesmd_self_access.helpers import parse_espi_data, get_bulk_id_from_xml
+
+
+CLIENT_ID = environ.get("CLIENT_ID")
+CLIENT_SECRET = environ.get("CLIENT_SECRET")
 
 auth_parser = reqparse.RequestParser()
 auth_parser.add_argument("email", help="Cannot be blank", required=True)
@@ -100,11 +104,8 @@ class TokenRefresh(Resource):
 
 class PgeOAuthRedirect(Resource):
     def get(self):
-        CLIENT_ID = "1" # TODO: make env variables and import from flask app
-        CLIENT_SECRET = "1"
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
         URL = "https://api.pge.com/datacustodian/test/oauth/v2/token"
-        FAKE_URL = "http://http://172.26.221.206:5000/api/fake"
 
         print("got hit at redirect")
         args = request.args
@@ -120,20 +121,18 @@ class PgeOAuthRedirect(Resource):
         request_params = {
             "grant_type": "authorization_code",
             "authorization_code": authorization_code,
-            "redirect_uri": REDIRECT_URI
+            "redirect_uri": REDIRECT_URI,
         }
         header_params = {"Authorization": auth_header}
-        
-        response = requests.post(FAKE_URL, data=request_params, headers=header_params) as response:
+
+        response = requests.post(URL, data=request_params, headers=header_params)
         print(response.text)
         return {}, 200
-    
 
 
 class PgeOAuthPortal(Resource):
     def get(self):
-        TESTING = True # TODO: make env variables and import from flask app
-        CLIENT_ID = 1
+        TESTING = True
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
         testing_endpoint = "https://api.pge.com/datacustodian/test/oauth/v2/authorize"
 
