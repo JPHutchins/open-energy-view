@@ -13,4 +13,6 @@ export PROD_JWT_COOKIE_SECURE=True
 export DEV_JWT_COOKIE_SECURE=False
 export PROD_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
 export DEV_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
+export CLIENT_ID=client_id
+export CLIENT_SECRET=client_secret
 flask run --host='0.0.0.0'
