@@ -31,7 +31,7 @@ def create_app() -> Flask:
         template_folder="./frontend",
         static_folder="./frontend/dist",
     )
-    app.config.from_object("config.DevConfig")
+    app.config.from_object("config.ProdConfig")
 
     from . import resources
 
