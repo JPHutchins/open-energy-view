@@ -43,6 +43,7 @@ def create_app() -> Flask:
 
     # Utility OAuth
     rest.add_resource(resources.PgeOAuthRedirect, "/api/utility/pge/redirect_url")
+    rest.add_resource(resources.PgeOAuthPortal, "/api/utility/pge/oauth_portal")
 
     # Get data
     rest.add_resource(resources.GetSources, "/api/web/sources")

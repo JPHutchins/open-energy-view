@@ -1,8 +1,10 @@
 """API endpoints for viewing data."""
-from flask import jsonify
+from flask import jsonify, redirect
 from time import time
+from base64 import b64encode
 import json
-from flask_restful import Resource, reqparse
+import requests
+from flask_restful import Resource, reqparse, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -97,8 +99,61 @@ class TokenRefresh(Resource):
 
 
 class PgeOAuthRedirect(Resource):
-    def post(self):
+    def get(self):
+        CLIENT_ID = "1" # TODO: make env variables and import from flask app
+        CLIENT_SECRET = "1"
+        REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
+        URL = "https://api.pge.com/datacustodian/test/oauth/v2/token"
+        FAKE_URL = "http://http://172.26.221.206:5000/api/fake"
+
+        print("got hit at redirect")
+        args = request.args
+
+        try:
+            authorization_code = args["authorization_code"]
+        except KeyError:
+            return {"error": "Missing parameter: authorization_code"}, 200
+
+        b64 = b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode("utf-8"))
+        auth_header = f"Basic {bytes.decode(b64)}"
+
+        request_params = {
+            "grant_type": "authorization_code",
+            "authorization_code": authorization_code,
+            "redirect_uri": REDIRECT_URI
+        }
+        header_params = {"Authorization": auth_header}
+        
+        response = requests.post(FAKE_URL, data=request_params, headers=header_params) as response:
+        print(response.text)
         return {}, 200
+    
+
+
+class PgeOAuthPortal(Resource):
+    def get(self):
+        TESTING = True # TODO: make env variables and import from flask app
+        CLIENT_ID = 1
+        REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
+        testing_endpoint = "https://api.pge.com/datacustodian/test/oauth/v2/authorize"
+
+        args = request.args
+
+        try:
+            scope = args["scope"]
+        except KeyError:
+            return {"error": "Missing parameter: scope"}, 200
+
+        print(scope)
+
+        authorizationServerAuthorizationEndpoint = (
+            testing_endpoint
+            if TESTING
+            else "https://sharemydata.pge.com/myAuthorization"
+        )
+        query = f"?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope={scope}&response_type=code"
+
+        return redirect(f"{authorizationServerAuthorizationEndpoint}{query}")
 
 
 class AllUsers(Resource):
