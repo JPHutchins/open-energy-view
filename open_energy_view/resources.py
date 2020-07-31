@@ -109,9 +109,9 @@ class PgeOAuthRedirect(Resource):
 
         print("got hit at redirect")
         args = request.args
-
+        print(args)
         try:
-            authorization_code = args["authorization_code"]
+            authorization_code = args["code"]
         except KeyError:
             return {"error": "Missing parameter: authorization_code"}, 200
 
@@ -120,12 +120,12 @@ class PgeOAuthRedirect(Resource):
 
         request_params = {
             "grant_type": "authorization_code",
-            "authorization_code": authorization_code,
+            "code": authorization_code,
             "redirect_uri": REDIRECT_URI,
         }
         header_params = {"Authorization": auth_header}
 
-        response = requests.post(URL, data=request_params, headers=header_params)
+        response = requests.post(URL, data=request_params, headers=header_params, cert=('/home/jp/pgesmd/open_energy_view/auth/cert.crt', '/home/jp/pgesmd/open_energy_view/auth/private.key'))
         print(response.text)
         return {}, 200
 
@@ -135,15 +135,17 @@ class PgeOAuthPortal(Resource):
         TESTING = True
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
         testing_endpoint = "https://api.pge.com/datacustodian/test/oauth/v2/authorize"
+        scope = "unknown"
+        #print(request.headers)
+        #print(request.text)
+        #args = request.args
 
-        args = request.args
+        #try:
+        #    scope = args["scope"]
+        #except KeyError:
+        #    return {"error": "Missing parameter: scope"}, 200
 
-        try:
-            scope = args["scope"]
-        except KeyError:
-            return {"error": "Missing parameter: scope"}, 200
-
-        print(scope)
+        #print(scope)
 
         authorizationServerAuthorizationEndpoint = (
             testing_endpoint
