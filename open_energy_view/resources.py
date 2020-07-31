@@ -135,24 +135,25 @@ class PgeOAuthPortal(Resource):
         TESTING = True
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
         testing_endpoint = "https://api.pge.com/datacustodian/test/oauth/v2/authorize"
-        scope = "unknown"
-        #print(request.headers)
-        #print(request.text)
-        #args = request.args
+        scope = "xxx"
+        print(request.headers)
+        print(request)
+        print(request.args)
+        args = request.args
 
-        #try:
-        #    scope = args["scope"]
-        #except KeyError:
-        #    return {"error": "Missing parameter: scope"}, 200
+        try:
+            scope = args["scope"]
+        except KeyError:
+            pass
 
         #print(scope)
-
+        scope_query = "&scope="
         authorizationServerAuthorizationEndpoint = (
             testing_endpoint
             if TESTING
             else "https://sharemydata.pge.com/myAuthorization"
         )
-        query = f"?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope={scope}&response_type=code"
+        query = f"?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code"
 
         return redirect(f"{authorizationServerAuthorizationEndpoint}{query}")
 
