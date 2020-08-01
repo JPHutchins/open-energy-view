@@ -1,5 +1,6 @@
 import React from "react";
 import SetPartitions from "./SetPartitions";
+import UploadXml from "./UploadXml";
 
 // TODO: add link to account settings ... or just place as child ... could be confusing
 
@@ -14,6 +15,7 @@ const Settings = ({ energyHistory, restrictView }) => {
           restrictView={restrictView}
         />
       </div>
+      <UploadXml energyHistory={energyHistory}/>
       {/* <h4>Link to account settings</h4> */}
     </div>
   );

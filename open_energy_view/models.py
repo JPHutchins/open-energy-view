@@ -6,8 +6,10 @@ class User(db.Model):
 
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(256), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    password = db.Column(db.String(256), nullable=True)
+    oauth_id = db.Column(db.String(256), unique=True, nullable=True)
+    oauth_provider = db.Column(db.String(120), nullable=True)
     token = db.Column(db.String(256), nullable=True)
     sources = db.relationship("Source", backref="users", lazy=True)
 
@@ -18,6 +20,11 @@ class User(db.Model):
         """Add the user to the TABLE users."""
         db.session.add(self)
         db.session.commit()
+
+    @classmethod
+    def find_by_oauth_id(cls, oauth_id) -> str:
+        """Return the User instance for the oauth_id if it exists, else None."""
+        return cls.query.filter_by(oauth_id=oauth_id).first()
 
     @classmethod
     def find_by_email(cls, email) -> str:

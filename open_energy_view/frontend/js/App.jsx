@@ -25,6 +25,8 @@ const App = () => {
   }, []);
 
   const restrictView = (selectedItem = null, partitionUpdate = null) => {
+    if (cookie.load("csrf_access_token")) cookie.save("logged_in", "csrf", { maxAge: 900 });
+    
     if (!cookie.load("logged_in") && cookie.load("csrf_refresh_token")) {
       AuthService.refreshToken();
     }

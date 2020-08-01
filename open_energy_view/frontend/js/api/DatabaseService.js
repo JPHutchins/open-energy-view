@@ -33,6 +33,10 @@ export const getSourcesF = () => {
   });
 };
 
+export const addPgeSource = (regInfo) => {
+  return axios.post("/api/web/add/pge-demo", regInfo, AuthService.getAuthHeader());
+};
+
 export const getPartitionOptions = (source) => {
   return axios.post(
     "/api/web/partition-options",

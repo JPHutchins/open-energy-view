@@ -6,6 +6,7 @@ from os import environ
 import json
 import requests
 from flask_restful import Resource, reqparse, request
+from oauthlib.oauth2 import WebApplicationClient
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -26,6 +27,9 @@ from pgesmd_self_access.helpers import parse_espi_data, get_bulk_id_from_xml
 
 CLIENT_ID = environ.get("CLIENT_ID")
 CLIENT_SECRET = environ.get("CLIENT_SECRET")
+GOOGLE_CLIENT_ID = environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
 auth_parser = reqparse.RequestParser()
 auth_parser.add_argument("email", help="Cannot be blank", required=True)
@@ -42,11 +46,14 @@ get_data_parser.add_argument("clientSecret", required=False)
 test_add_parser = reqparse.RequestParser()
 test_add_parser.add_argument("xml", required=True)
 
+google_client = WebApplicationClient(GOOGLE_CLIENT_ID)
+google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
+
 
 class AuthToken(Resource):
     def make_cookies(self, email):
-        access_token = create_access_token(identity=email)
-        refresh_token = create_refresh_token(identity=email)
+        access_token = create_access_token(identity=id)
+        refresh_token = create_refresh_token(identity=id)
         resp = jsonify({"login": True})
         set_access_cookies(resp, access_token)
         set_refresh_cookies(resp, refresh_token)
@@ -102,6 +109,71 @@ class TokenRefresh(Resource):
         return resp
 
 
+class GoogleOAuthStart(Resource):
+    def get(self):
+        authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+
+        request_uri = google_client.prepare_request_uri(
+            authorization_endpoint,
+            redirect_uri="https://www.openenergyview.com/api/oauth",
+            scope=["openid", "email", "profile"],
+        )
+        return redirect(request_uri)
+
+
+class GoogleOAuthEnd(Resource):
+    def get(self):
+        code = request.args.get("code")
+        token_endpoint = google_provider_cfg["token_endpoint"]
+
+        token_url, headers, body = google_client.prepare_token_request(
+            token_endpoint,
+            authorization_response=request.url,
+            redirect_url="https://www.openenergyview.com/api/oauth",
+            code=code,
+        )
+        token_response = requests.post(
+            token_url,
+            headers=headers,
+            data=body,
+            auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+        )
+
+        google_client.parse_request_body_response(json.dumps(token_response.json()))
+        userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+        uri, headers, body = google_client.add_token(userinfo_endpoint)
+        userinfo_response = requests.get(uri, headers=headers, data=body)
+
+        userinfo = userinfo_response.json()
+        if userinfo.get("email_verified"):
+            sub = userinfo["sub"]
+        else:
+            return "Unconfirmed email address.", 400
+
+        current_user = models.User.find_by_oauth_id(sub)
+        if current_user:
+            access_token = create_access_token(current_user.id)
+            refresh_token = create_refresh_token(current_user.id)
+            resp = redirect("https://www.openenergyview.com")
+            set_access_cookies(resp, access_token)
+            set_refresh_cookies(resp, refresh_token)
+            return resp
+
+        new_user = models.User(oauth_id=sub, oauth_provider="google",)
+        try:
+            new_user.save_to_db()
+            access_token = create_access_token(new_user.id)
+            refresh_token = create_refresh_token(new_user.id)
+            resp = redirect("https://www.openenergyview.com")
+            set_access_cookies(resp, access_token)
+            set_refresh_cookies(resp, refresh_token)
+            return resp
+        except Exception as e:
+            return {"message": str(e)}, 500
+        finally:
+            pass
+
+
 class PgeOAuthRedirect(Resource):
     def get(self):
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
@@ -125,7 +197,15 @@ class PgeOAuthRedirect(Resource):
         }
         header_params = {"Authorization": auth_header}
 
-        response = requests.post(URL, data=request_params, headers=header_params, cert=('/home/jp/pgesmd/open_energy_view/auth/cert.crt', '/home/jp/pgesmd/open_energy_view/auth/private.key'))
+        response = requests.post(
+            URL,
+            data=request_params,
+            headers=header_params,
+            cert=(
+                "/home/jp/pgesmd/open_energy_view/auth/cert.crt",
+                "/home/jp/pgesmd/open_energy_view/auth/private.key",
+            ),
+        )
         print(response.text)
         return {}, 200
 
@@ -146,7 +226,7 @@ class PgeOAuthPortal(Resource):
         except KeyError:
             pass
 
-        #print(scope)
+        # print(scope)
         scope_query = "&scope="
         authorizationServerAuthorizationEndpoint = (
             testing_endpoint
@@ -170,7 +250,7 @@ class AllUsers(Resource):
 class GetSources(Resource):
     @jwt_required
     def post(self):
-        user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         sources_entries = db.session.query(models.Source).with_parent(user).all()
         sources = list(map(lambda x: x.friendly_name, sources_entries))
         return sources
@@ -182,7 +262,7 @@ class GetPartitionOptions(Resource):
         data = get_data_parser.parse_args()
         if not data["source"] or data["source"] == "None":
             return
-        user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         source = (
             db.session.query(models.Source)
             .filter_by(friendly_name=data["source"])
@@ -199,7 +279,7 @@ class GetHourlyData(Resource):
         if not data["source"] or data["source"] == "None":
             return
 
-        user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         source = (
             db.session.query(models.Source)
             .filter_by(friendly_name=data["source"])
@@ -243,10 +323,10 @@ class PgeNotify(Resource):
         return {}, 200
 
 
-class AddPgeDemoSource(AuthToken):
+class AddPgeDemoSource(Resource):
     @jwt_required
     def post(self):
-        user = db.session.query(models.User).filter_by(email=get_jwt_identity()).first()
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         data = get_data_parser.parse_args()
         new_account = models.Source(
             u_id=user.id,
@@ -257,6 +337,56 @@ class AddPgeDemoSource(AuthToken):
             client_secret=data["clientSecret"],
         )
         new_account.save_to_db()
+
+
+class UploadXml(Resource):
+    @jwt_required
+    def post(self):
+        #xml = request.text
+        friendly_name = request.args.get("friendly_name")
+        if not friendly_name:
+            friendly_name = "PG&E Test XML upload"
+
+        if request.files:
+            xml= request.files.get("xml").read().decode('utf-8')
+
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        
+        source = (
+            db.session.query(models.Source)
+            .filter_by(friendly_name=friendly_name)
+            .with_parent(user)
+            .first()
+        )
+
+        data_update = []
+        last_entry = ""
+        for entry in parse_espi_data(xml):
+            data_update.append(
+                {
+                    "source_id": source.id,
+                    "start": entry[0],
+                    "duration": entry[1],
+                    "watt_hours": entry[2],
+                }
+            )
+            last_entry = entry[0]
+        try:
+            db.session.bulk_insert_mappings(models.Espi, data_update)
+            db.session.commit()
+        except exc.IntegrityError:
+            db.session.rollback()
+            db.engine.execute(
+                "INSERT OR IGNORE INTO espi (source_id, start, duration, watt_hours) VALUES (:source_id, :start, :duration, :watt_hours)",
+                data_update,
+            )
+        finally:
+            timestamp = int(time() * 1000)
+            source_row = db.session.query(models.Source).filter_by(id=source.id)
+            source_row.update({"last_update": timestamp})
+            db.session.commit()
+
+        return {}, 200
 
 
 class TestAddXml(Resource):

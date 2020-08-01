@@ -40,6 +40,9 @@ def create_app() -> Flask:
     rest.add_resource(resources.UserLogin, "/api/web/token/auth")
     rest.add_resource(resources.UserLogout, "/api/web/token/remove")
     rest.add_resource(resources.TokenRefresh, "/api/web/token/refresh")
+    # OAuth 2
+    rest.add_resource(resources.GoogleOAuthStart, "/api/oauth/google")
+    rest.add_resource(resources.GoogleOAuthEnd, "/api/oauth")
 
     # Utility OAuth
     rest.add_resource(resources.PgeOAuthRedirect, "/api/utility/pge/redirect_uri")
@@ -53,8 +56,11 @@ def create_app() -> Flask:
     # Utility or device notify endpoints
     rest.add_resource(resources.PgeNotify, "/api/utility/pge/notify")
 
+    # User uploads data
+    rest.add_resource(resources.UploadXml, "/api/web/upload-xml")
+
     # Initialize demo data
-    rest.add_resource(resources.AddPgeDemoSource, "/api/add/pge-demo")
+    rest.add_resource(resources.AddPgeDemoSource, "/api/web/add/pge-demo")
     rest.add_resource(resources.TestAddXml, "/api/test/add/xml")
 
     # Initialize extensions with the Flask app

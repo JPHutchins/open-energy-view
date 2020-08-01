@@ -10,6 +10,10 @@ const Login = (props) => {
   const [badCreds, setBadCreds] = useState("");
   const [loginDisabled, setLoginDisabled] = useState(false);
 
+  const googleAuth = () => {
+    location.href = "/api/oauth/google"
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     setLoginDisabled(true);
@@ -75,7 +79,9 @@ const Login = (props) => {
           Login
         </Button>
         <hr />
-        <div className="g-signin2" dataOnsuccess="onSignIn"></div>
+        <Button className="login-submit-button" variant="primary" onClick={googleAuth}>
+          Log in with Google
+        </Button>
         <hr />
         <Form.Text className="default-text">
           No account? <Link to="/create_account">Register now!</Link>
