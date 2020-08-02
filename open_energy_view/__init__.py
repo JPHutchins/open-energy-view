@@ -48,6 +48,9 @@ def create_app() -> Flask:
     rest.add_resource(resources.PgeOAuthRedirect, "/api/utility/pge/redirect_uri")
     rest.add_resource(resources.PgeOAuthPortal, "/api/utility/pge/oauth_portal")
 
+    # Add data source
+    rest.add_resource(resources.AddPgeFromOAuth, "/api/web/add/pge_oauth")
+
     # Get data
     rest.add_resource(resources.GetSources, "/api/web/sources")
     rest.add_resource(resources.GetPartitionOptions, "/api/web/partition-options")

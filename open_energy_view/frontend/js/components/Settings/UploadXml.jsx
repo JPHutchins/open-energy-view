@@ -14,7 +14,7 @@ const UploadXml = ({ energyHistory }) => {
         const data = new FormData();
         data.append("xml", file)
         axios.post(
-            `api/web/upload-xml?friendly_name=${energyHistory.friendly_name}`,
+            `api/web/upload-xml?friendly_name=${energyHistory.friendlyName}`,
             data,
             {
                 headers: {

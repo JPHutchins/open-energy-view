@@ -1,10 +1,11 @@
 """API endpoints for viewing data."""
-from flask import jsonify, redirect
+from flask import jsonify, redirect, url_for
 from time import time
 from base64 import b64encode
 from os import environ
 import json
 import requests
+import re
 from flask_restful import Resource, reqparse, request
 from oauthlib.oauth2 import WebApplicationClient
 from flask_jwt_extended import (
@@ -18,18 +19,41 @@ from flask_jwt_extended import (
     unset_jwt_cookies,
 )
 from sqlalchemy import exc
+from cryptography.fernet import Fernet
+import xml.etree.ElementTree as ET
+from urllib.parse import quote
 
 from . import models
 from . import bcrypt
 from . import db
 from pgesmd_self_access.helpers import parse_espi_data, get_bulk_id_from_xml
 
+from .utility_apis import Pge
 
-CLIENT_ID = environ.get("CLIENT_ID")
-CLIENT_SECRET = environ.get("CLIENT_SECRET")
+
+PGE_CLIENT_ID = environ.get("PGE_CLIENT_ID")
+PGE_CLIENT_SECRET = environ.get("PGE_CLIENT_SECRET")
+PGE_REGISTRATION_ACCESS_TOKEN = environ.get("PGE_REGISTRATION_ACCESS_TOKEN")
+CERT_PATH = environ.get("CERT_PATH")
+KEY_PATH = environ.get("KEY_PATH")
 GOOGLE_CLIENT_ID = environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+API_RESPONSE_KEY = environ.get("API_RESPONSE_KEY")
+
+STATE = "originatedfromoev"
+
+pge_api = Pge(
+    PGE_CLIENT_ID,
+    PGE_CLIENT_SECRET,
+    PGE_REGISTRATION_ACCESS_TOKEN,
+    CERT_PATH,
+    KEY_PATH,
+    "https://api.pge.com/datacustodian/oauth/v2/token",
+    "pass",
+    "pass",
+    "https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ReadServiceStatus",
+)
 
 auth_parser = reqparse.RequestParser()
 auth_parser.add_argument("email", help="Cannot be blank", required=True)
@@ -42,12 +66,15 @@ get_data_parser.add_argument("name", required=False)
 get_data_parser.add_argument("thirdPartyId", required=False)
 get_data_parser.add_argument("clientId", required=False)
 get_data_parser.add_argument("clientSecret", required=False)
+get_data_parser.add_argument("payload", required=False)
 
 test_add_parser = reqparse.RequestParser()
 test_add_parser.add_argument("xml", required=True)
 
 google_client = WebApplicationClient(GOOGLE_CLIENT_ID)
 google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
+
+f = Fernet(API_RESPONSE_KEY)
 
 
 class AuthToken(Resource):
@@ -176,18 +203,22 @@ class GoogleOAuthEnd(Resource):
 
 class PgeOAuthRedirect(Resource):
     def get(self):
+        args = request.args
+        if args.get("state") != STATE:
+            return {"error": "bad origin"}, 200
+
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
-        URL = "https://api.pge.com/datacustodian/test/oauth/v2/token"
+        URL = "https://api.pge.com/datacustodian/oauth/v2/token"
 
         print("got hit at redirect")
-        args = request.args
+
         print(args)
         try:
             authorization_code = args["code"]
         except KeyError:
             return {"error": "Missing parameter: authorization_code"}, 200
 
-        b64 = b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode("utf-8"))
+        b64 = b64encode(f"{PGE_CLIENT_ID}:{PGE_CLIENT_SECRET}".encode("utf-8"))
         auth_header = f"Basic {bytes.decode(b64)}"
 
         request_params = {
@@ -201,21 +232,72 @@ class PgeOAuthRedirect(Resource):
             URL,
             data=request_params,
             headers=header_params,
-            cert=(
-                "/home/jp/pgesmd/open_energy_view/auth/cert.crt",
-                "/home/jp/pgesmd/open_energy_view/auth/private.key",
-            ),
+            cert=(CERT_PATH, KEY_PATH,),
         )
         print(response.text)
-        return {}, 200
+
+        user_info = json.loads(response.text)
+        authorization_uri = user_info.get("authorizationURI")
+
+        print(pge_api.need_token())
+        print(pge_api.get_service_status())
+        published_period_start = pge_api.get_published_period_start(authorization_uri)
+
+        subscription_id = "unknown"
+        if group := re.search(r"(?<=Subscription/)\d+", user_info.get("resourceURI")):
+            subscription_id = group[0]
+
+        user_info_dict = {
+            "access_token": user_info.get("access_token"),
+            "refresh_token": user_info.get("refresh_token"),
+            "token_exp": int(user_info.get("expires_in")) + time(),
+            "subscription_id": subscription_id,
+            "published_period_start": published_period_start
+        }
+
+        payload = f.encrypt(json.dumps(user_info_dict).encode("utf-8"))
+        print(payload)
+        print(bytes.decode(f.decrypt(payload)))
+
+        resp = redirect(f"https://www.openenergyview.com/#/pge_oauth?payload={quote(payload)}")
+
+        return resp
+
+
+class AddPgeFromOAuth(Resource):
+    @jwt_required
+    def post(self):
+        data = get_data_parser.parse_args()
+        print(data["name"])
+        print(data["payload"])
+        
+        name = data["name"]
+        user_info = bytes.decode(f.decrypt(data["payload"].encode('utf-8')))
+        print(user_info)
+        user_info = json.loads(user_info)
+
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        
+        new_account = models.Source(
+            u_id=user.id,
+            friendly_name=name,
+            reg_type="oauth",
+            provider_id=user_info.get("subscription_id"),
+            access_token=user_info.get("access_token"),
+            token_exp=user_info.get("token_exp"),
+            refresh_token=user_info.get("refresh_token"),
+            published_period_start=user_info.get("published_period_start")
+        )
+        new_account.save_to_db()
+    return redirect("www.openenergyview.com")
 
 
 class PgeOAuthPortal(Resource):
     def get(self):
-        TESTING = True
+        TESTING = False
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
         testing_endpoint = "https://api.pge.com/datacustodian/test/oauth/v2/authorize"
-        scope = "xxx"
+        scope = ""
         print(request.headers)
         print(request)
         print(request.args)
@@ -226,14 +308,14 @@ class PgeOAuthPortal(Resource):
         except KeyError:
             pass
 
-        # print(scope)
+        print(scope)
         scope_query = "&scope="
         authorizationServerAuthorizationEndpoint = (
             testing_endpoint
             if TESTING
             else "https://sharemydata.pge.com/myAuthorization"
         )
-        query = f"?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code"
+        query = f"?client_id={PGE_CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code&state={STATE}"
 
         return redirect(f"{authorizationServerAuthorizationEndpoint}{query}")
 
@@ -320,6 +402,15 @@ class GetHourlyData(Resource):
 
 class PgeNotify(Resource):
     def post(self):
+        data = request.data
+        try:
+            resource_uri = ET.fromstring(data)[0].text
+        except ET.ParseError:
+            # print(f'Could not parse message: {data}')
+            return f"Could not parse message: {data}", 500
+
+        xml = pge_api.get_espi_data(resource_uri)
+
         return {}, 200
 
 
@@ -342,16 +433,17 @@ class AddPgeDemoSource(Resource):
 class UploadXml(Resource):
     @jwt_required
     def post(self):
-        #xml = request.text
+        # xml = request.text
         friendly_name = request.args.get("friendly_name")
+        print(friendly_name)
         if not friendly_name:
             friendly_name = "PG&E Test XML upload"
 
         if request.files:
-            xml= request.files.get("xml").read().decode('utf-8')
+            xml = request.files.get("xml").read().decode("utf-8")
 
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
-        
+
         source = (
             db.session.query(models.Source)
             .filter_by(friendly_name=friendly_name)

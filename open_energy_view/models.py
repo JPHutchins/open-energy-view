@@ -61,11 +61,15 @@ class Source(db.Model):
     # PGESMD registration information
     reg_type = db.Column(db.String(30), nullable=True)
     provider_id = db.Column(db.Integer, nullable=True)
+    access_token = db.Column(db.String(100), nullable=True)
+    token_exp = db.Column(db.Integer, nullable=True)
+    refresh_token = db.Column(db.String(100), nullable=True)
     client_id = db.Column(db.String(100), nullable=True)
     client_secret = db.Column(db.String(100), nullable=True)
     cert_crt_path = db.Column(db.String(100), nullable=True)
     cert_key_path = db.Column(db.String(100), nullable=True)
     # Information about the dataset
+    published_period_start = db.Column(db.Integer, nullable=True)
     last_entry = db.Column(db.Integer, default=0)
     last_update = db.Column(db.Integer, default=0)
     # Options

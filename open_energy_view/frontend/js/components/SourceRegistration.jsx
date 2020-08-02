@@ -27,7 +27,10 @@ const SourceRegistration = ({ history, restrictView }) => {
     });
   };
 
-  const handlePgeOAuth = () => {};
+  const handlePgeOAuth = (e) => {
+    e.preventDefault();
+    location.href = "/api/utility/pge/oauth_portal"
+   };
 
   const initialForm = (
     <div className="register-box">
@@ -44,52 +47,57 @@ const SourceRegistration = ({ history, restrictView }) => {
   );
 
   const selfAccess = <div className="register-box">
-  <Form onSubmit={handleSubmit}>
-    <Form.Text className="form-title">PG&E Share My Data</Form.Text>
-    <Form.Text className="form-title">Self Access</Form.Text>
-    <Form.Group controlId="formPge">
-      <Form.Label>Name</Form.Label>
-      <Form.Control
-        className="login-form"
-        type="text"
-        placeholder="Name, like PG&E or Home PG&E"
-        onChange={(e) => setName(e.target.value)}
-      />
-      <Form.Label>Third-Party ID</Form.Label>
-      <Form.Control
-        className="login-form"
-        type="text"
-        placeholder="Third-Party ID"
-        onChange={(e) => setThirdPartyId(e.target.value)}
-      />
-      <Form.Label>Client ID</Form.Label>
-      <Form.Control
-        className="login-form"
-        type="text"
-        placeholder="Client ID"
-        onChange={(e) => setClientId(e.target.value)}
-      />
-      <Form.Label>Client Secret</Form.Label>
-      <Form.Control
-        className="login-form"
-        type="text"
-        placeholder="Client Secret"
-        onChange={(e) => setClientSecret(e.target.value)}
-      />
-    </Form.Group>
-    <Button variant="primary" type="submit">
-      Add Source
+    <Form onSubmit={handleSubmit}>
+      <Form.Text className="form-title">PG&E Share My Data</Form.Text>
+      <Form.Text className="form-title">Self Access</Form.Text>
+      <Form.Group controlId="formPge">
+        <Form.Label>Name</Form.Label>
+        <Form.Control
+          className="login-form"
+          type="text"
+          placeholder="Name, like PG&E or Home PG&E"
+          onChange={(e) => setName(e.target.value)}
+        />
+        <Form.Label>Third-Party ID</Form.Label>
+        <Form.Control
+          className="login-form"
+          type="text"
+          placeholder="Third-Party ID"
+          onChange={(e) => setThirdPartyId(e.target.value)}
+        />
+        <Form.Label>Client ID</Form.Label>
+        <Form.Control
+          className="login-form"
+          type="text"
+          placeholder="Client ID"
+          onChange={(e) => setClientId(e.target.value)}
+        />
+        <Form.Label>Client Secret</Form.Label>
+        <Form.Control
+          className="login-form"
+          type="text"
+          placeholder="Client Secret"
+          onChange={(e) => setClientSecret(e.target.value)}
+        />
+      </Form.Group>
+      <Button variant="primary" type="submit">
+        Add Source
     </Button>
-    <hr />
-  </Form>
-</div>
+      <hr />
+    </Form>
+  </div>
 
   return (
     <>
-    {selfAccess}
-      <Button variant="primary" onClick={handlePgeOAuth}>Add PG&E Account</Button>
+      {selfAccess}
+      <div className="register-box">
+        <Form onSubmit={handlePgeOAuth}>
+          <Form.Group controlId="formPgeOAuth">
+            <Button variant="primary" type="submit">Add PG&E Account</Button>
+          </Form.Group>
+        </Form>
+      </div>
     </>
-    
   );
 };
 

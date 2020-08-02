@@ -14,6 +14,7 @@ import { theFuture } from "./api/DatabaseService";
 import SourceRegistration from "./components/SourceRegistration";
 import { useEffect } from "react";
 import AuthService from "./api/AuthService";
+import AddOAuthSource from "./components/AddOAuthSource"
 
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(cookie.load("logged_in"));
@@ -74,6 +75,7 @@ const App = () => {
         sources={sources}
       />
       <Switch>
+        <Route path="/pge_oauth" component={AddOAuthSource} />
         <Route path="/test" component={TestResults} />
         <Route path="/login">{bypassLogin()}</Route>
         <Route exact path="/">
