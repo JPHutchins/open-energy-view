@@ -56,11 +56,13 @@ class Source(db.Model):
 
     __tablename__ = "sources"
     id = db.Column(db.Integer, primary_key=True)
-    u_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     friendly_name = db.Column(db.String(100), nullable=True)
     # PGESMD registration information
     reg_type = db.Column(db.String(30), nullable=True)
-    provider_id = db.Column(db.Integer, nullable=True)
+    subscription_id = db.Column(db.Integer, nullable=True)
+    usage_point = db.Column(db.Integer, nullable=True)
+    resource_type = db.Column(db.String(50), nullable=True, default="electricity")
     access_token = db.Column(db.String(100), nullable=True)
     token_exp = db.Column(db.Integer, nullable=True)
     refresh_token = db.Column(db.String(100), nullable=True)
@@ -77,8 +79,8 @@ class Source(db.Model):
     # Relationship to data tables
     espi = db.relationship("Espi", backref="sources", lazy=True)
     __table_args__ = (
-        db.UniqueConstraint("friendly_name", "u_id"),
-        db.UniqueConstraint("provider_id", "u_id"),
+        db.UniqueConstraint("friendly_name", "user_id"),
+        db.UniqueConstraint("usage_point", "friendly_name"),
     )
 
     def save_to_db(self) -> None:
@@ -89,7 +91,7 @@ class Source(db.Model):
     def __repr__(self) -> None:
         return (
             f"id: {self.id}, "
-            f"u_id: {self.u_id}, "
+            f"user_id: {self.user_id}, "
             f"friendly_name: {self.friendly_name}"
         )
 
