@@ -55,6 +55,7 @@ def create_app() -> Flask:
     rest.add_resource(resources.GetSources, "/api/web/sources")
     rest.add_resource(resources.GetPartitionOptions, "/api/web/partition-options")
     rest.add_resource(resources.GetHourlyData, "/api/web/data/hours")
+    rest.add_resource(resources.GetMeterReading, "/api/web/data/meter-reading")
 
     # Utility or device notify endpoints
     rest.add_resource(resources.PgeNotify, "/api/utility/pge/notify")
