@@ -56,11 +56,11 @@ export const parseHourResponse = (partitions) => (res) => {
   const responseString = res.data.useLocalStorage
     ? getLocalStorage(res.data.email, res.data.friendlyName)
     : updateLocalStorage(
-        res.data.email,
-        res.data.friendlyName,
-        res.data.database,
-        res.data.lastUpdate
-      );
+      res.data.email,
+      res.data.friendlyName,
+      res.data.database,
+      res.data.lastUpdate
+    );
 
   const energyHistoryString = sliceEnergyHistoryStringFromResponse(
     responseString
@@ -121,9 +121,9 @@ const makeSources = (energyHistoryInstance) => {
   };
 };
 
-const sourcesF = getSourcesF().pipe(map((x) => x.data));
+const sourcesF = getSourcesF().pipe(map((x) => x.data))
 
-export const theFuture = (partitions) => {
+export const getData = (partitions) => {
   return sourcesF
     .pipe(map((x) => x.map(getHourlyData)))
     .pipe(chain(parallel(10)))
