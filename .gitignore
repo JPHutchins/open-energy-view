@@ -21,3 +21,4 @@ venv.bak
 requirements.txt.bak
 set-env.sh
 auth_details.xml
+private/
