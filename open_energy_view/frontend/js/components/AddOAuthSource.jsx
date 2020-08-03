@@ -11,7 +11,9 @@ const AddOAuthSource = (props) => {
     console.log(props)
     const params = new URLSearchParams(location.search);
     const payload = params.get("payload");
-    console.log(payload)
+    const usage_points = JSON.parse(params.get("usage_points"))
+    // TODO: handle multiple usage points
+    console.log(payload, usage_points)
 
 
 
@@ -23,6 +25,7 @@ const AddOAuthSource = (props) => {
         const regInfo = {
             payload: payload,
             name: name,
+            usage_point: usage_points.electricity[0]
         };
         axios.post("/api/web/add/pge_oauth", regInfo, AuthService.getAuthHeader()).then(() => {
             restrictView();

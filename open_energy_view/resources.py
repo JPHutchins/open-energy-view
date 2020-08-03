@@ -28,9 +28,9 @@ from . import bcrypt
 from . import db
 from pgesmd_self_access.helpers import parse_espi_data, get_bulk_id_from_xml
 
-from .utility_apis import Pge
+from .utility_apis import Pge, save_espi_xml
 
-
+PGE_BULK_ID = 51070
 PGE_CLIENT_ID = environ.get("PGE_CLIENT_ID")
 PGE_CLIENT_SECRET = environ.get("PGE_CLIENT_SECRET")
 PGE_REGISTRATION_ACCESS_TOKEN = environ.get("PGE_REGISTRATION_ACCESS_TOKEN")
@@ -44,16 +44,20 @@ API_RESPONSE_KEY = environ.get("API_RESPONSE_KEY")
 STATE = "originatedfromoev"
 
 pge_api = Pge(
+    PGE_BULK_ID,
     PGE_CLIENT_ID,
     PGE_CLIENT_SECRET,
     PGE_REGISTRATION_ACCESS_TOKEN,
     CERT_PATH,
     KEY_PATH,
     "https://api.pge.com/datacustodian/oauth/v2/token",
+    "https://api.pge.com/datacustodian/oauth/v2/token",
     "pass",
-    "pass",
+    "https://api.pge.com/GreenButtonConnect",
     "https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ReadServiceStatus",
 )
+
+pge_api.get_service_status()
 
 auth_parser = reqparse.RequestParser()
 auth_parser.add_argument("email", help="Cannot be blank", required=True)
@@ -67,6 +71,8 @@ get_data_parser.add_argument("thirdPartyId", required=False)
 get_data_parser.add_argument("clientId", required=False)
 get_data_parser.add_argument("clientSecret", required=False)
 get_data_parser.add_argument("payload", required=False)
+get_data_parser.add_argument("usage_point", required=False)
+get_data_parser.add_argument("friendly_name", required=False)
 
 test_add_parser = reqparse.RequestParser()
 test_add_parser.add_argument("xml", required=True)
@@ -239,7 +245,6 @@ class PgeOAuthRedirect(Resource):
         user_info = json.loads(response.text)
         authorization_uri = user_info.get("authorizationURI")
 
-        print(pge_api.need_token())
         print(pge_api.get_service_status())
         published_period_start = pge_api.get_published_period_start(authorization_uri)
 
@@ -247,21 +252,34 @@ class PgeOAuthRedirect(Resource):
         if group := re.search(r"(?<=Subscription/)\d+", user_info.get("resourceURI")):
             subscription_id = group[0]
 
+        if subscription_id != "unknown":
+            usage_points = pge_api.get_usage_points(
+                subscription_id, user_info.get("access_token")
+            )
+
         user_info_dict = {
             "access_token": user_info.get("access_token"),
             "refresh_token": user_info.get("refresh_token"),
             "token_exp": int(user_info.get("expires_in")) + time(),
             "subscription_id": subscription_id,
-            "published_period_start": published_period_start
+            "published_period_start": published_period_start,
         }
 
         payload = f.encrypt(json.dumps(user_info_dict).encode("utf-8"))
-        print(payload)
-        print(bytes.decode(f.decrypt(payload)))
 
-        resp = redirect(f"https://www.openenergyview.com/#/pge_oauth?payload={quote(payload)}")
+        resp = redirect(
+            f"https://www.openenergyview.com/#/pge_oauth?payload={quote(payload)}&usage_points={quote(json.dumps(usage_points))}"
+        )
 
         return resp
+
+
+class GetData(Resource):
+    @jwt_required
+    def post(self):
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        data = get_data_parser.parse_args()
+        friendly_name = data["source"]
 
 
 class AddPgeFromOAuth(Resource):
@@ -270,26 +288,49 @@ class AddPgeFromOAuth(Resource):
         data = get_data_parser.parse_args()
         print(data["name"])
         print(data["payload"])
-        
+
         name = data["name"]
-        user_info = bytes.decode(f.decrypt(data["payload"].encode('utf-8')))
+        usage_point = data["usage_point"]
+        user_info = bytes.decode(f.decrypt(data["payload"].encode("utf-8")))
         print(user_info)
         user_info = json.loads(user_info)
 
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
-        
+
         new_account = models.Source(
-            u_id=user.id,
+            user_id=user.id,
             friendly_name=name,
             reg_type="oauth",
-            provider_id=user_info.get("subscription_id"),
+            subscription_id=user_info.get("subscription_id"),
             access_token=user_info.get("access_token"),
             token_exp=user_info.get("token_exp"),
             refresh_token=user_info.get("refresh_token"),
-            published_period_start=user_info.get("published_period_start")
+            usage_point=usage_point,
+            published_period_start=user_info.get("published_period_start"),
         )
         new_account.save_to_db()
-    return redirect("www.openenergyview.com")
+
+        return redirect("www.openenergyview.com")
+
+
+class GetMeterReading(Resource):
+    @jwt_required
+    def post(self):
+        data = get_data_parser.parse_args()
+        friendly_name = data["friendly_name"]
+
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        source = (
+            db.session.query(models.Source)
+            .filter_by(friendly_name=friendly_name)
+            .with_parent(user)
+            .first()
+        )
+
+        pge_api.get_meter_reading(source)
+        # pge_api.get_espi_data(source)
+
+        return {}, 200
 
 
 class PgeOAuthPortal(Resource):
@@ -403,13 +444,15 @@ class GetHourlyData(Resource):
 class PgeNotify(Resource):
     def post(self):
         data = request.data
+        print("notify hit", request.headers)
+        save_espi_xml(data)
         try:
             resource_uri = ET.fromstring(data)[0].text
         except ET.ParseError:
             # print(f'Could not parse message: {data}')
             return f"Could not parse message: {data}", 500
 
-        xml = pge_api.get_espi_data(resource_uri)
+        # xml = pge_api.get_espi_data(resource_uri)
 
         return {}, 200
 
@@ -420,7 +463,7 @@ class AddPgeDemoSource(Resource):
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         data = get_data_parser.parse_args()
         new_account = models.Source(
-            u_id=user.id,
+            user_id=user.id,
             friendly_name=data["name"],
             reg_type="self",
             provider_id=data["thirdPartyId"],
@@ -504,7 +547,7 @@ class TestAddXml(Resource):
         bulk_id = get_bulk_id_from_xml(xml)
 
         source_id = (
-            db.session.query(models.Source).filter_by(provider_id=bulk_id).first().id
+            db.session.query(models.Source).filter_by(subscription_id=bulk_id).first().id
         )
 
         data_update = []

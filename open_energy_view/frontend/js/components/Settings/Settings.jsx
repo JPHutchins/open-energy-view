@@ -1,10 +1,21 @@
 import React from "react";
 import SetPartitions from "./SetPartitions";
 import UploadXml from "./UploadXml";
+import AuthService from "../../api/AuthService"
+import {Button} from "react-bootstrap"
+import axios from "axios"
 
 // TODO: add link to account settings ... or just place as child ... could be confusing
 
 const Settings = ({ energyHistory, restrictView }) => {
+
+  const handleMeterRead = () => {
+    const data = {
+      friendly_name: energyHistory.friendlyName
+    };
+    axios.post("/api/web/data/meter-reading", data, AuthService.getAuthHeader())
+  }
+
   return (
     <div className="main-tab-box">
       <h1>{energyHistory.friendlyName} Settings</h1>
@@ -17,6 +28,7 @@ const Settings = ({ energyHistory, restrictView }) => {
       </div>
       <UploadXml energyHistory={energyHistory}/>
       {/* <h4>Link to account settings</h4> */}
+      <Button onClick={handleMeterRead}>Read Meter</Button>
     </div>
   );
 };
