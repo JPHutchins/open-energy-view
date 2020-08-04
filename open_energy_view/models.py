@@ -59,6 +59,7 @@ class Source(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     friendly_name = db.Column(db.String(100), nullable=True)
     # PGESMD registration information
+    # utility = db.Column(db.String(100), nullable=True)
     reg_type = db.Column(db.String(30), nullable=True)
     subscription_id = db.Column(db.Integer, nullable=True)
     usage_point = db.Column(db.Integer, nullable=True)
