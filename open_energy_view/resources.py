@@ -26,9 +26,7 @@ from urllib.parse import quote
 from . import models
 from . import bcrypt
 from . import db
-from pgesmd_self_access.helpers import parse_espi_data, get_bulk_id_from_xml
-
-from .utility_apis import Pge, save_espi_xml
+from .utility_apis import Pge, save_espi_xml, parse_espi_data
 
 PGE_BULK_ID = 51070
 PGE_CLIENT_ID = environ.get("PGE_CLIENT_ID")
@@ -58,6 +56,7 @@ pge_api = Pge(
 )
 
 pge_api.get_service_status()
+# pge_api.request_bulk_data()
 
 auth_parser = reqparse.RequestParser()
 auth_parser.add_argument("email", help="Cannot be blank", required=True)
@@ -84,7 +83,7 @@ f = Fernet(API_RESPONSE_KEY)
 
 
 class AuthToken(Resource):
-    def make_cookies(self, email):
+    def make_cookies(self, id):
         access_token = create_access_token(identity=id)
         refresh_token = create_refresh_token(identity=id)
         resp = jsonify({"login": True})
@@ -105,7 +104,7 @@ class Register(AuthToken):
         )
         try:
             new_user.save_to_db()
-            return self.make_cookies(data["email"])
+            return self.make_cookies(new_user.id)
         except Exception as e:
             return {"message": str(e)}, 500
         finally:
@@ -115,12 +114,13 @@ class Register(AuthToken):
 class UserLogin(AuthToken):
     def post(self):
         data = auth_parser.parse_args()
+        print(data["email"], data["password"])
         current_user = models.User.find_by_email(data["email"])
         if not current_user:
             return {"message": "Bad credentials"}, 401
 
         if bcrypt.check_password_hash(current_user.password, data["password"]):
-            return self.make_cookies(data["email"])
+            return self.make_cookies(current_user.id)
         else:
             return {"message": "Bad credentials"}, 401
 
@@ -190,6 +190,7 @@ class GoogleOAuthEnd(Resource):
             resp = redirect("https://www.openenergyview.com")
             set_access_cookies(resp, access_token)
             set_refresh_cookies(resp, refresh_token)
+            resp.set_cookie("logged_in", "true")
             return resp
 
         new_user = models.User(oauth_id=sub, oauth_provider="google",)
@@ -200,6 +201,7 @@ class GoogleOAuthEnd(Resource):
             resp = redirect("https://www.openenergyview.com")
             set_access_cookies(resp, access_token)
             set_refresh_cookies(resp, refresh_token)
+            resp.set_cookie("logged_in", "true")
             return resp
         except Exception as e:
             return {"message": str(e)}, 500
@@ -309,6 +311,7 @@ class AddPgeFromOAuth(Resource):
             published_period_start=user_info.get("published_period_start"),
         )
         new_account.save_to_db()
+        pge_api.get_historical_data(new_account)
 
         return redirect("www.openenergyview.com")
 
@@ -440,17 +443,30 @@ class GetHourlyData(Resource):
         }
         return response, 200
 
+    
+class PgeRequestBulk(Resource):
+    def post(self):
+        pge_api.request_bulk_data()
+        return {}, 200
+
 
 class PgeNotify(Resource):
     def post(self):
         data = request.data
         print("notify hit", request.headers)
-        save_espi_xml(data)
+        save_espi_xml(data.decode('utf-8'))
+        resource_uris = []
         try:
-            resource_uri = ET.fromstring(data)[0].text
+            root = ET.fromstring(data)
+            for item in root:
+                resource_uris.append(item.text)
         except ET.ParseError:
             # print(f'Could not parse message: {data}')
             return f"Could not parse message: {data}", 500
+        
+        print(resource_uris)
+
+        pge_api.get_daily_deltas(resource_uris)
 
         # xml = pge_api.get_espi_data(resource_uri)
 
