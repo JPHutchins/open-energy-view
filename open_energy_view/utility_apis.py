@@ -2,7 +2,7 @@ from base64 import b64encode
 from time import time
 import requests
 import json
-import xml.etree.ElementTree as ET
+from xml.etree import cElementTree as ET
 import re
 from io import StringIO
 from datetime import datetime
@@ -70,23 +70,58 @@ def parse_espi_data(xml, ns="{http://naesb.org/espi}"):
 
             data.clear()
 
+
+def insert_espi_xml_into_db(xml, source_id):
+    data_update = []
+    last_entry = ""
+    for entry in parse_espi_data(xml):
+        data_update.append(
+            {
+                "source_id": source_id,
+                "start": entry[0],
+                "duration": entry[1],
+                "watt_hours": entry[2],
+            }
+        )
+        last_entry = entry[0]
+    try:
+        db.session.bulk_insert_mappings(models.Espi, data_update)
+        db.session.commit()
+    except exc.IntegrityError:
+        db.session.rollback()
+        db.engine.execute(
+            "INSERT OR IGNORE INTO espi (source_id, start, duration, watt_hours) VALUES (:source_id, :start, :duration, :watt_hours)",
+            data_update,
+        )
+    finally:
+        timestamp = int(time() * 1000)
+        source_row = db.session.query(models.Source).filter_by(id=source_id)
+        source_row.update({"last_update": timestamp})
+        db.session.commit()
+
+
 def save_espi_xml(xml_data, filename=None):
     """Save ESPI XML to a file named by timestamp or filename key."""
     if filename:
         save_name = f"{os.getcwd()}/data/espi_xml/{filename}.xml"
     else:
         save_name = f"{os.getcwd()}/{time()}.xml"
-    
+
     print(save_name)
 
     with open(save_name, "w") as file:
         file.write(xml_data)
     return save_name
 
-def request_url(method, url, data=None, headers=None, cert=None, format=None):
-    response = requests.request(method, url, data=data, headers=headers, cert=cert)
+
+def request_url(
+    method, url, params=None, data=None, headers=None, cert=None, format=None
+):
+    response = requests.request(
+        method, url, params=params, data=data, headers=headers, cert=cert
+    )
     if not response:
-        print(f"No response from {self.source_refresh_token_uri}")
+        print(f"No response from {url}")
         return False
     if not str(response.status_code) == "200":
         print(f"Error: {response.status_code}, {response.text}")
@@ -117,7 +152,7 @@ class Api:
         api_uri,
         service_status_uri,
     ):
-        self.bulk_id = bulk_id,
+        self.bulk_id = bulk_id
         self.client_id = client_id
         self.client_secret = client_secret
         self.registration_access_token = registration_access_token
@@ -140,7 +175,6 @@ class Api:
         if time() > self.client_access_token_exp - 5:
             return True
         return False
-
 
     def get_client_access_token(self):
         request_params = {"grant_type": "client_credentials"}
@@ -188,7 +222,6 @@ class Api:
             return True
         print("Service status is offline.")
         return False
-       
 
     def get_published_period_start(self, authorization_uri):
         if self.need_client_access_token():
@@ -227,11 +260,10 @@ class Api:
     def need_access_token(self, source):
         """Paramater source is SQL object."""
         return source.token_exp < time() - 5
-    
+
     def get_access_token(self, source):
         if self.need_client_access_token:
             self.get_client_access_token
-        
 
     def refresh_access_token(self, source):
         header_params = {"Authorization": self.auth_header}
@@ -332,7 +364,6 @@ class Api:
         ns1 = "{http://www.w3.org/2005/Atom}"
         urls = []
         for child in root:
-            cur_usage_point = None
             if child.tag == f"{ns1}entry":
                 for item in child:
                     url = item.attrib.get("href") or ""
@@ -405,6 +436,108 @@ class Api:
                 break
         return {}, 200
 
+    def get_historical_data(self, source):
+        # TODO: subclass this method to PGE - hopefully the need to lighten requests is unique to PGE
+        if self.need_access_token(source):
+            self.refresh_access_token(source)
+        header_params = {"Authorization": f"Bearer {source.access_token}"}
+        url = f"{self.api_uri}/espi/1_1/resource/Subscription/{source.subscription_id}/UsagePoint/{source.usage_point}/MeterReading"
+        response = request_url("GET", url, headers=header_params, cert=self.cert)
+        root = ET.fromstring(response)
+        ns1 = "{http://www.w3.org/2005/Atom}"
+        urls = []
+        for child in root:
+            cur_usage_point = None
+            if child.tag == f"{ns1}entry":
+                for item in child:
+                    url = item.attrib.get("href") or ""
+                    if url:
+                        urls.append(url)
+        re_interval_block_url = r"https:\/\/api\.pge\.com.*IntervalBlock"
+        group = re.search(re_interval_block_url, response)
+        if group:
+            interval_block_url = group[0]
+        else:
+            print("Could not find interval block url")
+            return {"error": "could not find interval block url"}, 500
+
+        four_weeks = 3600 * 24 * 28
+        start = source.published_period_start
+        final = int(time())
+        while start < final:
+            end = start + four_weeks - 3600
+            request_params = {
+                "published-min": start,
+                "published-max": end,
+            }
+            xml = request_url(
+                "GET",
+                interval_block_url,
+                params=request_params,
+                headers=header_params,
+                cert=self.cert,
+            )
+            insert_espi_xml_into_db(xml, source.id)
+            start = end + 3600
+
+    def request_bulk_data(self):
+        if self.need_client_access_token:
+            self.get_client_access_token
+        header_params = {"Authorization": f"Bearer {self.client_access_token}"}
+        # request_params = {"published-min": 1596178800, "published-max": int(time())}
+        url = f"{self.api_uri}/espi/1_1/resource/Batch/Bulk/{self.bulk_id}"
+        response = requests.get(url, headers=header_params, cert=self.cert)
+        if str(response.status_code) == "202":
+            print("request successful," " awaiting POST from server.")
+            return True
+        print(
+            f"request to Bulk Resource URI failed.  |  "
+            f"{response.status_code}: {response.text}"
+        )
+        return False
+
+    def get_daily_deltas(self, resource_uris):
+        if self.need_client_access_token:
+            self.get_client_access_token
+        header_params = {"Authorization": f"Bearer {self.client_access_token}"}
+
+        for url in resource_uris:
+            response = requests.get(url, headers=header_params, cert=self.cert,)
+            if not response:
+                print(f"No response from {url}")
+                return
+            if not str(response.status_code) == "200":
+                print(f"Error: {response.status_code}, {response.text}")
+                return
+            xml = response.text
+
+            root = ET.fromstring(xml)
+            usage_point = None
+            for item in root.iter():
+                href = item.attrib.get("href")
+                if not href:
+                    continue
+                if group := re.search(r"(?<=UsagePoint/)\d+", href):
+                    usage_point = group[0]
+                    break
+            if not usage_point:
+                print(f"could not find usage point in xml, saving")
+                save_espi_xml(xml)
+                break
+
+            # TODO: add check for utility name and/or subscription_id and use in filter
+            source = (
+                db.session.query(models.Source)
+                .filter_by(usage_point=usage_point)
+                .first()
+            )
+            if not source:
+                print(f"could not find usage point {usage_point} in db, probably gas")
+                break
+
+            print("adding to db...")
+            insert_espi_xml_into_db(xml, source.id)
+
     def get_espi_data(self, source):
         if self.need_access_token(source):
             self.refresh_access_token(source)
@@ -416,10 +549,7 @@ class Api:
         }
         url = f"{self.api_uri}/espi/1_1/resource/Subscription/{source.subscription_id}/UsagePoint/{source.usage_point}/MeterReading"
         response = requests.get(
-            url,
-            headers=header_params,
-            params=request_params,
-            cert=self.cert,
+            url, headers=header_params, params=request_params, cert=self.cert,
         )
         if str(response.status_code) == "202":
             print("request successful," " awaiting POST from server.")
