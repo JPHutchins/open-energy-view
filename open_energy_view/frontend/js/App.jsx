@@ -79,9 +79,7 @@ const App = () => {
         <Route path="/pge_oauth" component={AddOAuthSource} />
         <Route path="/test" component={TestResults} />
         <Route path="/login">{bypassLogin()}</Route>
-        <Route exact path="/">
-          {view}
-        </Route>
+        <Route exact path="/">{view}</Route>
         <Route exact path="/create_account">
           <UserRegistration callback={restrictView} />
         </Route>
