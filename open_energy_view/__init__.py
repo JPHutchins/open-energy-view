@@ -1,12 +1,9 @@
 import os
-from time import time
-from flask import Flask, render_template, request
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
-from xml.etree import cElementTree as ET
-from sqlalchemy import exc
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -53,8 +50,10 @@ def create_app() -> Flask:
     # Utility or device notify endpoints
     rest.add_resource(resources.PgeNotify, "/api/utility/pge/notify")
 
-    # User uploads data
+    # User interactions
     rest.add_resource(resources.UploadXml, "/api/web/upload-xml")
+    rest.add_resource(resources.DeleteSource, "/api/web/delete-source")
+    rest.add_resource(resources.ChangeSourceName, "/api/web/change-source-name")
 
     # Initialize demo data
     rest.add_resource(resources.AddPgeDemoSource, "/api/web/add/pge-demo")
@@ -68,6 +67,7 @@ def create_app() -> Flask:
 
     with app.app_context():
         db.create_all()
+
         # Setup the demo user and data
         demo_user = (
             db.session.query(models.User).filter_by(email="jph@demo.com").first()
