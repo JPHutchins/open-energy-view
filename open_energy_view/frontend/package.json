@@ -39,6 +39,7 @@
     "style-loader": "^1.0.1",
     "ts-loader": "^6.2.1",
     "typescript": "^3.7.4",
+    "url-loader": "^4.1.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10",
     "worker-loader": "^2.0.0",
@@ -77,6 +78,7 @@
     "regression": "^2.0.1",
     "rollup": "^2.23.0",
     "source-map-loader": "^0.2.4",
+    "svg-inline-loader": "^0.8.2",
     "zebras": "0.0.18"
   },
   "babel": {

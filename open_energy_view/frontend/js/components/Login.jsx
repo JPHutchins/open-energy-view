@@ -79,9 +79,7 @@ const Login = (props) => {
           Login
         </Button>
         <hr />
-        <Button className="login-submit-button" variant="primary" onClick={googleAuth}>
-          Log in with Google
-        </Button>
+        <div onClick={googleAuth} id="google-sign-in"></div>
         <hr />
         <Form.Text className="default-text">
           No account? <Link to="/create_account">Register now!</Link>

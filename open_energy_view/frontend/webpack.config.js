@@ -16,8 +16,30 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.css$/i,
+        test: /\.css$/i, 
         use: ["style-loader", "css-loader"],
+      },
+      {
+        test: /\.svg$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              encoding: false,
+            },
+          },
+        ],
+      },
+      {
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192,
+            },
+          },
+        ],
       },
       {
         test: /\.jsx?/,
