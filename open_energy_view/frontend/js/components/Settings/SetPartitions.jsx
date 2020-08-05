@@ -4,6 +4,7 @@ import { SliderRail, Handle, Track, Tick } from "./slider";
 import { useState } from "react";
 import { idToIndex } from "./functions";
 import { to12Hour } from "../../functions/to12Hour";
+import { Button } from "react-bootstrap";
 
 // TODO: display all-time day average as preview?
 
@@ -138,9 +139,9 @@ const SetPartitions = ({ existingPartitionOptions, restrictView }) => {
           )}
         </Ticks>
       </Slider>
-      <button onClick={() => restrictView(null, partitions)}style={{ marginTop: "80px" }}>
+      <Button onClick={() => restrictView(null, partitions)} style={{ marginTop: "80px", width: "auto" }}>
         Save and Reload with Updated Time Periods
-      </button>
+      </Button>
     </div>
   );
 };
