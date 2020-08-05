@@ -4,137 +4,12 @@ import requests
 import json
 from xml.etree import cElementTree as ET
 import re
-from io import StringIO
-from datetime import datetime
-from operator import itemgetter
-from sqlalchemy import exc
-import os
 
 
 from . import models
 from . import db
-
-
-def parse_espi_data(xml, ns="{http://naesb.org/espi}"):
-    """Generate ESPI tuple from ESPI XML.
-    Sequentially yields a tuple for each Interval Reading:
-        (start, duration, watthours)
-    The transition from Daylight Savings Time to Daylight Standard
-    Time or inverse are ignored as follows:
-    - If the "clocks are set back" then a UTC data point is repeated.  The
-        repetition is ignored in order to maintain 24 hours per day.
-    - If the "clocks are set forward" then a UTC data point is missing.  The
-        missing hour is filled with the average of the previous and following
-        values in order to maintain 24 hours per day.
-    """
-    print(f"Parsing the XML.")
-
-    # Find initial values
-    root = ET.fromstring(xml)
-    for child in root.iter(f"{ns}timePeriod"):
-        first_start = int(child.find(f"{ns}start").text)
-        duration = int(child.find(f"{ns}duration").text)
-        break
-    previous = (first_start - duration, 0, 0)
-    root.clear()
-
-    xml = StringIO(xml)
-    mp = -3
-
-    # Find all values
-    it = map(itemgetter(1), iter(ET.iterparse(xml)))
-    for data in it:
-        if data.tag == f"{ns}powerOfTenMultiplier":
-            mp = int(data.text)
-        if data.tag == f"{ns}IntervalBlock":
-            for interval in data.findall(f"{ns}IntervalReading"):
-                time_period = interval.find(f"{ns}timePeriod")
-
-                duration = int(time_period.find(f"{ns}duration").text)
-                start = int(time_period.find(f"{ns}start").text)
-                value = int(interval.find(f"{ns}value").text)
-                watt_hours = int(round(value * pow(10, mp) * duration / 3600))
-
-                if start == previous[0]:  # clocks back
-                    continue
-
-                if not start == previous[0] + duration:  # clocks forward
-                    start = previous[0] + duration
-                    watt_hours = int((previous[2] + watt_hours) / 2)
-                    previous = (start, duration, watt_hours)
-                    yield (start, duration, watt_hours)
-                    continue
-
-                previous = (start, duration, watt_hours)
-                yield (start, duration, watt_hours)
-
-            data.clear()
-
-
-def insert_espi_xml_into_db(xml, source_id):
-    data_update = []
-    last_entry = ""
-    for entry in parse_espi_data(xml):
-        data_update.append(
-            {
-                "source_id": source_id,
-                "start": entry[0],
-                "duration": entry[1],
-                "watt_hours": entry[2],
-            }
-        )
-        last_entry = entry[0]
-    try:
-        db.session.bulk_insert_mappings(models.Espi, data_update)
-        db.session.commit()
-    except exc.IntegrityError:
-        db.session.rollback()
-        db.engine.execute(
-            "INSERT OR IGNORE INTO espi (source_id, start, duration, watt_hours) VALUES (:source_id, :start, :duration, :watt_hours)",
-            data_update,
-        )
-    finally:
-        timestamp = int(time() * 1000)
-        source_row = db.session.query(models.Source).filter_by(id=source_id)
-        source_row.update({"last_update": timestamp})
-        db.session.commit()
-
-
-def save_espi_xml(xml_data, filename=None):
-    """Save ESPI XML to a file named by timestamp or filename key."""
-    if filename:
-        save_name = f"{os.getcwd()}/data/espi_xml/{filename}.xml"
-    else:
-        save_name = f"{os.getcwd()}/{time()}.xml"
-
-    print(save_name)
-
-    with open(save_name, "w") as file:
-        file.write(xml_data)
-    return save_name
-
-
-def request_url(
-    method, url, params=None, data=None, headers=None, cert=None, format=None
-):
-    response = requests.request(
-        method, url, params=params, data=data, headers=headers, cert=cert
-    )
-    if not response:
-        print(f"No response from {url}")
-        return False
-    if not str(response.status_code) == "200":
-        print(f"Error: {response.status_code}, {response.text}")
-        return False
-    if format == "xml":
-        try:
-            root = ET.fromstring(response.text)
-            return root
-        except ET.ParseError:
-            print(f"Could not parse XML: {response.text}")
-            return False
-    else:
-        return response.text
+from .espi_helpers import insert_espi_xml_into_db, save_espi_xml
+from .helpers import request_url
 
 
 class Api:
@@ -170,6 +45,9 @@ class Api:
         b64 = b64encode(f"{self.client_id}:{self.client_secret}".encode("utf-8"))
         self.auth_header = f"Basic {bytes.decode(b64)}"
 
+    def get_client_id_headers(self):
+        return {"Authorization": self.auth_header}
+
     def need_client_access_token(self):
         """Return True if the access token has expired, False otherwise."""
         if time() > self.client_access_token_exp - 5:
@@ -177,17 +55,16 @@ class Api:
         return False
 
     def get_client_access_token(self):
-        request_params = {"grant_type": "client_credentials"}
-        header_params = {"Authorization": self.auth_header}
+        params = {"grant_type": "client_credentials"}
+        headers = {"Authorization": self.auth_header}
 
         response = requests.post(
-            self.token_uri, data=request_params, headers=header_params, cert=self.cert
+            self.token_uri, params=params, headers=headers, cert=self.cert
         )
 
         if str(response.status_code) == "200":
             try:
                 content = json.loads(response.text)
-                print(content)
                 self.client_access_token = content["client_access_token"]
                 self.client_access_token_exp = time() + int(content["expires_in"])
                 return self.client_access_token
@@ -200,20 +77,17 @@ class Api:
 
         return None
 
-    def get_service_status(self):
-        """Return True if utility responds with status online, False otherwise."""
+    def get_client_access_token_headers(self):
         if self.need_client_access_token():
             self.get_client_access_token()
-        # print(f"Requesting service status from {self.service_status_uri}")
+        return {"Authorization": f"Bearer {self.client_access_token}"}
 
-        header_params = {"Authorization": f"Bearer {self.client_access_token}"}
-        response = requests.get(
-            self.service_status_uri, headers=header_params, cert=self.cert
-        )
+    def get_service_status(self):
+        """Return True if utility responds with status online, False otherwise."""
         root = request_url(
             "GET",
             self.service_status_uri,
-            headers=header_params,
+            headers=self.get_client_access_token_headers(),
             cert=self.cert,
             format="xml",
         )
@@ -224,65 +98,38 @@ class Api:
         return False
 
     def get_published_period_start(self, authorization_uri):
-        if self.need_client_access_token():
-            self.get_client_access_token()
-
-        header_params = {"Authorization": f"Bearer {self.client_access_token}"}
-        response = requests.get(
-            authorization_uri, headers=header_params, cert=self.cert
+        """Return the published period start if found, else None."""
+        root = request_url(
+            "GET",
+            authorization_uri,
+            headers=self.get_client_access_token_headers(),
+            cert=self.cert,
+            format="xml",
         )
-        if not response:
-            print(f"No response from {authorization_uri}")
-            return
-        if not str(response.status_code) == "200":
-            print(f"Error: {response.status_code}, {response.text}")
-            return
-        try:
-            root = ET.fromstring(response.text)
-        except ET.ParseError:
-            print(f"Could not parse XML: {response.text}")
-            return
-
-        def search_xml_for_start(root, publishedPeriod, start, result):
-            for child in root:
-                if child.tag == publishedPeriod:
-                    for g_child in child:
-                        if g_child.tag == start:
-                            result = g_child.text
-                result = search_xml_for_start(child, publishedPeriod, start, result)
-            return result
-
-        publishedPeriod = "{http://naesb.org/espi}publishedPeriod"
-        start = "{http://naesb.org/espi}start"
-        result = search_xml_for_start(root, publishedPeriod, start, None)
-        return result
+        published_period_start = None
+        for item in root.iter("{http://naesb.org/espi}publishedPeriod"):
+            published_period_start = item.find("{http://naesb.org/espi}start").text
+        return published_period_start
 
     def need_access_token(self, source):
         """Paramater source is SQL object."""
         return source.token_exp < time() - 5
 
-    def get_access_token(self, source):
-        if self.need_client_access_token:
-            self.get_client_access_token
-
     def refresh_access_token(self, source):
-        header_params = {"Authorization": self.auth_header}
-        request_params = {
+        params = {
             "grant_type": "refresh_token",
             "refresh_token": source.refresh_token,
         }
-        response = requests.post(
+        response_text = request_url(
+            "POST",
             self.source_refresh_token_uri,
-            data=request_params,
-            headers=header_params,
+            params=params,
+            headers=self.get_client_id_headers,
             cert=self.cert,
+            format="text",
         )
-        if not str(response.status_code) == "200":
-            print(f"Error: {response.status_code}, {response.text}")
-            return False
-        response_json = json.loads(response.text)
-
-        source_row = db.session.query(models.Source).filter_by(id=source.id)
+        response_json = json.loads(response_text)
+        source_row = db.session.query(models.Source).filter_by(id=source.id).first()
         source_row.update(
             {
                 "access_token": response_json.get("access_token"),
@@ -296,37 +143,32 @@ class Api:
             print(e)
             db.session.rollback()
             return False
-        return True
+        return response_json.get("access_token")
+
+    def get_access_token_headers(self, source):
+        if self.need_access_token(source):
+            access_token = self.refresh_access_token(source)
+        else:
+            access_token = source.access_token
+        return {"Authorization": f"Bearer {access_token}"}
 
     def get_usage_points(self, subscription_id, access_token):
-        header_params = {"Authorization": f"Bearer {access_token}"}
+        """Return a dictionary of usage points keyed by type
+           ex. {"electricity": ["integer string"]}."""
+        headers = {"Authorization": f"Bearer {access_token}"}
         url = f"{self.api_uri}/espi/1_1/resource/Subscription/{subscription_id}/UsagePoint"
-        response = requests.get(url, headers=header_params, cert=self.cert,)
-        if not response:
-            print(f"No response from {url}")
-            return False
-        if not str(response.status_code) == "200":
-            print(f"Error: {response.status_code}, {response.text}")
-            return False
-        try:
-            root = ET.fromstring(response.text)
-        except ET.ParseError:
-            print(f"Could not parse XML: {response.text}")
-            return
+        root = request_url("GET", url, headers=headers, cert=self.cert, format="xml")
         ns0 = "{http://naesb.org/espi}"
         ns1 = "{http://www.w3.org/2005/Atom}"
-
         re_usage_point = r"(?<=UsagePoint\/)\d+"
-        node = root
         usage_points = {}
-        for child in root:
+        for child in root.iter(f"{ns1}entry"):
             cur_usage_point = None
-            if child.tag == f"{ns1}entry":
-                for item in child:
-                    url = item.attrib.get("href") or ""
-                    if group := re.search(re_usage_point, url):
-                        cur_usage_point = group[0]
-                        break
+            for item in child:
+                url = item.attrib.get("href") or ""
+                if group := re.search(re_usage_point, url):
+                    cur_usage_point = group[0]
+                    break
             if cur_usage_point:
                 kind = child.find(
                     f"./{ns1}content/{ns0}UsagePoint/{ns0}ServiceCategory/{ns0}kind"
@@ -344,23 +186,19 @@ class Api:
                     usage_points[key] = [cur_usage_point]
         return usage_points
 
-    def get_meter_reading(self, source):
-        if self.need_access_token(source):
-            self.refresh_access_token(source)
-        header_params = {"Authorization": f"Bearer {source.access_token}"}
-        url = f"{self.api_uri}/espi/1_1/resource/Subscription/{source.subscription_id}/UsagePoint/{source.usage_point}/MeterReading"
-        response = requests.get(url, headers=header_params, cert=self.cert,)
-        if not response:
-            print(f"No response from {url}")
-            return False
-        if not str(response.status_code) == "200":
-            print(f"Error: {response.status_code}, {response.text}")
-            return False
-        try:
-            root = ET.fromstring(response.text)
-        except ET.ParseError:
-            print(f"Could not parse XML: {response.text}")
-            return
+    def get_meter_reading(self, source, start=None, end=None):
+        url = (
+            f"{self.api_uri}"
+            f"/espi/1_1/resource/Subscription/{source.subscription_id}"
+            f"/UsagePoint/{source.usage_point}/MeterReading"
+        )
+        root = request_url(
+            "GET",
+            url,
+            headers=self.get_access_token_headers(),
+            cert=self.cert,
+            format="xml",
+        )
         ns1 = "{http://www.w3.org/2005/Atom}"
         urls = []
         for child in root:
@@ -371,122 +209,41 @@ class Api:
                         urls.append(url)
         re_interval_block_url = r"https:\/\/api\.pge\.com.*IntervalBlock"
         for url in urls:
-            response = requests.get(url, headers=header_params, cert=self.cert,)
-            if not response:
-                print(f"No response from {url}")
-                break
-            if not str(response.status_code) == "200":
-                print(f"Error: {response.status_code}, {response.text}")
-                break
-            try:
-                root = ET.fromstring(response.text)
-            except ET.ParseError:
-                print(f"Could not parse XML: {response.text}")
-                break
-            group = re.search(re_interval_block_url, response.text)
-            if group:
-                interval_block_url = group[0]
-                header_params = {"Authorization": f"Bearer {source.access_token}"}
-                request_params = {
-                    "published-min": source.published_period_start,
-                    "published-max": 1596178800 - 31536000,
-                }
-                response = requests.get(
-                    interval_block_url,
-                    params=request_params,
-                    headers=header_params,
-                    cert=self.cert,
-                )
-                if not response:
-                    print(f"No response from {url}")
-                    return
-                if not str(response.status_code) == "200":
-                    print(f"Error: {response.status_code}, {response.text}")
-                    return
-                xml = response.text
-                save_espi_xml(xml)
-                source_id = source.id
-                print("going for parse...")
-                data_update = []
-                last_entry = ""
-                for entry in parse_espi_data(xml):
-                    data_update.append(
-                        {
-                            "source_id": source_id,
-                            "start": entry[0],
-                            "duration": entry[1],
-                            "watt_hours": entry[2],
-                        }
-                    )
-                    last_entry = entry[0]
-                try:
-                    db.session.bulk_insert_mappings(models.Espi, data_update)
-                    db.session.commit()
-                except exc.IntegrityError:
-                    db.session.rollback()
-                    db.engine.execute(
-                        "INSERT OR IGNORE INTO espi (source_id, start, duration, watt_hours) VALUES (:source_id, :start, :duration, :watt_hours)",
-                        data_update,
-                    )
-                finally:
-                    timestamp = int(time() * 1000)
-                    source_row = db.session.query(models.Source).filter_by(id=source_id)
-                    source_row.update({"last_update": timestamp})
-                    db.session.commit()
-                break
-        return {}, 200
+            response_text = request_url(
+                "GET",
+                url,
+                headers=self.get_access_token_headers(),
+                cert=self.cert,
+                format="text",
+            )
+            group = re.search(re_interval_block_url, response_text)
+            if not group:
+                continue
 
-    def get_historical_data(self, source):
-        # TODO: subclass this method to PGE - hopefully the need to lighten requests is unique to PGE
-        if self.need_access_token(source):
-            self.refresh_access_token(source)
-        header_params = {"Authorization": f"Bearer {source.access_token}"}
-        url = f"{self.api_uri}/espi/1_1/resource/Subscription/{source.subscription_id}/UsagePoint/{source.usage_point}/MeterReading"
-        response = request_url("GET", url, headers=header_params, cert=self.cert)
-        root = ET.fromstring(response)
-        ns1 = "{http://www.w3.org/2005/Atom}"
-        urls = []
-        for child in root:
-            cur_usage_point = None
-            if child.tag == f"{ns1}entry":
-                for item in child:
-                    url = item.attrib.get("href") or ""
-                    if url:
-                        urls.append(url)
-        re_interval_block_url = r"https:\/\/api\.pge\.com.*IntervalBlock"
-        group = re.search(re_interval_block_url, response)
-        if group:
             interval_block_url = group[0]
-        else:
-            print("Could not find interval block url")
-            return {"error": "could not find interval block url"}, 500
-
-        four_weeks = 3600 * 24 * 28
-        start = source.published_period_start
-        final = int(time())
-        while start < final:
-            end = start + four_weeks - 3600
-            request_params = {
-                "published-min": start,
-                "published-max": end,
-            }
-            xml = request_url(
+            params = (
+                {"published-min": start, "published-max": end or int(time())}
+                if start
+                else None
+            )
+            response_text = request_url(
                 "GET",
                 interval_block_url,
-                params=request_params,
-                headers=header_params,
+                params=params,
+                headers=self.get_access_token_headers(),
                 cert=self.cert,
+                format="text",
             )
+            xml = response_text
             insert_espi_xml_into_db(xml, source.id)
-            start = end + 3600
+            break
+        return {}, 200
 
     def request_bulk_data(self):
-        if self.need_client_access_token:
-            self.get_client_access_token
-        header_params = {"Authorization": f"Bearer {self.client_access_token}"}
-        # request_params = {"published-min": 1596178800, "published-max": int(time())}
         url = f"{self.api_uri}/espi/1_1/resource/Batch/Bulk/{self.bulk_id}"
-        response = requests.get(url, headers=header_params, cert=self.cert)
+        response = requests.get(
+            url, headers=self.get_client_access_token_headers(), cert=self.cert
+        )
         if str(response.status_code) == "202":
             print("request successful," " awaiting POST from server.")
             return True
@@ -496,21 +253,22 @@ class Api:
         )
         return False
 
-    def get_daily_deltas(self, resource_uris):
-        if self.need_client_access_token:
-            self.get_client_access_token
-        header_params = {"Authorization": f"Bearer {self.client_access_token}"}
-
+    def get_daily_deltas(self, resource_uris, save=False):
         for url in resource_uris:
-            response = requests.get(url, headers=header_params, cert=self.cert,)
+            response = request_url(
+                "GET",
+                url,
+                headers=self.get_client_access_token_headers(),
+                cert=self.cert,
+            )
             if not response:
                 print(f"No response from {url}")
-                return
+                continue
             if not str(response.status_code) == "200":
                 print(f"Error: {response.status_code}, {response.text}")
-                return
-            xml = response.text
+                continue
 
+            xml = response.text
             root = ET.fromstring(xml)
             usage_point = None
             for item in root.iter():
@@ -521,47 +279,62 @@ class Api:
                     usage_point = group[0]
                     break
             if not usage_point:
-                print(f"could not find usage point in xml, saving")
+                print("could not find usage point in xml, saving")
                 save_espi_xml(xml)
                 break
 
             # TODO: add check for utility name and/or subscription_id and use in filter
-            source = (
+            sources = (
                 db.session.query(models.Source)
                 .filter_by(usage_point=usage_point)
-                .first()
             )
-            if not source:
+            sources_count = sources.count()
+            if sources_count == 0:
                 print(f"could not find usage point {usage_point} in db, probably gas")
                 break
+            elif sources_count > 1:
+                print(f"WARNING: {usage_point} is associated with multiple sources")
 
-            print("adding to db...")
-            insert_espi_xml_into_db(xml, source.id)
-
-    def get_espi_data(self, source):
-        if self.need_access_token(source):
-            self.refresh_access_token(source)
-
-        header_params = {"Authorization": f"Bearer {source.access_token}"}
-        request_params = {
-            "published-min": source.published_period_start,
-            "published-max": 1596178800 - 86400,
-        }
-        url = f"{self.api_uri}/espi/1_1/resource/Subscription/{source.subscription_id}/UsagePoint/{source.usage_point}/MeterReading"
-        response = requests.get(
-            url, headers=header_params, params=request_params, cert=self.cert,
-        )
-        if str(response.status_code) == "202":
-            print("request successful," " awaiting POST from server.")
-            return True
-        print(
-            f"request to Bulk Resource URI failed.  |  "
-            f"{response.status_code}: {response.text}"
-        )
-        return False
+            for source in sources:
+                insert_espi_xml_into_db(xml, source.id, save=save)
 
 
 class Pge(Api):
     """Pge client API."""
 
-    pass
+    def get_historical_data_incrementally(self, source):
+        """Get all interval data 28 days at a time according to PG&E guide."""
+        if self.need_access_token(source):
+            self.refresh_access_token(source)
+        headers = {"Authorization": f"Bearer {source.access_token}"}
+        url = (
+            f"{self.api_uri}"
+            f"/espi/1_1/resource/Subscription/{source.subscription_id}"
+            f"/UsagePoint/{source.usage_point}/MeterReading"
+        )
+        response = request_url("GET", url, headers=headers, cert=self.cert)
+        group = re.search(r"https:\/\/api\.pge\.com.*IntervalBlock", response)
+        if group:
+            interval_block_url = group[0]
+        else:
+            print("Could not find interval block url")
+            return {"error": "could not find interval block url"}, 500
+
+        four_weeks = 3600 * 24 * 28
+        end = int(time())
+        while end > source.published_period_start:
+            start = end - four_weeks + 3600
+            params = {
+                "published-min": start,
+                "published-max": end,
+            }
+            xml = request_url(
+                "GET",
+                interval_block_url,
+                params=params,
+                headers=headers,
+                cert=self.cert,
+            )
+            insert_espi_xml_into_db(xml, source.id)
+            end = start - 3600
+        return
