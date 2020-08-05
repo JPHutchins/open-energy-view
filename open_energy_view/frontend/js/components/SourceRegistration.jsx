@@ -9,6 +9,7 @@ const SourceRegistration = ({ history, restrictView }) => {
   const [thirdPartyId, setThirdPartyId] = useState("");
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
+  const [utility, setUtility] = useState("Utility Company");
 
   // TODO: server will respond 500 on failing UniqueConstraint for
   // "Provider ID" (third party ID) or name - update UI on promise reject
@@ -27,10 +28,12 @@ const SourceRegistration = ({ history, restrictView }) => {
     });
   };
 
-  const handlePgeOAuth = (e) => {
+  const handleUtilityOAuth = (e) => {
     e.preventDefault();
-    location.href = "/api/utility/pge/oauth_portal"
-   };
+    if (utility === "Pacific Gas & Electric") {
+      location.href = "/api/utility/pge/oauth_portal"
+    }
+  };
 
   const initialForm = (
     <div className="register-box">
@@ -47,9 +50,11 @@ const SourceRegistration = ({ history, restrictView }) => {
   );
 
   const selfAccess = <div className="register-box">
-    <Form onSubmit={handleSubmit}>
-      <Form.Text className="form-title">PG&E Share My Data</Form.Text>
-      <Form.Text className="form-title">Self Access</Form.Text>
+    <Form style={{ maxWidth: "450px" }} onSubmit={handleSubmit}>
+      <h4>Add Custom Source </h4>
+      <div style={{ fontSize: "8pt", color: "gray" }}>This is mostly unimplemented. After adding a source below
+      (enter 555 for Third-Party ID, Client ID, and Client Secret),
+      you can upload your own ESPI XML from the new resource's Settings page.</div>
       <Form.Group controlId="formPge">
         <Form.Label>Name</Form.Label>
         <Form.Control
@@ -89,14 +94,25 @@ const SourceRegistration = ({ history, restrictView }) => {
 
   return (
     <>
-      {selfAccess}
       <div className="register-box">
-        <Form onSubmit={handlePgeOAuth}>
+        <Form style={{ maxWidth: "450px" }} onSubmit={handleUtilityOAuth}>
           <Form.Group controlId="formPgeOAuth">
-            <Button variant="primary" type="submit">Add PG&E Account</Button>
+            <h3>Add Your Utility</h3>
+            <div style={{ fontSize: "10pt", color: "gray" }}>Authorize your utility company to share your home energy data.
+            You will need the login information for your utilities. It is the
+            same login that you would use to pay your bill online.</div>
+            <hr/>
+            <h4>Select your utility company</h4>
+            <DropdownButton title={utility} onSelect={setUtility}>
+              <Dropdown.Item eventKey="Pacific Gas & Electric">Pacific Gas & Electric</Dropdown.Item>
+              </DropdownButton>
+              <hr/>
+            <h4>Link your account</h4>
+            <Button variant="primary" type="submit">Authorize</Button>
           </Form.Group>
         </Form>
       </div>
+      {selfAccess}
     </>
   );
 };
