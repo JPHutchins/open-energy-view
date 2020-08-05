@@ -1,8 +1,8 @@
 """API endpoints for viewing data."""
-from flask import jsonify, redirect, url_for
-from time import time
+from flask import jsonify, redirect
 from base64 import b64encode
 from os import environ
+from time import time
 import json
 import requests
 import re
@@ -26,7 +26,8 @@ from urllib.parse import quote
 from . import models
 from . import bcrypt
 from . import db
-from .utility_apis import Pge, save_espi_xml, parse_espi_data
+from .utility_apis import Pge, save_espi_xml
+from .espi_helpers import insert_espi_xml_into_db
 
 PGE_BULK_ID = 51070
 PGE_CLIENT_ID = environ.get("PGE_CLIENT_ID")
@@ -72,6 +73,7 @@ get_data_parser.add_argument("clientSecret", required=False)
 get_data_parser.add_argument("payload", required=False)
 get_data_parser.add_argument("usage_point", required=False)
 get_data_parser.add_argument("friendly_name", required=False)
+get_data_parser.add_argument("new_friendly_name", required=False)
 
 test_add_parser = reqparse.RequestParser()
 test_add_parser.add_argument("xml", required=True)
@@ -270,7 +272,9 @@ class PgeOAuthRedirect(Resource):
         payload = f.encrypt(json.dumps(user_info_dict).encode("utf-8"))
 
         resp = redirect(
-            f"https://www.openenergyview.com/#/pge_oauth?payload={quote(payload)}&usage_points={quote(json.dumps(usage_points))}"
+            f"https://www.openenergyview.com/#/pge_oauth"
+            f"?payload={quote(payload)}"
+            f"&usage_points={quote(json.dumps(usage_points))}"
         )
 
         return resp
@@ -311,9 +315,9 @@ class AddPgeFromOAuth(Resource):
             published_period_start=user_info.get("published_period_start"),
         )
         new_account.save_to_db()
-        pge_api.get_historical_data(new_account)
+        pge_api.get_historical_data_incrementally(new_account)
 
-        return redirect("www.openenergyview.com")
+        return redirect("https://www.openenergyview.com")
 
 
 class GetMeterReading(Resource):
@@ -331,7 +335,6 @@ class GetMeterReading(Resource):
         )
 
         pge_api.get_meter_reading(source)
-        # pge_api.get_espi_data(source)
 
         return {}, 200
 
@@ -359,7 +362,11 @@ class PgeOAuthPortal(Resource):
             if TESTING
             else "https://sharemydata.pge.com/myAuthorization"
         )
-        query = f"?client_id={PGE_CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code&state={STATE}"
+        query = (
+            f"?client_id={PGE_CLIENT_ID}"
+            f"&redirect_uri={REDIRECT_URI}"
+            f"&response_type=code"
+            f"&state={STATE}")
 
         return redirect(f"{authorizationServerAuthorizationEndpoint}{query}")
 
@@ -380,6 +387,46 @@ class GetSources(Resource):
         sources_entries = db.session.query(models.Source).with_parent(user).all()
         sources = list(map(lambda x: x.friendly_name, sources_entries))
         return sources
+
+
+class DeleteSource(Resource):
+    @jwt_required
+    def post(self):
+        data = get_data_parser.parse_args()
+        if not data["friendly_name"]:
+            return {"error": "friendly_name required"}, 400
+
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        if user.email == "jph@demo.com":
+            return {"error": "cannot modify demo account"}, 403
+
+        return models.Source.delete(user, data["friendly_name"]), 200
+
+
+class ChangeSourceName(Resource):
+    @jwt_required
+    def post(self):
+        data = get_data_parser.parse_args()
+        if not data["friendly_name"] and data["new_friendly_name"]:
+            return {"error": "friendly_name and new_friendly_name required"}, 400
+
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        if user.email == "jph@demo.com":
+            return {"error": "cannot modify demo account"}, 403
+
+        source = (
+            db.session.query(models.Source)
+            .filter_by(friendly_name=data["friendly_name"])
+            .with_parent(user)
+            .first()
+        )
+        source.friendly_name = data["new_friendly_name"]
+        try:
+            db.session.commit()
+            return {"message": "success"}, 200
+        except Exception as e:
+            print(e)
+            return {"error": e}, 500
 
 
 class GetPartitionOptions(Resource):
@@ -443,7 +490,7 @@ class GetHourlyData(Resource):
         }
         return response, 200
 
-    
+
 class PgeRequestBulk(Resource):
     def post(self):
         pge_api.request_bulk_data()
@@ -454,7 +501,7 @@ class PgeNotify(Resource):
     def post(self):
         data = request.data
         print("notify hit", request.headers)
-        save_espi_xml(data.decode('utf-8'))
+        save_espi_xml(data.decode("utf-8"))
         resource_uris = []
         try:
             root = ET.fromstring(data)
@@ -463,12 +510,10 @@ class PgeNotify(Resource):
         except ET.ParseError:
             # print(f'Could not parse message: {data}')
             return f"Could not parse message: {data}", 500
-        
+
         print(resource_uris)
 
-        pge_api.get_daily_deltas(resource_uris)
-
-        # xml = pge_api.get_espi_data(resource_uri)
+        pge_api.get_daily_deltas(resource_uris, save=False)
 
         return {}, 200
 
@@ -492,16 +537,15 @@ class AddPgeDemoSource(Resource):
 class UploadXml(Resource):
     @jwt_required
     def post(self):
-        # xml = request.text
         friendly_name = request.args.get("friendly_name")
-        print(friendly_name)
         if not friendly_name:
             friendly_name = "PG&E Test XML upload"
-
         if request.files:
             xml = request.files.get("xml").read().decode("utf-8")
 
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        if user.email == "jph@demo.com":
+            return {"error": "cannot modify demo account"}, 403
 
         source = (
             db.session.query(models.Source)
@@ -510,32 +554,7 @@ class UploadXml(Resource):
             .first()
         )
 
-        data_update = []
-        last_entry = ""
-        for entry in parse_espi_data(xml):
-            data_update.append(
-                {
-                    "source_id": source.id,
-                    "start": entry[0],
-                    "duration": entry[1],
-                    "watt_hours": entry[2],
-                }
-            )
-            last_entry = entry[0]
-        try:
-            db.session.bulk_insert_mappings(models.Espi, data_update)
-            db.session.commit()
-        except exc.IntegrityError:
-            db.session.rollback()
-            db.engine.execute(
-                "INSERT OR IGNORE INTO espi (source_id, start, duration, watt_hours) VALUES (:source_id, :start, :duration, :watt_hours)",
-                data_update,
-            )
-        finally:
-            timestamp = int(time() * 1000)
-            source_row = db.session.query(models.Source).filter_by(id=source.id)
-            source_row.update({"last_update": timestamp})
-            db.session.commit()
+        insert_espi_xml_into_db(xml, source.id)
 
         return {}, 200
 
@@ -560,37 +579,16 @@ class TestAddXml(Resource):
         data = test_add_parser.parse_args()
         with open(test_xml[int(data.xml)]) as xml_reader:
             xml = xml_reader.read()
-        bulk_id = get_bulk_id_from_xml(xml)
+        # bulk_id = get_bulk_id_from_xml(xml)
+        bulk_id = 55555
 
         source_id = (
-            db.session.query(models.Source).filter_by(subscription_id=bulk_id).first().id
+            db.session.query(models.Source)
+            .filter_by(subscription_id=bulk_id)
+            .first()
+            .id
         )
 
-        data_update = []
-        last_entry = ""
-        for entry in parse_espi_data(xml):
-            data_update.append(
-                {
-                    "source_id": source_id,
-                    "start": entry[0],
-                    "duration": entry[1],
-                    "watt_hours": entry[2],
-                }
-            )
-            last_entry = entry[0]
-        try:
-            db.session.bulk_insert_mappings(models.Espi, data_update)
-            db.session.commit()
-        except exc.IntegrityError:
-            db.session.rollback()
-            db.engine.execute(
-                "INSERT OR IGNORE INTO espi (source_id, start, duration, watt_hours) VALUES (:source_id, :start, :duration, :watt_hours)",
-                data_update,
-            )
-        finally:
-            timestamp = int(time() * 1000)
-            source_row = db.session.query(models.Source).filter_by(id=source_id)
-            source_row.update({"last_update": timestamp})
-            db.session.commit()
+        insert_espi_xml_into_db(xml, source_id)
 
         return {}, 200
