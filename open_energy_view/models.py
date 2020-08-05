@@ -89,6 +89,25 @@ class Source(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    @classmethod
+    def delete(cls, user, friendly_name) -> dict:
+        """Delete the user's source where friendly_name=friendly_name"""
+        try:
+            source = (
+                db.session.query(cls)
+                .filter_by(friendly_name=friendly_name)
+                .with_parent(user)
+                .first()
+            )
+            db.session.query(Espi).filter_by(source_id=source.id).delete()
+            db.session.query(cls).filter_by(id=source.id).delete()
+            db.session.commit()
+            print(f"deleted source_id: {source.id} ")
+            return {"message": f"{friendly_name} deleted"}
+        except Exception as e:
+            db.session.rollback()
+            return {"message": f"Something went wrong: {e}"}
+
     def __repr__(self) -> None:
         return (
             f"id: {self.id}, "
