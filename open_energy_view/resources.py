@@ -211,22 +211,49 @@ class GoogleOAuthEnd(Resource):
             pass
 
 
+class PgeOAuthPortal(Resource):
+    def get(self):
+        TESTING = False
+        REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
+        testing_endpoint = "https://api.pge.com/datacustodian/test/oauth/v2/authorize"
+        scope = ""
+        args = request.args
+
+        try:
+            scope = args["scope"]
+        except KeyError:
+            pass
+
+        authorizationServerAuthorizationEndpoint = (
+            testing_endpoint
+            if TESTING
+            else "https://sharemydata.pge.com/myAuthorization"
+        )
+        query = (
+            f"?client_id={PGE_CLIENT_ID}"
+            f"&redirect_uri={REDIRECT_URI}"
+            f"&response_type=code"
+            f"&state={STATE}"
+        )
+
+        return redirect(f"{authorizationServerAuthorizationEndpoint}{query}")
+
+
 class PgeOAuthRedirect(Resource):
     def get(self):
         args = request.args
         if args.get("state") != STATE:
-            return {"error": "bad origin"}, 200
+            return {"error": "bad origin"}, 400
 
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
         URL = "https://api.pge.com/datacustodian/oauth/v2/token"
 
         print("got hit at redirect")
 
-        print(args)
         try:
             authorization_code = args["code"]
         except KeyError:
-            return {"error": "Missing parameter: authorization_code"}, 200
+            return {"error": "Missing parameter: authorization_code"}, 500
 
         b64 = b64encode(f"{PGE_CLIENT_ID}:{PGE_CLIENT_SECRET}".encode("utf-8"))
         auth_header = f"Basic {bytes.decode(b64)}"
@@ -249,7 +276,6 @@ class PgeOAuthRedirect(Resource):
         user_info = json.loads(response.text)
         authorization_uri = user_info.get("authorizationURI")
 
-        print(pge_api.get_service_status())
         published_period_start = pge_api.get_published_period_start(authorization_uri)
 
         subscription_id = "unknown"
@@ -280,15 +306,7 @@ class PgeOAuthRedirect(Resource):
         return resp
 
 
-class GetData(Resource):
-    @jwt_required
-    def post(self):
-        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
-        data = get_data_parser.parse_args()
-        friendly_name = data["source"]
-
-
-class AddPgeFromOAuth(Resource):
+class AddPgeSourceFromOAuth(Resource):
     @jwt_required
     def post(self):
         data = get_data_parser.parse_args()
@@ -337,47 +355,6 @@ class GetMeterReading(Resource):
         pge_api.get_meter_reading(source)
 
         return {}, 200
-
-
-class PgeOAuthPortal(Resource):
-    def get(self):
-        TESTING = False
-        REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
-        testing_endpoint = "https://api.pge.com/datacustodian/test/oauth/v2/authorize"
-        scope = ""
-        print(request.headers)
-        print(request)
-        print(request.args)
-        args = request.args
-
-        try:
-            scope = args["scope"]
-        except KeyError:
-            pass
-
-        print(scope)
-        scope_query = "&scope="
-        authorizationServerAuthorizationEndpoint = (
-            testing_endpoint
-            if TESTING
-            else "https://sharemydata.pge.com/myAuthorization"
-        )
-        query = (
-            f"?client_id={PGE_CLIENT_ID}"
-            f"&redirect_uri={REDIRECT_URI}"
-            f"&response_type=code"
-            f"&state={STATE}")
-
-        return redirect(f"{authorizationServerAuthorizationEndpoint}{query}")
-
-
-class AllUsers(Resource):
-    # TODO: secure and add to admin panel
-    def get(self):
-        return models.User.return_all()
-
-    def delete(self):
-        return models.User.delete_all()
 
 
 class GetSources(Resource):
@@ -469,10 +446,11 @@ class GetHourlyData(Resource):
                 },
                 200,
             )
-
+        # TODO: currently entries are coming in reversed - research ORDER BY performance
         hours = (
             db.session.query(models.Espi)
             .filter_by(source_id=source.id, duration=3600)
+            .order_by(models.Espi.start)
             .all()
         )
         database = ",".join(
@@ -518,7 +496,7 @@ class PgeNotify(Resource):
         return {}, 200
 
 
-class AddPgeDemoSource(Resource):
+class AddCustomSource(Resource):
     @jwt_required
     def post(self):
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
