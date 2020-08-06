@@ -1,11 +1,9 @@
-import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 
-PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 db = SQLAlchemy()
 rest = Api()
@@ -39,7 +37,8 @@ def create_app() -> Flask:
     rest.add_resource(resources.PgeOAuthPortal, "/api/utility/pge/oauth_portal")
 
     # Add data source
-    rest.add_resource(resources.AddPgeFromOAuth, "/api/web/add/pge_oauth")
+    rest.add_resource(resources.AddCustomSource, "/api/web/add/custom-source")
+    rest.add_resource(resources.AddPgeSourceFromOAuth, "/api/web/add/pge_oauth")
 
     # Get data
     rest.add_resource(resources.GetSources, "/api/web/sources")
@@ -56,7 +55,6 @@ def create_app() -> Flask:
     rest.add_resource(resources.ChangeSourceName, "/api/web/change-source-name")
 
     # Initialize demo data
-    rest.add_resource(resources.AddPgeDemoSource, "/api/web/add/pge-demo")
     rest.add_resource(resources.TestAddXml, "/api/test/add/xml")
 
     # Initialize extensions with the Flask app

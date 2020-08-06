@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import cookie from "react-cookies";
 import { Form, Button, DropdownButton, Dropdown } from "react-bootstrap";
-import { addPgeSource } from "../api/DatabaseService";
+import { addCustomSource } from "../api/DatabaseService";
 
 const SourceRegistration = ({ history, restrictView }) => {
   const [form, setForm] = useState("");
@@ -22,7 +22,7 @@ const SourceRegistration = ({ history, restrictView }) => {
       clientId: clientId,
       clientSecret: clientSecret,
     };
-    addPgeSource(regInfo).then(() => {
+    addCustomSource(regInfo).then(() => {
       restrictView();
       history.push("/");
     });
@@ -101,12 +101,12 @@ const SourceRegistration = ({ history, restrictView }) => {
             <div style={{ fontSize: "10pt", color: "gray" }}>Authorize your utility company to share your home energy data.
             You will need the login information for your utilities. It is the
             same login that you would use to pay your bill online.</div>
-            <hr/>
+            <hr />
             <h4>Select your utility company</h4>
             <DropdownButton title={utility} onSelect={setUtility}>
               <Dropdown.Item eventKey="Pacific Gas & Electric">Pacific Gas & Electric</Dropdown.Item>
-              </DropdownButton>
-              <hr/>
+            </DropdownButton>
+            <hr />
             <h4>Link your account</h4>
             <Button variant="primary" type="submit">Authorize</Button>
           </Form.Group>
