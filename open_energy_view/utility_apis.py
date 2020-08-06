@@ -284,10 +284,7 @@ class Api:
                 break
 
             # TODO: add check for utility name and/or subscription_id and use in filter
-            sources = (
-                db.session.query(models.Source)
-                .filter_by(usage_point=usage_point)
-            )
+            sources = db.session.query(models.Source).filter_by(usage_point=usage_point)
             sources_count = sources.count()
             if sources_count == 0:
                 print(f"could not find usage point {usage_point} in db, probably gas")
@@ -303,7 +300,7 @@ class Pge(Api):
     """Pge client API."""
 
     def get_historical_data_incrementally(self, source):
-        """Get all interval data 28 days at a time according to PG&E guide."""
+        """Get all interval data 28 days at a time according to PG&E guidelines."""
         if self.need_access_token(source):
             self.refresh_access_token(source)
         headers = {"Authorization": f"Bearer {source.access_token}"}
@@ -312,8 +309,10 @@ class Pge(Api):
             f"/espi/1_1/resource/Subscription/{source.subscription_id}"
             f"/UsagePoint/{source.usage_point}/MeterReading"
         )
-        response = request_url("GET", url, headers=headers, cert=self.cert)
-        group = re.search(r"https:\/\/api\.pge\.com.*IntervalBlock", response)
+        response_text = request_url(
+            "GET", url, headers=headers, cert=self.cert, format="text"
+        )
+        group = re.search(r"https:\/\/api\.pge\.com.*IntervalBlock", response_text)
         if group:
             interval_block_url = group[0]
         else:
@@ -328,13 +327,14 @@ class Pge(Api):
                 "published-min": start,
                 "published-max": end,
             }
-            xml = request_url(
+            response_text = request_url(
                 "GET",
                 interval_block_url,
                 params=params,
                 headers=headers,
                 cert=self.cert,
+                format="text",
             )
-            insert_espi_xml_into_db(xml, source.id)
+            insert_espi_xml_into_db(response_text, source.id)
             end = start - 3600
         return
