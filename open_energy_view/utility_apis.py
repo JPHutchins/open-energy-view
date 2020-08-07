@@ -91,7 +91,7 @@ class Api:
             cert=self.cert,
             format="xml",
         )
-        if root[0].text == "1":
+        if root and root[0].text == "1":
             print("Service status is online.")
             return True
         print("Service status is offline.")
