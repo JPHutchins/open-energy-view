@@ -19,6 +19,21 @@ export const calculateTrend = (data) => {
   // usage during the entire period rather than the "interval over inter"
 
   // TODO: this can be done with the "points" prop of trendObject instead
+
+  // TODO: reality check - over very long periods let's set the first intercept
+  // to some average of the the early datapoints and recalculate the slope
+  // to the given ending intercept.  I have a dataset where the best fit is 
+  // showing 900% increase over 4 years because it set the first intercept to
+  // 50 instead of the 250 that is actually present.  In other words, for
+  // how can the first point used to calculate the percent change * be lower
+  // than it actually was * Answer - it should not be!
+  // This could be applied to the ending intercept as well:
+  // So startIntercept = max(startingAverage, startIntercept)
+  //    endIntercept = min(endingAverage, endIntercept)
+  // This should account for plateaus in the dataseet relatively well
+  // Note that this proposes a percentage that DOES NOT MATCH the slope of 
+  // the best fit trendline
+  // RENAME THE METRIC? to increase / decrease rather than trend?
   const trendPercent = Math.round(
     (100 * (slope * data.length + intercept)) / intercept - 100
   );
