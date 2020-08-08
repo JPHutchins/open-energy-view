@@ -29,6 +29,7 @@ const NavigationBar = (props) => {
 
   const handleSelect = (selectedItem) => {
     props.restrictView(selectedItem);
+    props.history.push("/")
   };
 
   const loggedInItems = (
