@@ -1,5 +1,5 @@
 from base64 import b64encode
-from time import time
+import time
 import requests
 import json
 from xml.etree import cElementTree as ET
@@ -50,7 +50,7 @@ class Api:
 
     def need_client_access_token(self):
         """Return True if the access token has expired, False otherwise."""
-        if time() > self.client_access_token_exp - 5:
+        if time.time() > self.client_access_token_exp - 5:
             return True
         return False
 
@@ -66,7 +66,7 @@ class Api:
             try:
                 content = json.loads(response.text)
                 self.client_access_token = content["client_access_token"]
-                self.client_access_token_exp = time() + int(content["expires_in"])
+                self.client_access_token_exp = time.time() + int(content["expires_in"])
                 return self.client_access_token
             except KeyError:
                 print(
@@ -113,7 +113,7 @@ class Api:
 
     def need_access_token(self, source):
         """Paramater source is SQL object."""
-        return source.token_exp < time() - 5
+        return source.token_exp < time.time() - 5
 
     def refresh_access_token(self, source):
         params = {
@@ -134,7 +134,7 @@ class Api:
             {
                 "access_token": response_json.get("access_token"),
                 "refresh_token": response_json.get("refresh_token"),
-                "token_exp": int(response_json.get("expires_in")) + time(),
+                "token_exp": int(response_json.get("expires_in")) + time.time(),
             }
         )
         try:
@@ -222,7 +222,7 @@ class Api:
 
             interval_block_url = group[0]
             params = (
-                {"published-min": start, "published-max": end or int(time())}
+                {"published-min": start, "published-max": end or int(time.time())}
                 if start
                 else None
             )
@@ -296,6 +296,22 @@ class Api:
                 insert_espi_xml_into_db(xml, source.id, save=save)
 
 
+class FakeUtility(Api):
+    """A demo utility for use in development."""
+
+    def get_historical_data_incrementally(self, source):
+        """Fake server takes a long time."""
+        time.sleep(60)
+
+        xml_path = "/home/jp/open-energy-view/test/data/espi/espi_2_years.xml"
+        with open(xml_path) as xml_reader:
+            xml = xml_reader.read()
+
+        insert_espi_xml_into_db(xml, source.id)
+
+        return "Finished download from utility API"
+
+
 class Pge(Api):
     """Pge client API."""
 
@@ -320,7 +336,7 @@ class Pge(Api):
             return {"error": "could not find interval block url"}, 500
 
         four_weeks = 3600 * 24 * 28
-        end = int(time())
+        end = int(time.time())
         while end > source.published_period_start:
             start = end - four_weeks + 3600
             params = {

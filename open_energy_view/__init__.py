@@ -1,4 +1,5 @@
-from flask import Flask
+from os import environ
+from flask import Flask, url_for, abort, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 from flask_bcrypt import Bcrypt
@@ -19,7 +20,7 @@ def create_app() -> Flask:
         template_folder="./frontend",
         static_folder="./frontend/dist",
     )
-    app.config.from_object("config.ProdConfig")
+    app.config.from_object(environ.get("FLASK_CONFIG"))
 
     from . import resources
 
@@ -33,8 +34,8 @@ def create_app() -> Flask:
     rest.add_resource(resources.GoogleOAuthEnd, "/api/oauth")
 
     # Utility OAuth
-    rest.add_resource(resources.PgeOAuthRedirect, "/api/utility/pge/redirect_uri")
     rest.add_resource(resources.PgeOAuthPortal, "/api/utility/pge/oauth_portal")
+    rest.add_resource(resources.PgeOAuthRedirect, "/api/utility/pge/redirect_uri")
 
     # Add data source
     rest.add_resource(resources.AddCustomSource, "/api/web/add/custom-source")
@@ -57,11 +58,19 @@ def create_app() -> Flask:
     # Initialize demo data
     rest.add_resource(resources.TestAddXml, "/api/test/add/xml")
 
+    # Tests
+    rest.add_resource(resources.FakeOAuthStart, "/api/utility/fake/redirect_uri")
+    rest.add_resource(resources.AddFakeSourceFromFakeOAuth, "/api/web/add/fake_oauth")
+
+    from .tasks import GetTaskStatus, task_gc_loop
+    # rest.add_resource(resources.CatchAll, '/<path:path>', '/')
+    rest.add_resource(GetTaskStatus, '/status/<task_id>')
+
     # Initialize extensions with the Flask app
     db.init_app(app)
-    rest.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
+    rest.init_app(app)
 
     with app.app_context():
         db.create_all()
@@ -79,5 +88,9 @@ def create_app() -> Flask:
                 demo_user.save_to_db()
             except Exception as e:
                 print(e)
+
+        @app.before_first_request
+        def before_first_request():
+            task_gc_loop()
 
         return app

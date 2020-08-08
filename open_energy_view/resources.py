@@ -1,8 +1,8 @@
 """API endpoints for viewing data."""
-from flask import jsonify, redirect
+from flask import jsonify, redirect, abort, url_for
 from base64 import b64encode
 from os import environ
-from time import time
+import time
 import json
 import requests
 import re
@@ -26,8 +26,9 @@ from urllib.parse import quote
 from . import models
 from . import bcrypt
 from . import db
-from .utility_apis import Pge, save_espi_xml
+from .utility_apis import Pge, FakeUtility, save_espi_xml
 from .espi_helpers import insert_espi_xml_into_db
+from .tasks import async_api
 
 PGE_BULK_ID = 51070
 PGE_CLIENT_ID = environ.get("PGE_CLIENT_ID")
@@ -58,6 +59,21 @@ pge_api = Pge(
 
 pge_api.get_service_status()
 # pge_api.request_bulk_data()
+
+#  TODO: add real fake endpoints and data
+fake_api = FakeUtility(
+    "fake",
+    "fake",
+    "fake",
+    "fake",
+    "fake",
+    "fake",
+    "fake",
+    "fake",
+    "fake",
+    "fake",
+    "fake",
+)
 
 auth_parser = reqparse.RequestParser()
 auth_parser.add_argument("email", help="Cannot be blank", required=True)
@@ -213,6 +229,7 @@ class GoogleOAuthEnd(Resource):
 
 class PgeOAuthPortal(Resource):
     def get(self):
+        # TODO: this needs to handle account creation - tailor message to referral utility
         TESTING = False
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
         testing_endpoint = "https://api.pge.com/datacustodian/test/oauth/v2/authorize"
@@ -290,7 +307,7 @@ class PgeOAuthRedirect(Resource):
         user_info_dict = {
             "access_token": user_info.get("access_token"),
             "refresh_token": user_info.get("refresh_token"),
-            "token_exp": int(user_info.get("expires_in")) + time(),
+            "token_exp": int(user_info.get("expires_in")) + time.time(),
             "subscription_id": subscription_id,
             "published_period_start": published_period_start,
         }
@@ -320,6 +337,8 @@ class AddPgeSourceFromOAuth(Resource):
         user_info = json.loads(user_info)
 
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        if user.email == "jph@demo.com":
+            return {"error": "cannot modify demo account"}, 403
 
         new_account = models.Source(
             user_id=user.id,
@@ -336,6 +355,29 @@ class AddPgeSourceFromOAuth(Resource):
         pge_api.get_historical_data_incrementally(new_account)
 
         return redirect("https://www.openenergyview.com")
+
+
+class FakeOAuthStart(Resource):
+    def get(self):
+        # TODO: get host IP - my WSL is not working on localhost so I can't use that...
+        return redirect("http://172.26.214.105:5000/dist/index.html#/fake_oauth")
+
+
+class AddFakeSourceFromFakeOAuth(Resource):
+    @async_api
+    @jwt_required
+    def post(self):
+        data = get_data_parser.parse_args()
+        name = data["name"]
+        print(get_jwt_identity())
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        if user.email == "jph@demo.com":
+            return {"error": "cannot modify demo account"}, 403
+        new_account = models.Source(user_id=user.id, friendly_name=name,)
+        new_account.save_to_db()
+        fake_api.get_historical_data_incrementally(new_account)
+
+        return "Success"
 
 
 class GetMeterReading(Resource):
@@ -500,12 +542,14 @@ class AddCustomSource(Resource):
     @jwt_required
     def post(self):
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        if user.email == "jph@demo.com":
+            return {"error": "cannot modify demo account"}, 403
         data = get_data_parser.parse_args()
         new_account = models.Source(
             user_id=user.id,
             friendly_name=data["name"],
             reg_type="self",
-            provider_id=data["thirdPartyId"],
+            subscription_id=data["thirdPartyId"],
             client_id=data["clientId"],
             client_secret=data["clientSecret"],
         )
@@ -570,3 +614,13 @@ class TestAddXml(Resource):
         insert_espi_xml_into_db(xml, source_id)
 
         return {}, 200
+
+
+# class CatchAll(Resource):
+#     @async_api
+#     def get(self, path=''):
+#         # perform some intensive processing
+#         print("starting processing task, path: '%s'" % path)
+#         time.sleep(30)
+#         print("completed processing task, path: '%s'" % path)
+#         return f'The answer is: {path}'
