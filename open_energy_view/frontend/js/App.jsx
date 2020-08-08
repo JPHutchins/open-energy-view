@@ -13,8 +13,9 @@ import { fork } from "fluture";
 import { getData } from "./api/DatabaseService";
 import SourceRegistration from "./components/SourceRegistration";
 import { useEffect } from "react";
-import AddOAuthSource from "./components/AddOAuthSource"
-import { handleErrors } from "./api/handleErrors"
+import AddOAuthSource from "./components/AddOAuthSource";
+import AddFakeOAuthSource from "./components/AddFakeOAuthSource";
+import { handleErrors } from "./api/handleErrors";
 
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(cookie.load("logged_in"));
@@ -32,26 +33,33 @@ const App = () => {
     if (cookie.load("logged_in")) {
       setView(<DataLoader />);
       getData(partitionUpdate).pipe(
-        fork(
-          (e) => handleErrors(e).then(
+        fork((e) =>
+          handleErrors(e).then(
             () => restrictView(selectedItem, partitionUpdate),
-            (component) => setView(component)))
-          ((x) => {
-            setSources(x);
-            selectedItem = selectedItem ? selectedItem : x[0];
+            (component) => setView(component)
+          )
+        )((x) => {
+          setSources(x);
+          let selectedEnergyHistory = selectedItem;
+          if (selectedItem === "last") {
+            selectedEnergyHistory = x[x.length - 1]
+          } else if (selectedItem === null) {
+            selectedEnergyHistory = x[0]
+          }
 
-            const initView = selectedItem ? (
-              <ViewTabs
-                energyDisplayItem={selectedItem}
-                restrictView={restrictView}
-              />
-            ) : (
-                <SourceRegistration restrictView={restrictView} />
-              );
-            setView(initView);
-          })
-
-      )
+          console.log(selectedEnergyHistory)
+          
+          const initView = selectedEnergyHistory ? (
+            <ViewTabs
+              energyDisplayItem={selectedEnergyHistory}
+              restrictView={restrictView}
+            />
+          ) : (
+            <SourceRegistration restrictView={restrictView} />
+          );
+          setView(initView);
+        })
+      );
     } else {
       setView(<Redirect to="/login" />);
     }
@@ -76,10 +84,17 @@ const App = () => {
         sources={sources}
       />
       <Switch>
-        <Route path="/pge_oauth" component={AddOAuthSource} />
+        <Route path="/pge_oauth">
+          <AddOAuthSource />{" "}
+        </Route>
+        <Route path="/fake_oauth">
+          <AddFakeOAuthSource restrictView={restrictView} />
+        </Route>
         <Route path="/test" component={TestResults} />
         <Route path="/login">{bypassLogin()}</Route>
-        <Route exact path="/">{view}</Route>
+        <Route exact path="/">
+          {view}
+        </Route>
         <Route exact path="/create_account">
           <UserRegistration callback={restrictView} />
         </Route>

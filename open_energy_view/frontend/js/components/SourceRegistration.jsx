@@ -23,7 +23,7 @@ const SourceRegistration = ({ history, restrictView }) => {
       clientSecret: clientSecret,
     };
     addCustomSource(regInfo).then(() => {
-      restrictView();
+      restrictView("last");
       history.push("/");
     });
   };
@@ -31,7 +31,10 @@ const SourceRegistration = ({ history, restrictView }) => {
   const handleUtilityOAuth = (e) => {
     e.preventDefault();
     if (utility === "Pacific Gas & Electric") {
-      location.href = "/api/utility/pge/oauth_portal"
+      location.href = "/api/utility/pge/oauth_portal";
+    }
+    if (utility === "Fake Utility") {
+      location.href = "/api/utility/fake/redirect_uri";
     }
   };
 
@@ -49,48 +52,52 @@ const SourceRegistration = ({ history, restrictView }) => {
     </div>
   );
 
-  const selfAccess = <div className="register-box">
-    <Form style={{ maxWidth: "450px" }} onSubmit={handleSubmit}>
-      <h4>Add Custom Source </h4>
-      <div style={{ fontSize: "8pt", color: "gray" }}>This is mostly unimplemented. After adding a source below
-      (enter 555 for Third-Party ID, Client ID, and Client Secret),
-      you can upload your own ESPI XML from the new resource's Settings page.</div>
-      <Form.Group controlId="formPge">
-        <Form.Label>Name</Form.Label>
-        <Form.Control
-          className="login-form"
-          type="text"
-          placeholder="Name, like PG&E or Home PG&E"
-          onChange={(e) => setName(e.target.value)}
-        />
-        <Form.Label>Third-Party ID</Form.Label>
-        <Form.Control
-          className="login-form"
-          type="text"
-          placeholder="Third-Party ID"
-          onChange={(e) => setThirdPartyId(e.target.value)}
-        />
-        <Form.Label>Client ID</Form.Label>
-        <Form.Control
-          className="login-form"
-          type="text"
-          placeholder="Client ID"
-          onChange={(e) => setClientId(e.target.value)}
-        />
-        <Form.Label>Client Secret</Form.Label>
-        <Form.Control
-          className="login-form"
-          type="text"
-          placeholder="Client Secret"
-          onChange={(e) => setClientSecret(e.target.value)}
-        />
-      </Form.Group>
-      <Button variant="primary" type="submit">
-        Add Source
-    </Button>
-      <hr />
-    </Form>
-  </div>
+  const selfAccess = (
+    <div className="register-box">
+      <Form style={{ maxWidth: "450px" }} onSubmit={handleSubmit}>
+        <h4>Add Custom Source </h4>
+        <div style={{ fontSize: "8pt", color: "gray" }}>
+          This is mostly unimplemented. After adding a source below (enter 555
+          for Third-Party ID, Client ID, and Client Secret), you can upload your
+          own ESPI XML from the new resource's Settings page.
+        </div>
+        <Form.Group controlId="formPge">
+          <Form.Label>Name</Form.Label>
+          <Form.Control
+            className="login-form"
+            type="text"
+            placeholder="Name, like PG&E or Home PG&E"
+            onChange={(e) => setName(e.target.value)}
+          />
+          <Form.Label>Third-Party ID</Form.Label>
+          <Form.Control
+            className="login-form"
+            type="text"
+            placeholder="Third-Party ID"
+            onChange={(e) => setThirdPartyId(e.target.value)}
+          />
+          <Form.Label>Client ID</Form.Label>
+          <Form.Control
+            className="login-form"
+            type="text"
+            placeholder="Client ID"
+            onChange={(e) => setClientId(e.target.value)}
+          />
+          <Form.Label>Client Secret</Form.Label>
+          <Form.Control
+            className="login-form"
+            type="text"
+            placeholder="Client Secret"
+            onChange={(e) => setClientSecret(e.target.value)}
+          />
+        </Form.Group>
+        <Button variant="primary" type="submit">
+          Add Source
+        </Button>
+        <hr />
+      </Form>
+    </div>
+  );
 
   return (
     <>
@@ -98,17 +105,26 @@ const SourceRegistration = ({ history, restrictView }) => {
         <Form style={{ maxWidth: "450px" }} onSubmit={handleUtilityOAuth}>
           <Form.Group controlId="formPgeOAuth">
             <h3>Add Your Utility</h3>
-            <div style={{ fontSize: "10pt", color: "gray" }}>Authorize your utility company to share your home energy data.
-            You will need the login information for your utilities. It is the
-            same login that you would use to pay your bill online.</div>
+            <div style={{ fontSize: "10pt", color: "gray" }}>
+              Authorize your utility company to share your home energy data. You
+              will need the login information for your utilities. It is the same
+              login that you would use to pay your bill online.
+            </div>
             <hr />
             <h4>Select your utility company</h4>
             <DropdownButton title={utility} onSelect={setUtility}>
-              <Dropdown.Item eventKey="Pacific Gas & Electric">Pacific Gas & Electric</Dropdown.Item>
+              <Dropdown.Item eventKey="Pacific Gas & Electric">
+                Pacific Gas & Electric
+              </Dropdown.Item>
+              <Dropdown.Item eventKey="Fake Utility">
+                Fake Utility
+              </Dropdown.Item>
             </DropdownButton>
             <hr />
             <h4>Link your account</h4>
-            <Button variant="primary" type="submit">Authorize</Button>
+            <Button variant="primary" type="submit">
+              Authorize
+            </Button>
           </Form.Group>
         </Form>
       </div>
