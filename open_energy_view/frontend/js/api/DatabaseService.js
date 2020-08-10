@@ -30,6 +30,7 @@ const makeSources = (energyHistoryInstance) => {
   return {
     title: energyHistoryInstance.friendlyName,
     component: <EnergyDisplay energyHistoryInstance={energyHistoryInstance} />,
+    currentTab: 0,
   };
 };
 
@@ -56,7 +57,7 @@ export const getHourlyData = (source) => {
 };
 
 const refreshToken = () => {
-  return encaseP(AuthService.refreshToken)()
+  return encaseP(AuthService.refreshToken)();
 };
 
 export const getData = (partitions) => {
