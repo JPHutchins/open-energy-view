@@ -23,7 +23,6 @@ const Login = (props) => {
         setBadCreds("Incorrect email and/or password.");
         setLoginDisabled(false);
       } else {
-        cookie.save("logged_in", credentials.email, { maxAge: 900 });
         props.callback();
         props.history.push("/");
       }
@@ -38,7 +37,6 @@ const Login = (props) => {
         setLoginDisabled(false);
         throw Error("That's weird, the demo credentials are missing.");
       } else {
-        cookie.save("logged_in", credentials.email, { maxAge: 900 });
         props.callback();
         props.history.push("/");
       }

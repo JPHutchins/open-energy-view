@@ -30,7 +30,6 @@ const UserRegistration = props => {
           </Form.Text>
         );
       } else {
-        cookie.save("logged_in", true, { maxAge: 900 });
         props.callback();
         props.history.push("/");
       }

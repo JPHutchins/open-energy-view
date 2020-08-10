@@ -1,5 +1,5 @@
 """API endpoints for viewing data."""
-from flask import jsonify, redirect, abort, url_for
+from flask import jsonify, redirect, abort, url_for, make_response
 from base64 import b64encode
 from os import environ
 import time
@@ -107,6 +107,7 @@ class AuthToken(Resource):
         resp = jsonify({"login": True})
         set_access_cookies(resp, access_token)
         set_refresh_cookies(resp, refresh_token)
+        resp.set_cookie('logged_in', str(id))
         return resp
 
 
@@ -147,6 +148,7 @@ class UserLogout(Resource):
     def post(self):
         resp = jsonify({"logout": True})
         unset_jwt_cookies(resp)
+        resp.set_cookie('logged_in', "", expires=0)
         return resp
 
 
@@ -155,8 +157,11 @@ class TokenRefresh(Resource):
     def post(self):
         current_user = get_jwt_identity()
         access_token = create_access_token(identity=current_user)
+        refresh_token = create_refresh_token(identity=current_user)
         resp = jsonify({"refresh": True})
         set_access_cookies(resp, access_token)
+        set_refresh_cookies(resp, refresh_token)
+        resp.set_cookie('logged_in', str(current_user))
         return resp
 
 

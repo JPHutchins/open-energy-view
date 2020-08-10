@@ -10,7 +10,6 @@ export const handleErrors = (e) => {
         if (e.response.status === 401) {  
             return AuthService.refreshToken()
                 .then(() => {
-                    cookie.save("logged_in")
                     return Promise.resolve()
                 })
                 .catch((e) => {
