@@ -11,6 +11,8 @@ html,
 }
 
 footer {
+  color: gray;
+  font-size: 8pt;
   text-align: center;
   margin: 10px;
   justify-self: flex-end;
