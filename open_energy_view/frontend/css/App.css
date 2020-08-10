@@ -74,13 +74,8 @@ footer {
 }
 
 .sidebar-container {
-  display: flex;
-  flex-direction: column;
-  padding-top: 20px;
-  background-color: #f6f8ff;
-  max-width: 130px;
-  padding-right: 20px;
-  flex: 1;
+  background-color: #f6eaff;
+  margin-right: 20px;
 }
 
 .pattern-header {
@@ -335,18 +330,25 @@ footer {
 }
 
 .tab {
-  max-width: 4rem;
   text-align: center;
   color: grey;
   cursor: pointer;
-  padding: 5px;
+  padding: 15px;
   transition: all 0.1s ease-out;
   font-size: 10pt;
   margin: auto;
+  height: 100%;
+  width: 100%;
 }
 
 .tab:hover {
-  max-width: 4.5rem;
+  cursor: pointer;
+  box-shadow: 0px 0px 10px -5px;
+}
+
+.tab-selected:hover {
+  cursor: default;
+  box-shadow: -10px 0px 10px -5px;
 }
 
 .tab-container div.tab:hover {
@@ -354,8 +356,8 @@ footer {
 }
 
 .tab-selected {
-  color: black;
   background-color: #f6f8ff;
+  box-shadow: -10px 0px 10px -5px;
 }
 
 .energy-chart {
