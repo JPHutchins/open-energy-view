@@ -20,7 +20,7 @@ import AuthService from "./api/AuthService";
 
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(cookie.load("logged_in"));
-  const [view, setView] = useState(<Redirect to="/" />);
+  const [view, setView] = useState(<Redirect to="/login" />);
   const [sources, setSources] = useState([]);
   const [selectedResource, setSelectedResource] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -121,7 +121,7 @@ const App = () => {
         <Route exact path="/create_account">
           <UserRegistration callback={restrictView} />
         </Route>
-        <Route>{null}</Route>
+        <Route><Redirect to="/login" /></Route>
       </Switch>
       <footer>Copyright 2020 J.P. Hutchins. All Rights Reserved.</footer>
     </Router>
