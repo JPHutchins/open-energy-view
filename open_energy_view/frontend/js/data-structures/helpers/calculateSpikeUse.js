@@ -3,10 +3,12 @@ import { rolling } from "../../functions/rolling";
 import { makeFillWindow } from "../../functions/makeFillWindow";
 import { standardDeviationOf } from "../../functions/standardDeviationOf";
 import { meanOf } from "../../functions/meanOf";
+import { extract } from "../../functions/extract";
 
-export function calculateSpikeUse(zippedDatabase) {
+
+export function calculateSpikeUse(database) {
   const WINDOW = 48; //hours
-  const rawHours = zippedDatabase.map((x) => x.get("active")).toArray();
+  const rawHours = database.map(x => x.total);
 
   const fillWindow = makeFillWindow(WINDOW)(rawHours);
   const fillWindowS = makeFillWindow(24*14)(rawHours)

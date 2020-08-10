@@ -1,37 +1,30 @@
-import { List } from "immutable";
 import { indexInDb } from "../../functions/indexInDb";
 import { startOfDay, getTime } from "date-fns";
-import { compose } from "ramda";
+import { fromJS as toImmutableJSfromJS } from "immutable";
 
-export const zipPassiveCalculation = (database, passiveUse) => {
-  //TODO: refactor - consider moving further up in composition?
-  //Rename this function?
-  if (!database || !passiveUse) return;
+export const zipPassiveCalculation = (database, passiveUse, spikes) => {
+  if (!database || !passiveUse || !spikes) return;
+  if (database.length !== spikes.length) return;
   const zipped = [];
 
-  const getFrom = (object) => (key) => object.get(key);
-  const useKey = (key) => (object) => object.get(key);
+  for (let i = 0; i < database.length; i++) {
+    const hour = database[i];
+    const total = hour.total;
 
-  for (let i = 0; i < database.size; i++) {
-    const hour = database.get(i);
-    const day = getTime(startOfDay(new Date(hour.get("x"))));
-
-    const total = hour.get("total");
-
-    let passive = compose(
-      useKey("passive"),
-      getFrom(passiveUse),
-      indexInDb(passiveUse)
-    )(day);
-
+    const day = getTime(startOfDay(new Date(hour.x)));
+    let passive = passiveUse[indexInDb(passiveUse)(day)].passive;
     passive = passive < total ? passive : total;
-    const active = total - passive;
+    
+    const spike = spikes[i];
+    const active = total - spike - passive;
 
-    const zip = hour.withMutations((hour) => {
-      hour.set("passive", passive).set("active", active);
+    zipped.push({
+      x: hour.x,
+      active,
+      passive,
+      spike,
+      total,
     });
-   
-    zipped.push(zip)
   }
-  return List(zipped);
+  return toImmutableJSfromJS(zipped);
 };
