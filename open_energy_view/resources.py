@@ -365,7 +365,7 @@ class AddPgeSourceFromOAuth(Resource):
 class FakeOAuthStart(Resource):
     def get(self):
         # TODO: get host IP - my WSL is not working on localhost so I can't use that...
-        return redirect("http://172.26.214.105:5000/dist/index.html#/fake_oauth")
+        return redirect("http://172.26.214.5:5000/dist/index.html#/fake_oauth")
 
 
 class AddFakeSourceFromFakeOAuth(Resource):

@@ -301,13 +301,29 @@ class FakeUtility(Api):
 
     def get_historical_data_incrementally(self, source):
         """Fake server takes a long time."""
-        time.sleep(60)
+        test_xml = [
+            "/home/jp/open-energy-view/test/data/espi/espi_2_years.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-16.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-17.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-18.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-19.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-20.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-21.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-22.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-23.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-24.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-25.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-26.xml",
+            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-27.xml",
+        ]
+        test_xml.reverse()
 
-        xml_path = "/home/jp/open-energy-view/test/data/espi/espi_2_years.xml"
-        with open(xml_path) as xml_reader:
-            xml = xml_reader.read()
+        for xml_path in test_xml:
+            time.sleep(5)
+            with open(xml_path) as xml_reader:
+                xml = xml_reader.read()
 
-        insert_espi_xml_into_db(xml, source.id)
+            insert_espi_xml_into_db(xml, source.id)
 
         return "Finished download from utility API"
 
