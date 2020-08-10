@@ -5,18 +5,16 @@ import AuthService from "../api/AuthService";
 
 const NavigationBar = (props) => {
   const handleLogout = () => {
-    AuthService.logOut()
-      .then(props.history.push("/login"))
-      .then(props.restrictView());
+    AuthService.logOut().then(() => {
+      props.history.push("/login");
+      props.restrictView();
+    });
   };
 
   const sourceList = props.sources
     ? props.sources.map((source, i) => {
         return (
-          <NavDropdown.Item
-            onClick={() => handleSelect(source)}
-            key={i}
-          >
+          <NavDropdown.Item onClick={() => handleSelect(source)} key={i}>
             {source.title}
           </NavDropdown.Item>
         );
@@ -24,12 +22,16 @@ const NavigationBar = (props) => {
     : [];
 
   const handleAddNew = () => {
-    props.sourceRegistration()
+    props.sourceRegistration();
   };
 
   const handleSelect = (selectedItem) => {
-    props.restrictView(selectedItem);
-    props.history.push("/")
+    props.setSelectedResource(
+      props.sources.reduce(
+        (acc, x, i) => (x.title === selectedItem.title ? i : acc),
+        0
+      )
+    );
   };
 
   const loggedInItems = (

@@ -10,16 +10,16 @@ import { mdiChartBar } from "@mdi/js";
 import { mdiTrendingUp } from "@mdi/js";
 import { mdiCogs } from "@mdi/js";
 import Icon from "@mdi/react";
+import { useEffect } from "react";
+import {withRouter} from 'react-router';
 
-const ViewTabs = ({ energyDisplayItem, restrictView }) => {
-  const [selectedTab, setSelectedTab] = useState(0); // always preselect first tab
-  const [energyHistory, setEnergyHistory] = useState(
-    energyDisplayItem.component.props.energyHistoryInstance
-  );
-
+const ViewTabs = ({ energyDisplayItem, restrictView, setSources, sources, setSelectedResource, setSelectedTab, selectedTab}) => {
+  selectedTab = selectedTab ? selectedTab : 0
+  const energyHistory = energyDisplayItem.component.props.energyHistoryInstance
+  
   const views = [
     {
-      title: "Dashboard",
+      title: "Dash",
       icon: (
         <Icon className="sidebar-icon" color="#5f5566" path={mdiGaugeLow} />
       ),
@@ -63,7 +63,9 @@ const ViewTabs = ({ energyDisplayItem, restrictView }) => {
       component: (
         <EnergyDisplay
           energyHistory={energyHistory}
-          setEnergyHistory={setEnergyHistory}
+          setSources={setSources}
+          sources={sources}
+          setSelectedResource={setSelectedResource}
         />
       ),
     },
@@ -76,12 +78,14 @@ const ViewTabs = ({ energyDisplayItem, restrictView }) => {
     },
   ];
 
+
   /**
    * Set the State Variable selectedTab to the value attribute of the click event.
    *
    * @param {Object} e Event.
    */
   const handleClick = (e) => {
+    energyDisplayItem.currentTab = parseInt(e.currentTarget.getAttribute("value"))
     setSelectedTab(parseInt(e.currentTarget.getAttribute("value")));
   };
 

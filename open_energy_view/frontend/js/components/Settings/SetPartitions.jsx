@@ -5,6 +5,7 @@ import { useState } from "react";
 import { idToIndex } from "./functions";
 import { to12Hour } from "../../functions/to12Hour";
 import { Button } from "react-bootstrap";
+import { withRouter } from "react-router-dom"
 
 // TODO: display all-time day average as preview?
 
@@ -14,7 +15,7 @@ const sliderStyle = {
 };
 const domain = [0, 23];
 
-const SetPartitions = ({ existingPartitionOptions, restrictView }) => {
+const SetPartitions = ({ existingPartitionOptions, restrictView, history }) => {
   const [currentHandle, setCurrentHandle] = useState(null);
   const [edit, hookSetEdit] = useState(null);
   const [partitions, setPartitions] = useState(existingPartitionOptions.value);
@@ -145,4 +146,4 @@ const SetPartitions = ({ existingPartitionOptions, restrictView }) => {
     </div>
   );
 };
-export default SetPartitions;
+export default withRouter(SetPartitions);
