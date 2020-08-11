@@ -17,6 +17,7 @@ import AddOAuthSource from "./components/AddOAuthSource";
 import AddFakeOAuthSource from "./components/AddFakeOAuthSource";
 import { handleErrors } from "./api/handleErrors";
 import AuthService from "./api/AuthService";
+import axios from "axios";
 
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(cookie.load("logged_in"));
@@ -24,17 +25,59 @@ const App = () => {
   const [sources, setSources] = useState([]);
   const [selectedResource, setSelectedResource] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     restrictView();
-  }, [loggedIn, selectedResource, sources, selectedTab]);
+  }, [loggedIn, selectedResource, sources, selectedTab, loading]);
 
-  const restrictView = (selectedItem = null, partitionUpdate = null) => {
-    console.log("Running restrict view")
+  const restrictView = (
+    selectedItem = null,
+    partitionUpdate = null,
+    loading = false,
+    removeSource = null
+  ) => {
+    if (removeSource) {
+      setSources(sources.filter((s) => s.title !== removeSource));
+      if (sources.length === 1)
+        return setView(<SourceRegistration restrictView={restrictView} />);
+      setSelectedResource(selectedResource - 1);
+    }
+
+    if (loading) {
+      const checkAgain = () => {
+        axios.get(loading.location).then((res) => {
+          if (res.status === 200) {
+            setLoading({
+              ...loading,
+              button: (
+                <Button onClick={() => window.location.reload()}>
+                  Complete! Reload Now
+                </Button>
+              ),
+            });
+          }
+          if (res.status === 202) {
+            setLoading(loading);
+            setTimeout(checkAgain, 5000);
+          }
+        });
+      };
+      checkAgain();
+    }
+
     const energyView = (
       <ViewTabs
-        key={Math.random()}
+        key={
+          sources.length
+            ? sources.reduce(
+                (acc, x) => acc + x.title + x.component.startDate,
+                ""
+              )
+            : "empty"
+        }
         setSources={setSources}
+        setView={setView}
         sources={sources}
         energyDisplayItem={sources[selectedResource]}
         setSelectedTab={setSelectedTab}
@@ -47,8 +90,9 @@ const App = () => {
       AuthService.refreshToken().then(restrictView);
     }
 
-    if (sources.length > 0 && partitionUpdate === null)
+    if (sources.length > 0 && !partitionUpdate && !loading) {
       return setView(energyView);
+    }
 
     setView(<DataLoader />);
 
@@ -59,15 +103,19 @@ const App = () => {
           (component) => setView(component)
         )
       )((energyHistorySources) => {
+        if (energyHistorySources.length === 0) {
+          return setView(<SourceRegistration restrictView={restrictView} />);
+        }
         const selectedEnergyHistory = selectEnergyHistory(
           energyHistorySources,
           selectedItem
         );
-        const initView = selectedEnergyHistory ? (
-          energyView
-        ) : (
-          <SourceRegistration restrictView={restrictView} />
-        );
+        const initView =
+          energyHistorySources.length > 0 ? (
+            energyView
+          ) : (
+            <SourceRegistration restrictView={restrictView} />
+          );
         setSources(energyHistorySources);
         setView(initView);
         setLoggedIn(cookie.load("logged_in"));
@@ -78,8 +126,6 @@ const App = () => {
   const selectEnergyHistory = (energyHistorySources, selectedItem) => {
     let selectedEnergyHistory = selectedItem;
     if (selectedItem === "last") {
-      selectedEnergyHistory =
-        energyHistorySources[energyHistorySources.length - 1];
     } else if (selectedItem === null) {
       selectedEnergyHistory = energyHistorySources[0];
     }
@@ -99,17 +145,22 @@ const App = () => {
   return (
     <Router>
       <NavigationBar
-        //restrictView={restrictView}
         sourceRegistration={sourceRegistration}
         loggedIn={loggedIn}
-        sources={sources}
+        setLoggedIn={setLoggedIn}
+        setView={setView}
+        setSources={setSources}
         setSelectedResource={setSelectedResource}
+        setSelectedTab={setSelectedTab}
+        setLoading={setLoading}
+        sources={sources}
         restrictView={restrictView}
+        loading={loading}
       />
       <Switch>
         <Route path="/login">{bypassLogin()}</Route>
         <Route path="/pge_oauth">
-          <AddOAuthSource />{" "}
+          <AddOAuthSource restrictView={restrictView} />
         </Route>
         <Route path="/fake_oauth">
           <AddFakeOAuthSource restrictView={restrictView} />
@@ -121,7 +172,9 @@ const App = () => {
         <Route exact path="/create_account">
           <UserRegistration callback={restrictView} />
         </Route>
-        <Route><Redirect to="/login" /></Route>
+        <Route>
+          <Redirect to="/login" />
+        </Route>
       </Switch>
       <footer>Copyright 2020 J.P. Hutchins. All Rights Reserved.</footer>
     </Router>
