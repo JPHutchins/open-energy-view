@@ -9,6 +9,7 @@ import { EnergyHistory } from "../data-structures/EnergyHistory";
 import { parseHourResponse } from "./helpers";
 import { getLocalStorage } from "./helpers";
 import { sliceLastUpdateFromResponse } from "./helpers";
+import SourceRegistration from "../components/SourceRegistration";
 
 export const addCustomSource = (regInfo) => {
   return axios.post(
@@ -36,7 +37,11 @@ const makeSources = (energyHistoryInstance) => {
 
 export const requestSources = () => {
   return attemptP(() => {
-    return axios.post("/api/web/sources", {}, AuthService.getAuthHeader());
+    if (cookie.load("csrf_access_token")) {
+      return axios.post("/api/web/sources", {}, AuthService.getAuthHeader());
+    } else {
+      return Promise.reject("No token available.")
+    }
   });
 };
 
