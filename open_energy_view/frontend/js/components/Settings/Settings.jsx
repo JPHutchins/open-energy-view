@@ -27,15 +27,15 @@ const Settings = ({ energyHistory, restrictView, history }) => {
   const handleDeleteSource = () => {
     // TODO: small bug here if friendly name has been changed on server but
     // the energyHistory object has not been reloaded
+    const key = `${energyHistory.email}${energyHistory.friendlyName}`;
+    localStorage.removeItem(key);
     const data = {
       friendly_name: energyHistory.friendlyName,
     };
     axios
       .post("/api/web/delete-source", data, AuthService.getAuthHeader())
-      .then((res) => {
-        console.log(res);
-      })
       .then(() => {
+        restrictView("last", null, false, energyHistory.friendlyName)
         history.push("/");
       });
   };
@@ -66,7 +66,7 @@ const Settings = ({ energyHistory, restrictView, history }) => {
       {/* <h4>Link to account settings</h4> */}
       <hr />
       <Button onClick={handleDeleteSource} style={{ width: "auto" }}>
-        Permanently delete this resource and all of it's data
+        Permanently delete this resource and all of its data
       </Button>
     </div>
   );
