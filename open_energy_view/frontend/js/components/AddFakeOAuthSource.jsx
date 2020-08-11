@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Redirect, withRouter } from "react-router-dom";
-import cookie from "react-cookies";
-import { Form, Button, DropdownButton, Dropdown } from "react-bootstrap";
+import React, { useState } from "react";
+import { withRouter } from "react-router-dom";
+import { Form, Button } from "react-bootstrap";
 import AuthService from "../api/AuthService";
 import axios from "axios";
-import ViewTabs from "./ViewTabs";
+import DataLoader from "./DataLoader";
 
 const AddFakeOAuthSource = (props) => {
   const [name, setName] = useState("");
-  const [redirect, setRedirect] = useState(false);
-  const [receivedInitialData, setReceivedInitialData] = useState(false)
   const { history, restrictView } = props;
+  const [loading, setLoading] = useState(false);
 
   // TODO: server will respond 500 on failing UniqueConstraint for
   // "Provider ID" (third party ID) or name - update UI on promise reject
@@ -23,11 +21,15 @@ const AddFakeOAuthSource = (props) => {
     axios
       .post("/api/web/add/fake_oauth", regInfo, AuthService.getAuthHeader())
       .then((res) => {
-        console.log(history)
-        console.log(res);
-        restrictView("last");
-        history.push("/")
+        setTimeout(() => {
+          restrictView("last", null, {
+            name,
+            location: res.headers.location,
+          });
+          history.push("/");
+        }, 10000);
       });
+    setLoading(<DataLoader />);
   };
 
   const nameSource = (
@@ -50,10 +52,7 @@ const AddFakeOAuthSource = (props) => {
     </div>
   );
 
-  return  (
-  
-    nameSource
-  );
+  return loading ? loading : nameSource;
 };
 
 export default withRouter(AddFakeOAuthSource);
