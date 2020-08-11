@@ -27,8 +27,34 @@ footer {
   height:50px;
 }
 
+.loading-historical {
+  color:white;
+}
+
 #google-sign-in:hover {
   cursor: pointer;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+}
+
+.navbar-link {
+  color: white;
+}
+
+.navbar-link:hover {
+  cursor: pointer;
+  color: white;
+}
+
+.rotate {
+  animation: rotation 2s infinite linear;
 }
 
 .main-tab-box {
@@ -405,6 +431,8 @@ footer {
 .data-loader {
   display: block;
   margin: auto;
+  height: 200px;
+  width: 200px;
   text-align: center;
 }
 
