@@ -64,7 +64,7 @@ def create_app() -> Flask:
 
     from .tasks import GetTaskStatus, task_gc_loop
     # rest.add_resource(resources.CatchAll, '/<path:path>', '/')
-    rest.add_resource(GetTaskStatus, '/status/<task_id>')
+    rest.add_resource(GetTaskStatus, '/api/web/add/status/<task_id>')
 
     # Initialize extensions with the Flask app
     db.init_app(app)
