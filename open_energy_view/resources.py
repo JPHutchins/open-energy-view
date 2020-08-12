@@ -21,7 +21,7 @@ from flask_jwt_extended import (
 from sqlalchemy import exc
 from cryptography.fernet import Fernet
 import xml.etree.ElementTree as ET
-from urllib.parse import quote
+from urllib.parse import quote, parse_qs
 
 from . import models
 from . import bcrypt
@@ -133,7 +133,6 @@ class Register(AuthToken):
 class UserLogin(AuthToken):
     def post(self):
         data = auth_parser.parse_args()
-        print(data["email"], data["password"])
         current_user = models.User.find_by_email(data["email"])
         if not current_user:
             return {"message": "Bad credentials"}, 401
@@ -293,7 +292,7 @@ class PgeOAuthRedirect(Resource):
             headers=header_params,
             cert=(CERT_PATH, KEY_PATH,),
         )
-        print(response.text)
+        # print(response.text)
 
         user_info = json.loads(response.text)
         authorization_uri = user_info.get("authorizationURI")
@@ -331,15 +330,29 @@ class PgeOAuthRedirect(Resource):
 class AddPgeSourceFromOAuth(Resource):
     @async_api
     @jwt_required
-    def post(self):
-        data = get_data_parser.parse_args()
-        print(data["name"])
-        print(data["payload"])
+    def get(self):
+        query_string = request.environ.get("QUERY_STRING")
+        query_dict = parse_qs(query_string)
 
-        name = data["name"]
-        usage_point = data["usage_point"]
-        user_info = bytes.decode(f.decrypt(data["payload"].encode("utf-8")))
-        print(user_info)
+        name_list = query_dict.get("name")
+        if len(name_list) > 0:
+            name = name_list[0]
+        else:
+            return "Failure"
+
+        usage_point_list = query_dict.get("usage_point")
+        if len(usage_point_list) > 0:
+            usage_point = usage_point_list[0]
+        else:
+            return "Failure"
+
+        payload_list = query_dict.get("payload")
+        if len(payload_list) > 0:
+            payload = payload_list[0]
+        else:
+            return "Failure"
+
+        user_info = bytes.decode(f.decrypt(payload.encode("utf-8")))
         user_info = json.loads(user_info)
 
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
@@ -365,17 +378,23 @@ class AddPgeSourceFromOAuth(Resource):
 
 class FakeOAuthStart(Resource):
     def get(self):
-        # TODO: get host IP - my WSL is not working on localhost so I can't use that...
-        return redirect("http://172.26.209.185:5000/dist/index.html#/fake_oauth")
+        # TODO: get host IP on Dev mode - my WSL is not working on localhost...
+        return redirect("https://www.openenergyview.com/#/fake_oauth")
 
 
 class AddFakeSourceFromFakeOAuth(Resource):
     @async_api
     @jwt_required
-    def post(self):
-        data = get_data_parser.parse_args()
-        name = data["name"]
-        print(get_jwt_identity())
+    def get(self):
+        query_string = request.environ.get("QUERY_STRING")
+        query_dict = parse_qs(query_string)
+
+        name_list = query_dict.get("name")
+        if len(name_list) > 0:
+            name = name_list[0]
+        else:
+            return "Failure"
+
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         if user.email == "jph@demo.com":
             return {"error": "cannot modify demo account"}, 403
@@ -526,7 +545,7 @@ class PgeRequestBulk(Resource):
 class PgeNotify(Resource):
     def post(self):
         data = request.data
-        print("notify hit", request.headers)
+        # print("notify hit", request.headers)
         save_espi_xml(data.decode("utf-8"))
         resource_uris = []
         try:
@@ -620,13 +639,3 @@ class TestAddXml(Resource):
         insert_espi_xml_into_db(xml, source_id)
 
         return {}, 200
-
-
-# class CatchAll(Resource):
-#     @async_api
-#     def get(self, path=''):
-#         # perform some intensive processing
-#         print("starting processing task, path: '%s'" % path)
-#         time.sleep(30)
-#         print("completed processing task, path: '%s'" % path)
-#         return f'The answer is: {path}'

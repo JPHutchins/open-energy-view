@@ -16,10 +16,12 @@ const AddFakeOAuthSource = (props) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const regInfo = {
-      name: name,
+      params: {
+        name: name,
+      }
     };
     axios
-      .post("/api/web/add/fake_oauth", regInfo, AuthService.getAuthHeader())
+      .get('/api/web/add/fake_oauth', regInfo, AuthService.getAuthHeader())
       .then((res) => {
         setTimeout(() => {
           restrictView("last", null, {

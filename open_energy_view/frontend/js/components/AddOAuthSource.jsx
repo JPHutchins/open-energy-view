@@ -21,12 +21,14 @@ const AddOAuthSource = (props) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const regInfo = {
-      payload: payload,
-      name: name,
-      usage_point: usage_points.electricity[0],
+      params: {
+        payload: payload,
+        name: name,
+        usage_point: usage_points.electricity[0],
+      }
     };
     axios
-      .post("/api/web/add/pge_oauth", regInfo, AuthService.getAuthHeader())
+      .get("/api/web/add/pge_oauth", regInfo, AuthService.getAuthHeader())
       .then((res) => {
         setTimeout(() => {
           restrictView("last", null, {

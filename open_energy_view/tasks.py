@@ -48,6 +48,7 @@ def async_api(f):
                 try:
                     tasks[task_id]["return_value"] = f(*args, **kwargs)
                 except HTTPException as e:
+                    print(e)
                     tasks[task_id]["return_value"] = current_app.handle_http_exception(
                         e
                     )
@@ -94,6 +95,7 @@ class GetTaskStatus(resources.Resource):
         status code, it means that task hasn't finished yet. Else, the response
         from the task is returned.
         """
+        
         task = tasks.get(task_id)
         if task is None:
             abort(404)
