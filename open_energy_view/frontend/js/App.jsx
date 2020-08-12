@@ -18,6 +18,7 @@ import AddFakeOAuthSource from "./components/AddFakeOAuthSource";
 import { handleErrors } from "./api/handleErrors";
 import AuthService from "./api/AuthService";
 import axios from "axios";
+import { Button } from "react-bootstrap"
 
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(cookie.load("logged_in"));
@@ -71,15 +72,15 @@ const App = () => {
         key={
           sources.length
             ? sources.reduce(
-                (acc, x) => acc + x.title + x.component.startDate,
-                ""
-              )
+              (acc, x) => acc + x.title + x.component.startDate,
+              ""
+            )
             : "empty"
         }
         setSources={setSources}
         setView={setView}
         sources={sources}
-        energyDisplayItem={sources[selectedResource]}
+        energyDisplayItem={sources[selectedResource] ? sources[selectedResource] : sources[0]}
         setSelectedTab={setSelectedTab}
         selectedTab={selectedTab}
         restrictView={restrictView}
@@ -114,8 +115,8 @@ const App = () => {
           energyHistorySources.length > 0 ? (
             energyView
           ) : (
-            <SourceRegistration restrictView={restrictView} />
-          );
+              <SourceRegistration restrictView={restrictView} />
+            );
         setSources(energyHistorySources);
         setView(initView);
         setLoggedIn(cookie.load("logged_in"));
