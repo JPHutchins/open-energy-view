@@ -335,19 +335,19 @@ class AddPgeSourceFromOAuth(Resource):
         query_dict = parse_qs(query_string)
 
         name_list = query_dict.get("name")
-        if len(name_list) > 0:
+        if name_list and len(name_list) > 0:
             name = name_list[0]
         else:
             return "Failure"
 
         usage_point_list = query_dict.get("usage_point")
-        if len(usage_point_list) > 0:
+        if usage_point_list and len(usage_point_list) > 0:
             usage_point = usage_point_list[0]
         else:
             return "Failure"
 
         payload_list = query_dict.get("payload")
-        if len(payload_list) > 0:
+        if payload_list and len(payload_list) > 0:
             payload = payload_list[0]
         else:
             return "Failure"
@@ -390,7 +390,7 @@ class AddFakeSourceFromFakeOAuth(Resource):
         query_dict = parse_qs(query_string)
 
         name_list = query_dict.get("name")
-        if len(name_list) > 0:
+        if name_list and len(name_list) > 0:
             name = name_list[0]
         else:
             return "Failure"
