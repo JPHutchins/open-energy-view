@@ -2,6 +2,12 @@
 
 The goal of this project is to analyze and present resource consumption data to users empowering them to conserve and save money. 
 
+## Open Beta!
+
+https://www.openenergyview.com
+
+If you are a PG&E customer you can link your account now!  If you are not a PG&E customer you can try the demo and talk to J.P. about integrating your utility.
+
 ## User Interface
 
 ![Interface](/docs/energy-history-screenshot.png)
