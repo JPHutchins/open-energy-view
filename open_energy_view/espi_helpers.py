@@ -24,11 +24,22 @@ def parse_espi_data(xml, ns="{http://naesb.org/espi}"):
     """
 
     # Find initial values
-    root = ET.fromstring(xml)
+    try:
+        root = ET.fromstring(xml)
+    except Exception as e:
+        print(e, xml)
+        return
+    first_start = None
     for child in root.iter(f"{ns}timePeriod"):
         first_start = int(child.find(f"{ns}start").text)
         duration = int(child.find(f"{ns}duration").text)
         break
+    if not first_start:
+        print(f"Could not find a first_start in XML: {xml}")
+        return
+    if not duration:
+        print(f"Could not find a duration in XML: {xml}")
+        return
     previous = (first_start - duration, 0, 0)
     root.clear()
 
