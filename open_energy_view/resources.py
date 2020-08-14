@@ -58,7 +58,7 @@ pge_api = Pge(
 )
 
 pge_api.get_service_status()
-# pge_api.request_bulk_data()
+pge_api.request_bulk_data()
 
 #  TODO: add real fake endpoints and data
 fake_api = FakeUtility(
