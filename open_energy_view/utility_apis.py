@@ -349,6 +349,7 @@ class Pge(Api):
             interval_block_url = group[0]
         else:
             print("Could not find interval block url")
+            save_espi_xml(response_text, filename=f"SubRespForUserId{source.id}")
             return {"error": "could not find interval block url"}, 500
 
         four_weeks = 3600 * 24 * 28
