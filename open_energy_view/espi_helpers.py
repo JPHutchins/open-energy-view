@@ -117,7 +117,7 @@ def insert_espi_xml_into_db(xml, source_id, save=False):
 def save_espi_xml(xml_data, filename=None):
     """Save ESPI XML to a file named by timestamp or filename key."""
     if filename:
-        save_name = f"{os.getcwd()}/data/espi_xml/{filename}.xml"
+        save_name = f"{os.getcwd()}/{filename}.xml"
     else:
         save_name = f"{os.getcwd()}/{time()}.xml"
 

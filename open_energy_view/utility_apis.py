@@ -195,7 +195,7 @@ class Api:
         root = request_url(
             "GET",
             url,
-            headers=self.get_access_token_headers(),
+            headers=self.get_access_token_headers(source),
             cert=self.cert,
             format="xml",
         )
@@ -212,7 +212,7 @@ class Api:
             response_text = request_url(
                 "GET",
                 url,
-                headers=self.get_access_token_headers(),
+                headers=self.get_access_token_headers(source),
                 cert=self.cert,
                 format="text",
             )
@@ -230,7 +230,7 @@ class Api:
                 "GET",
                 interval_block_url,
                 params=params,
-                headers=self.get_access_token_headers(),
+                headers=self.get_access_token_headers(source),
                 cert=self.cert,
                 format="text",
             )
@@ -349,7 +349,7 @@ class Pge(Api):
             interval_block_url = group[0]
         else:
             print("Could not find interval block url")
-            save_espi_xml(response_text, filename=f"SubRespForUserId{source.id}")
+            save_espi_xml(response_text, filename=f"SubRespForSource{source.id}")
             return {"error": "could not find interval block url"}, 500
 
         four_weeks = 3600 * 24 * 28
