@@ -267,33 +267,10 @@ class Api:
             if not str(response.status_code) == "200":
                 print(f"Error: {response.status_code}, {response.text}")
                 continue
-
+            save_espi_xml(response.text)
             xml = response.text
             root = ET.fromstring(xml)
-            usage_point = None
-            for item in root.iter():
-                href = item.attrib.get("href")
-                if not href:
-                    continue
-                if group := re.search(r"(?<=UsagePoint/)\d+", href):
-                    usage_point = group[0]
-                    break
-            if not usage_point:
-                print("could not find usage point in xml, saving")
-                save_espi_xml(xml)
-                break
-
-            # TODO: add check for utility name and/or subscription_id and use in filter
-            sources = db.session.query(models.Source).filter_by(usage_point=usage_point)
-            sources_count = sources.count()
-            if sources_count == 0:
-                print(f"could not find usage point {usage_point} in db, probably gas")
-                break
-            elif sources_count > 1:
-                print(f"WARNING: {usage_point} is associated with multiple sources")
-
-            for source in sources:
-                insert_espi_xml_into_db(xml, source.id, save=save)
+            insert_espi_xml_into_db(xml, save=save)
 
 
 class FakeUtility(Api):

@@ -1,4 +1,5 @@
 import os
+import re
 from io import StringIO
 from xml.etree import cElementTree as ET
 from operator import itemgetter
@@ -10,10 +11,12 @@ from . import db
 from . import models
 
 
-def parse_espi_data(xml, ns="{http://naesb.org/espi}"):
+def parse_espi_data(
+    xml, ns0="{http://naesb.org/espi}", ns1="{http://www.w3.org/2005/Atom}"
+):
     """Generate ESPI tuple from ESPI XML.
     Sequentially yields a tuple for each Interval Reading:
-        (start, duration, watthours)
+        (start, duration, watthours, source_id)
     The transition from Daylight Savings Time to Daylight Standard
     Time or inverse are ignored as follows:
     - If the "clocks are set back" then a UTC data point is repeated.  The
@@ -30,9 +33,9 @@ def parse_espi_data(xml, ns="{http://naesb.org/espi}"):
         print(e, xml)
         return
     first_start = None
-    for child in root.iter(f"{ns}timePeriod"):
-        first_start = int(child.find(f"{ns}start").text)
-        duration = int(child.find(f"{ns}duration").text)
+    for child in root.iter(f"{ns0}timePeriod"):
+        first_start = int(child.find(f"{ns0}start").text)
+        duration = int(child.find(f"{ns0}duration").text)
         break
     if not first_start:
         print(f"Could not find a first_start in XML: {xml}")
@@ -45,38 +48,53 @@ def parse_espi_data(xml, ns="{http://naesb.org/espi}"):
 
     xml = StringIO(xml)
     mp = -3
+    usage_point = None
 
     # Find all values
     it = map(itemgetter(1), iter(ET.iterparse(xml)))
     for data in it:
-        if data.tag == f"{ns}powerOfTenMultiplier":
+        if data.tag == f"{ns0}powerOfTenMultiplier":
             mp = int(data.text)
-        if data.tag == f"{ns}IntervalBlock":
-            for interval in data.findall(f"{ns}IntervalReading"):
-                time_period = interval.find(f"{ns}timePeriod")
 
-                duration = int(time_period.find(f"{ns}duration").text)
-                start = int(time_period.find(f"{ns}start").text)
-                value = int(interval.find(f"{ns}value").text)
+        if data.tag == f"{ns1}link":
+            href = data.attrib.get("href")
+            if not href:
+                continue
+            if group := re.search(r"(?<=UsagePoint/)\d+", href):
+                usage_point = group[0]
+
+        if usage_point and data.tag == f"{ns0}IntervalBlock":
+            previous = None
+            if block_interval := data.find(f"{ns0}interval"):
+                if block_start := block_interval.find(f"{ns0}start"):
+                    previous = (int(block_start.text) - duration, duration, 0)
+
+            for interval in data.findall(f"{ns0}IntervalReading"):
+                time_period = interval.find(f"{ns0}timePeriod")
+
+                duration = int(time_period.find(f"{ns0}duration").text)
+                start = int(time_period.find(f"{ns0}start").text)
+                value = int(interval.find(f"{ns0}value").text)
                 watt_hours = int(round(value * pow(10, mp) * duration / 3600))
 
-                if start == previous[0]:  # clocks back
+                if previous and start == previous[0]:  # clocks back
                     continue
 
-                if not start == previous[0] + duration:  # clocks forward
+                if previous and not start == previous[0] + duration:  # clocks forward
                     start = previous[0] + duration
                     watt_hours = int((previous[2] + watt_hours) / 2)
                     previous = (start, duration, watt_hours)
-                    yield (start, duration, watt_hours)
+                    yield (start, duration, watt_hours, usage_point)
                     continue
 
                 previous = (start, duration, watt_hours)
-                yield (start, duration, watt_hours)
+                yield (start, duration, watt_hours, usage_point)
 
+            usage_point = None
             data.clear()
 
 
-def insert_espi_xml_into_db(xml, source_id, save=False):
+def insert_espi_xml_into_db(xml, save=False):
     """Parse and insert the XML into the db."""
     if save:
         try:
@@ -87,15 +105,25 @@ def insert_espi_xml_into_db(xml, source_id, save=False):
         finally:
             pass
     data_update = []
-    for entry in parse_espi_data(xml):
-        data_update.append(
-            {
-                "source_id": source_id,
-                "start": entry[0],
-                "duration": entry[1],
-                "watt_hours": entry[2],
-            }
-        )
+    source_id_memo = {}
+    for start, duration, watt_hours, usage_point in parse_espi_data(xml):
+        if usage_point not in source_id_memo:
+            sources = db.session.query(models.Source).filter_by(usage_point=usage_point)
+            if sources.count() == 0:
+                print(f"could not find usage point {usage_point} in db, probably gas")
+                source_id_memo[usage_point] = []
+            elif sources.count() > 1:
+                print(f"WARNING: {usage_point} is associated with multiple sources")
+            source_id_memo[usage_point] = [source.id for source in sources]
+        for source_id in source_id_memo[usage_point]:
+            data_update.append(
+                {
+                    "start": start,
+                    "duration": duration,
+                    "watt_hours": watt_hours,
+                    "source_id": source_id,
+                }
+            )
     try:
         db.session.bulk_insert_mappings(models.Espi, data_update)
         db.session.commit()
@@ -103,14 +131,16 @@ def insert_espi_xml_into_db(xml, source_id, save=False):
         db.session.rollback()
         db.engine.execute(
             """INSERT OR IGNORE
-               INTO espi (source_id, start, duration, watt_hours)
-               VALUES (:source_id, :start, :duration, :watt_hours)""",
+               INTO espi (start, duration, watt_hours, source_id)
+               VALUES (:start, :duration, :watt_hours, :source_id)""",
             data_update,
         )
     finally:
         timestamp = int(time() * 1000)
-        source_row = db.session.query(models.Source).filter_by(id=source_id)
-        source_row.update({"last_update": timestamp})
+        for source_ids in source_id_memo.values():
+            for source_id in source_ids:
+                source_row = db.session.query(models.Source).filter_by(id=source_id)
+                source_row.update({"last_update": timestamp})
         db.session.commit()
 
 
