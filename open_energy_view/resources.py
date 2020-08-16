@@ -1,7 +1,7 @@
 """API endpoints for viewing data."""
 from flask import jsonify, redirect, abort, url_for, make_response
 from base64 import b64encode
-from os import environ
+import os
 import time
 import json
 import requests
@@ -31,15 +31,15 @@ from .espi_helpers import insert_espi_xml_into_db
 from .tasks import async_api
 
 PGE_BULK_ID = 51070
-PGE_CLIENT_ID = environ.get("PGE_CLIENT_ID")
-PGE_CLIENT_SECRET = environ.get("PGE_CLIENT_SECRET")
-PGE_REGISTRATION_ACCESS_TOKEN = environ.get("PGE_REGISTRATION_ACCESS_TOKEN")
-CERT_PATH = environ.get("CERT_PATH")
-KEY_PATH = environ.get("KEY_PATH")
-GOOGLE_CLIENT_ID = environ.get("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = environ.get("GOOGLE_CLIENT_SECRET")
+PGE_CLIENT_ID = os.environ.get("PGE_CLIENT_ID")
+PGE_CLIENT_SECRET = os.environ.get("PGE_CLIENT_SECRET")
+PGE_REGISTRATION_ACCESS_TOKEN = os.environ.get("PGE_REGISTRATION_ACCESS_TOKEN")
+CERT_PATH = os.environ.get("CERT_PATH")
+KEY_PATH = os.environ.get("KEY_PATH")
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-API_RESPONSE_KEY = environ.get("API_RESPONSE_KEY")
+API_RESPONSE_KEY = os.environ.get("API_RESPONSE_KEY")
 
 STATE = "originatedfromoev"
 
@@ -58,7 +58,6 @@ pge_api = Pge(
 )
 
 pge_api.get_service_status()
-pge_api.request_bulk_data()
 
 #  TODO: add real fake endpoints and data
 fake_api = FakeUtility(
