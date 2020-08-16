@@ -129,12 +129,11 @@ def insert_espi_xml_into_db(xml, save=False):
         db.session.commit()
     except SQLiteException.IntegrityError:
         db.session.rollback()
-        db.engine.execute(
-            """INSERT OR IGNORE
-               INTO espi (start, duration, watt_hours, source_id)
-               VALUES (:start, :duration, :watt_hours, :source_id)""",
-            data_update,
-        )
+        sql_statement = """
+            INSERT OR REPLACE INTO espi (start, duration, watt_hours, source_id)
+            VALUES (:start, :duration, :watt_hours, :source_id)
+        """
+        db.engine.execute(sql_statement, data_update)
     finally:
         timestamp = int(time() * 1000)
         for source_ids in source_id_memo.values():
