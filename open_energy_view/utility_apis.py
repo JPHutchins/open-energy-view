@@ -4,6 +4,8 @@ import requests
 import json
 from xml.etree import cElementTree as ET
 import re
+from pytz import timezone
+from datetime import datetime
 
 
 from . import models
@@ -272,6 +274,58 @@ class Api:
             root = ET.fromstring(xml)
             insert_espi_xml_into_db(xml, save=save)
 
+    def admin_request_bulk_data(self, start=None, end=None, dryrun=False):
+        """Request bulk data for subscribers.
+
+        Specify a date range for the data request. start is required if end is
+        provided. end is exclusive; start="2016-11-5", end="2016-11-6" will
+        request the data for 2016-11-05 only.
+
+        Keyword Arguments:
+            start - Optional; string, start date, format "YYYY-M-D"
+            end = Optional; string, end date, format "YYYY-M-D", default today
+
+        """
+        url = f"{self.api_uri}/espi/1_1/resource/Batch/Bulk/{self.bulk_id}"
+
+        tz = timezone("US/Pacific")
+
+        if start:
+            start = datetime.strptime(start, "%Y-%m-%d")
+            offset = tz.utcoffset(start).total_seconds()
+            epoch = (start - datetime(1970, 1, 1)).total_seconds()
+            start = int(epoch - offset)
+
+        if end:
+            end = datetime.strptime(end, "%Y-%m-%d")
+            offset = tz.utcoffset(end).total_seconds()
+            epoch = (end - datetime(1970, 1, 1)).total_seconds()
+            end = int(epoch - offset - 3600)  # midnight = pull that entire day
+
+        params = (
+            {"published-min": start, "published-max": end or int(time.time())}
+            if start
+            else None
+        )
+
+        if dryrun:
+            return params
+
+        response = requests.get(
+            url,
+            headers=self.get_client_access_token_headers(),
+            params=params,
+            cert=self.cert,
+        )
+        if str(response.status_code) == "202":
+            print("request successful," " awaiting POST from server.")
+            return True
+        print(
+            f"request to Bulk Resource URI failed.  |  "
+            f"{response.status_code}: {response.text}"
+        )
+        return False
+
 
 class FakeUtility(Api):
     """A demo utility for use in development."""
@@ -345,6 +399,6 @@ class Pge(Api):
                 cert=self.cert,
                 format="text",
             )
-            insert_espi_xml_into_db(response_text, source.id)
+            insert_espi_xml_into_db(response_text)
             end = start - 3600
         return
