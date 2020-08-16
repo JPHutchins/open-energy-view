@@ -5,6 +5,8 @@ import AuthService from "../../api/AuthService"
 
 const UploadXml = ({ energyHistory }) => {
     const [file, setFile] = useState(null);
+    const demo = energyHistory.email === "jph@demo.com";
+
 
     const onFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -26,8 +28,8 @@ const UploadXml = ({ energyHistory }) => {
 
     return (
         <div>
-            <input type="file" onChange={onFileChange} />
-            <button onClick={onFileUpload}>
+            <input disabled={demo} type="file" onChange={onFileChange} />
+            <button disabled={demo} onClick={onFileUpload}>
                 Upload
             </button>
         </div>

@@ -11,6 +11,7 @@ import { withRouter } from "react-router-dom";
 
 const Settings = ({ energyHistory, restrictView, history }) => {
   const [friendlyName, setFriendlyName] = useState(energyHistory.friendlyName);
+  const demo = energyHistory.email === "jph@demo.com";
 
   const handleSaveName = () => {
     const data = {
@@ -47,7 +48,7 @@ const Settings = ({ energyHistory, restrictView, history }) => {
         type="text"
         onChange={(e) => setFriendlyName(e.currentTarget.value)}
       ></input>
-      <Button onClick={handleSaveName} style={{ width: "auto" }}>
+      <Button disabled={demo} onClick={handleSaveName} style={{ width: "auto" }}>
         Save new name
       </Button>
       <h3>Customize Daily Time Periods</h3>
@@ -65,7 +66,7 @@ const Settings = ({ energyHistory, restrictView, history }) => {
       <UploadXml energyHistory={energyHistory} />
       {/* <h4>Link to account settings</h4> */}
       <hr />
-      <Button onClick={handleDeleteSource} style={{ width: "auto" }}>
+      <Button disabled={demo} onClick={handleDeleteSource} style={{ width: "auto" }}>
         Permanently delete this resource and all of its data
       </Button>
     </div>
