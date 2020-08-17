@@ -57,7 +57,6 @@ pge_api = Pge(
     "https://api.pge.com/GreenButtonConnect/espi/1_1/resource/ReadServiceStatus",
 )
 
-pge_api.get_service_status()
 
 #  TODO: add real fake endpoints and data
 fake_api = FakeUtility(
