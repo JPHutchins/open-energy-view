@@ -1,6 +1,6 @@
 const webpack = require("webpack");
 const WorkerPlugin = require("worker-plugin");
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const config = {
   entry: ["babel-polyfill", __dirname + "/js/index.jsx"],
@@ -15,7 +15,7 @@ const config = {
     new WorkerPlugin(),
     new HtmlWebpackPlugin({
       title: "Output Management",
-      template: 'index.html'
+      template: "index.html",
     }),
   ],
   module: {
