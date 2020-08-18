@@ -47,7 +47,7 @@ const App = () => {
 
     if (loading) {
       const checkAgain = () => {
-        axios.get(loading.location).then((res) => {
+        axios.post("/api/web/task", {taskId: loading.taskId}).then((res) => {
           if (res.status === 200) {
             setLoading({
               ...loading,
