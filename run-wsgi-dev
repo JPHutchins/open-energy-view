@@ -1,0 +1,26 @@
+#!/bin/bash
+source venv/bin/activate
+export FLASK_CONFIG=config.DevConfig
+export FLASK_APP=open_energy_view
+export FLASK_ENV=production
+export SECRET_KEY=dev
+export JWT_SECRET_KEY=dev
+export JWT_BLACKLIST_ENABLED=True
+export JWT_TOKEN_LOCATION=cookies
+export JWT_ACCESS_COOKIE_PATH=/
+export JWT_REFRESH_COOKIE_PATH=/api/web/token/refresh
+export JWT_COOKIE_CSRF_PROTECT=True
+export PROD_JWT_COOKIE_SECURE=True
+export DEV_JWT_COOKIE_SECURE=False
+export PROD_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
+export DEV_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
+export PGE_CLIENT_ID=client_id
+export PGE_CLIENT_SECRET=client_secret
+export GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID
+export GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET
+export OAUTHLIB_INSECURE_TRANSPORT=True
+export CERT_PATH=test/cert/cert.crt
+export KEY_PATH=test/cert/private.key
+export API_RESPONSE_KEY=xS5MqJ6N9CyH-hvqAGrmBVAxFMOyauMpdrdqCZa1eqo=
+export IP_ADDRESS=$(hostname -I | awk '{print $1}')
+./venv/bin/uwsgi --http 0.0.0.0:5000 --gevent 100 --wsgi-file wsgi.py --callable app
