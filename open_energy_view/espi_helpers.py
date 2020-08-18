@@ -3,12 +3,7 @@ import re
 from io import StringIO
 from xml.etree import cElementTree as ET
 from operator import itemgetter
-from sqlalchemy import exc as SQLiteException
 from time import time
-
-
-from . import db
-from . import models
 
 
 def parse_espi_data(
@@ -92,55 +87,6 @@ def parse_espi_data(
 
             usage_point = None
             data.clear()
-
-
-def insert_espi_xml_into_db(xml, save=False):
-    """Parse and insert the XML into the db."""
-    if save:
-        try:
-            save_espi_xml(xml)
-        except Exception as e:
-            print(e)
-            save_espi_xml(xml.decode("utf-8"))
-        finally:
-            pass
-    data_update = []
-    source_id_memo = {}
-    for start, duration, watt_hours, usage_point in parse_espi_data(xml):
-        if usage_point not in source_id_memo:
-            sources = db.session.query(models.Source).filter_by(usage_point=usage_point)
-            if sources.count() == 0:
-                print(f"could not find usage point {usage_point} in db, probably gas")
-                source_id_memo[usage_point] = []
-            elif sources.count() > 1:
-                print(f"WARNING: {usage_point} is associated with multiple sources")
-            source_id_memo[usage_point] = [source.id for source in sources]
-        for source_id in source_id_memo[usage_point]:
-            data_update.append(
-                {
-                    "start": start,
-                    "duration": duration,
-                    "watt_hours": watt_hours,
-                    "source_id": source_id,
-                }
-            )
-    try:
-        db.session.bulk_insert_mappings(models.Espi, data_update)
-        db.session.commit()
-    except SQLiteException.IntegrityError:
-        db.session.rollback()
-        sql_statement = """
-            INSERT OR REPLACE INTO espi (start, duration, watt_hours, source_id)
-            VALUES (:start, :duration, :watt_hours, :source_id)
-        """
-        db.engine.execute(sql_statement, data_update)
-    finally:
-        timestamp = int(time() * 1000)
-        for source_ids in source_id_memo.values():
-            for source_id in source_ids:
-                source_row = db.session.query(models.Source).filter_by(id=source_id)
-                source_row.update({"last_update": timestamp})
-        db.session.commit()
 
 
 def save_espi_xml(xml_data, filename=None):
