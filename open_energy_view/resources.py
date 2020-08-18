@@ -22,13 +22,18 @@ from sqlalchemy import exc
 from cryptography.fernet import Fernet
 import xml.etree.ElementTree as ET
 from urllib.parse import quote, parse_qs
+from gevent import sleep
+from celery import chain
 
 from . import models
 from . import bcrypt
 from . import db
-from .utility_apis import Pge, FakeUtility, save_espi_xml
-from .espi_helpers import insert_espi_xml_into_db
-from .tasks import async_api
+from .utility_apis import Pge, FakeUtility
+from .espi_helpers import save_espi_xml
+from .celery_tasks import get_jp, insert_espi_xml_into_db, process_data
+from .celery import celery
+
+IP_ADDRESS = os.environ.get("IP_ADDRESS")
 
 PGE_BULK_ID = 51070
 PGE_CLIENT_ID = os.environ.get("PGE_CLIENT_ID")
@@ -92,10 +97,13 @@ get_data_parser.add_argument("new_friendly_name", required=False)
 test_add_parser = reqparse.RequestParser()
 test_add_parser.add_argument("xml", required=True)
 
+task_parser = reqparse.RequestParser()
+task_parser.add_argument("taskId", required=True)
+
 google_client = WebApplicationClient(GOOGLE_CLIENT_ID)
 google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
 
-f = Fernet(API_RESPONSE_KEY)
+f = Fernet(API_RESPONSE_KEY or "81HqDtbqAywKSOumSha3BhWNOdQ26slT6K0YaZeZyPs=")
 
 
 class AuthToken(Resource):
@@ -105,7 +113,7 @@ class AuthToken(Resource):
         resp = jsonify({"login": True})
         set_access_cookies(resp, access_token)
         set_refresh_cookies(resp, refresh_token)
-        resp.set_cookie('logged_in', str(id))
+        resp.set_cookie("logged_in", str(id))
         return resp
 
 
@@ -145,7 +153,7 @@ class UserLogout(Resource):
     def post(self):
         resp = jsonify({"logout": True})
         unset_jwt_cookies(resp)
-        resp.set_cookie('logged_in', "", expires=0)
+        resp.set_cookie("logged_in", "", expires=0)
         return resp
 
 
@@ -158,7 +166,7 @@ class TokenRefresh(Resource):
         resp = jsonify({"refresh": True})
         set_access_cookies(resp, access_token)
         set_refresh_cookies(resp, refresh_token)
-        resp.set_cookie('logged_in', str(current_user))
+        resp.set_cookie("logged_in", str(current_user))
         return resp
 
 
@@ -326,7 +334,7 @@ class PgeOAuthRedirect(Resource):
 
 
 class AddPgeSourceFromOAuth(Resource):
-    @async_api
+    #  @async_api
     @jwt_required
     def get(self):
         query_string = request.environ.get("QUERY_STRING")
@@ -377,11 +385,11 @@ class AddPgeSourceFromOAuth(Resource):
 class FakeOAuthStart(Resource):
     def get(self):
         # TODO: get host IP on Dev mode - my WSL is not working on localhost...
-        return redirect("https://www.openenergyview.com/#/fake_oauth")
+        return redirect(f"http://{IP_ADDRESS}:5000/#/fake_oauth")
 
 
-class AddFakeSourceFromFakeOAuth(Resource):
-    @async_api
+class AddFakeSourceFromFakeOAuthOLD(Resource):
+    #  @async_api
     @jwt_required
     def get(self):
         query_string = request.environ.get("QUERY_STRING")
@@ -396,11 +404,28 @@ class AddFakeSourceFromFakeOAuth(Resource):
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         if user.email == "jph@demo.com":
             return {"error": "cannot modify demo account"}, 403
-        new_account = models.Source(user_id=user.id, friendly_name=name,)
+        new_account = models.Source(
+            user_id=user.id, friendly_name=name, usage_point="5391320451"
+        )
         new_account.save_to_db()
         fake_api.get_historical_data_incrementally(new_account)
 
         return "Success"
+
+
+class AddFakeSourceFromFakeOAuth(Resource):
+    @jwt_required
+    def get(self):
+        name = get_data_parser.parse_args().get("name")
+        user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
+        if user.email == "jph@demo.com":
+            return {"error": "cannot modify demo account"}, 403
+        new_account = models.Source(
+            user_id=user.id, friendly_name=name, usage_point="5391320451"
+        )
+        new_account.save_to_db()
+        task_id = fake_api.get_historical_data_incrementally().id
+        return task_id, 202
 
 
 class GetMeterReading(Resource):
@@ -599,7 +624,10 @@ class UploadXml(Resource):
             .first()
         )
 
-        insert_espi_xml_into_db(xml, source.id)
+        task = insert_espi_xml_into_db.delay(xml, given_source_id=source.id)
+
+        while not task.ready():
+            sleep(1)
 
         return {}, 200
 
@@ -607,7 +635,6 @@ class UploadXml(Resource):
 class TestAddXml(Resource):
     def post(self):
         test_xml = [
-            "/home/jp/pgesmd/test/data/espi/espi_2_years.xml",
             "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-16.xml",
             "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-17.xml",
             "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-18.xml",
@@ -637,3 +664,21 @@ class TestAddXml(Resource):
         insert_espi_xml_into_db(xml, source_id)
 
         return {}, 200
+
+
+from celery.result import AsyncResult
+
+
+class TestCelery(Resource):
+    def get(self):
+        result = chain(get_jp.s(), process_data.s())()
+        return result.id
+
+
+class CheckTaskStatus(Resource):
+    def post(self):
+        task_id = task_parser.parse_args().get("taskId")
+        task = celery.AsyncResult(task_id)
+        if task.ready():
+            return task.get(), 200
+        return {}, 202

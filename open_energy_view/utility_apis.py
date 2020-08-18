@@ -6,12 +6,16 @@ from xml.etree import cElementTree as ET
 import re
 from pytz import timezone
 from datetime import datetime
+from gevent import sleep
 
 
 from . import models
 from . import db
-from .espi_helpers import insert_espi_xml_into_db, save_espi_xml
+from .espi_helpers import save_espi_xml
 from .helpers import request_url
+
+from .celery import celery
+from .celery_tasks import insert_espi_xml_into_db
 
 
 class Api:
@@ -330,33 +334,44 @@ class Api:
 class FakeUtility(Api):
     """A demo utility for use in development."""
 
-    def get_historical_data_incrementally(self, source):
-        """Fake server takes a long time."""
-        test_xml = [
-            "/home/jp/open-energy-view/test/data/espi/espi_2_years.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-16.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-17.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-18.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-19.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-20.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-21.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-22.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-23.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-24.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-25.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-26.xml",
-            "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-27.xml",
-        ]
-        test_xml.reverse()
+    def get_historical_data_incrementally(self):
+        @celery.task(bind=True, name="fake_fetch")
+        def fake_fetch(self):
+            """Fake server takes a long time."""
+            test_xml = [
+                "/home/jp/open-energy-view/test/data/espi/espi_2_years.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-16.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-17.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-18.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-19.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-20.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-21.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-22.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-23.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-24.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-25.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-26.xml",
+                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-27.xml",
+            ]
+            test_xml.reverse()
 
-        for xml_path in test_xml:
-            time.sleep(5)
-            with open(xml_path) as xml_reader:
-                xml = xml_reader.read()
+            for xml_path in test_xml:
+                response = requests.get(
+                    "http://slowwly.robertomurray.co.uk/delay/2500/url/https://www.jphutchins.com"
+                )
+                with open(xml_path) as xml_reader:
+                    xml = xml_reader.read()
+                db_insert_task = insert_espi_xml_into_db.delay(xml)
 
-            insert_espi_xml_into_db(xml, source.id)
+            retries = 0
+            while not db_insert_task.ready():
+                if retries > 60:
+                    break
+                retries += 1
+                sleep(1)
 
-        return "Finished download from utility API"
+            return "done"
+        return fake_fetch.delay()
 
 
 class Pge(Api):

@@ -1,5 +1,9 @@
+from gevent import monkey
+monkey.patch_all()
+
+
 from os import environ
-from flask import Flask, url_for, abort, request
+from flask import Flask, url_for, abort, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 from flask_bcrypt import Bcrypt
@@ -12,16 +16,16 @@ bcrypt = Bcrypt()
 jwt = JWTManager()
 
 
-def create_app() -> Flask:
+def create_app(config_name) -> Flask:
     """Initialize the application."""
     app = Flask(
         __name__,
         instance_relative_config=False,
-        template_folder="./frontend",
-        static_folder="./frontend/dist",
+        template_folder="./frontend/dist/",
+        static_folder="./frontend/dist/",
+        static_url_path=""
     )
-    app.config.from_object(environ.get("FLASK_CONFIG"))
-
+    app.config.from_object(config_name)
     from . import resources
 
     # Authentication
@@ -62,9 +66,9 @@ def create_app() -> Flask:
     rest.add_resource(resources.FakeOAuthStart, "/api/utility/fake/redirect_uri")
     rest.add_resource(resources.AddFakeSourceFromFakeOAuth, "/api/web/add/fake_oauth")
 
-    from .tasks import GetTaskStatus, task_gc_loop
-    # rest.add_resource(resources.CatchAll, '/<path:path>', '/')
-    rest.add_resource(GetTaskStatus, '/api/web/add/status/<task_id>')
+    # Task status
+    rest.add_resource(resources.TestCelery, "/api/celery")
+    rest.add_resource(resources.CheckTaskStatus, '/api/web/task')
 
     # Initialize extensions with the Flask app
     db.init_app(app)
@@ -88,9 +92,11 @@ def create_app() -> Flask:
                 demo_user.save_to_db()
             except Exception as e:
                 print(e)
-
-        @app.before_first_request
-        def before_first_request():
-            task_gc_loop()
+     
+        #  Really need to be setting Dev/Prod flags for stuff like this
+        #  Technically this will get intercepted by Nginx in production
+        @app.route("/")
+        def index():
+            return render_template('index.html')
 
         return app
