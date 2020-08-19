@@ -33,10 +33,10 @@ const AddOAuthSource = (props) => {
         setTimeout(() => {
           restrictView("last", null, {
             name,
-            location: res.headers.location,
+            taskId: res.data,
           });
           history.push("/");
-        }, 10000);
+        }, 5000);
       });
     setLoading(<DataLoader />);
   };

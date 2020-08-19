@@ -21,7 +21,7 @@ const AddFakeOAuthSource = (props) => {
       }
     };
     axios
-      .get('/api/web/add/fake_oauth', regInfo,)
+      .get('/api/web/add/fake_oauth', regInfo, AuthService.getAuthHeader())
       .then((res) => {
         setTimeout(() => {
           restrictView("last", null, {
