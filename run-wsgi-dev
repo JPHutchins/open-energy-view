@@ -22,5 +22,5 @@ export OAUTHLIB_INSECURE_TRANSPORT=True
 export CERT_PATH=test/cert/cert.crt
 export KEY_PATH=test/cert/private.key
 export API_RESPONSE_KEY=xS5MqJ6N9CyH-hvqAGrmBVAxFMOyauMpdrdqCZa1eqo=
-export IP_AND_PORT=$(hostname -I | awk '{print $1}')
+export IP_AND_PORT=$(hostname -I | awk '{print $1}'):5000
 ./venv/bin/uwsgi --http 0.0.0.0:5000 --gevent 100 --wsgi-file wsgi.py --callable app
