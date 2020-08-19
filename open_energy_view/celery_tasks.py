@@ -10,8 +10,6 @@ from .celery import celery
 from .espi_helpers import parse_espi_data, save_espi_xml
 from gevent import sleep
 
-from . import config
-
 from . import models
 from . import create_app
 from . import db
@@ -24,7 +22,7 @@ def insert_espi_xml_into_db(self, xml, given_source_id=None, save=False):
     print("CALLED")
 
     if not has_app_context():
-        app = create_app(config.DevConfig)
+        app = create_app(f"open_energy_view.{os.environ.get('FLASK_CONFIG')}")
         app.app_context().push()
 
     print(has_app_context())
@@ -76,7 +74,7 @@ def insert_espi_xml_into_db(self, xml, given_source_id=None, save=False):
                 source_row = db.session.query(models.Source).filter_by(id=source_id)
                 source_row.update({"last_update": timestamp})
         db.session.commit()
- 
+
 
 @celery.task(bind=True, name="process_data")
 def process_data(self, inc):
