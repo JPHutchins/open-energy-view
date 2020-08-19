@@ -275,7 +275,6 @@ class Api:
                 continue
             save_espi_xml(response.text)
             xml = response.text
-            root = ET.fromstring(xml)
             insert_espi_xml_into_db.delay(xml, save=save)
 
     def admin_request_bulk_data(self, start=None, end=None, dryrun=False):
