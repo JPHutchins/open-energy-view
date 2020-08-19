@@ -17,6 +17,7 @@ celery.conf.update(
             "get_jp": {"queue": "io"},
             "process_data": {"queue": "cpu"},
             "fake_fetch": {"queue": "io"},
+            "fetch_task": {"queue": "io"},
             "insert_espi_xml_into_db": {"queue": "cpu"},
         },
         "task_serializer": "json",

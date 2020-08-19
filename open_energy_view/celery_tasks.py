@@ -10,6 +10,7 @@ from .celery import celery
 from .espi_helpers import parse_espi_data, save_espi_xml
 from gevent import sleep
 
+from .helpers import request_url
 from . import models
 from . import create_app
 from . import db
@@ -95,6 +96,34 @@ def get_jp(self):
     )
     return "BOOM"
 
+
+@celery.task(bind=True, name="fetch_task")
+def fetch_task(self, published_period_start, interval_block_url, headers, cert):
+    four_weeks = 3600 * 24 * 28
+    end = int(time.time())
+    while end > published_period_start:
+        start = end - four_weeks + 3600
+        params = {
+            "published-min": start,
+            "published-max": end,
+        }
+        response_text = request_url(
+            "GET",
+            interval_block_url,
+            params=params,
+            headers=headers,
+            cert=cert,
+            format="text",
+        )
+        db_insert_task = insert_espi_xml_into_db.delay(response_text)
+        end = start - 3600
+    retries = 0
+    while not db_insert_task.ready():
+        if retries > 60:
+            break
+        retries += 1
+        sleep(1)
+    return "done"
 
 @celery.task(bind=True, name="fake_fetch")
 def fake_fetch(self):

@@ -15,7 +15,7 @@ from .espi_helpers import save_espi_xml
 from .helpers import request_url
 
 from .celery import celery
-from .celery_tasks import insert_espi_xml_into_db
+from .celery_tasks import insert_espi_xml_into_db, fake_fetch, fetch_task
 
 
 class Api:
@@ -112,6 +112,15 @@ class Api:
             cert=self.cert,
             format="xml",
         )
+        if not root:
+            sleep(5)
+            root = request_url(
+                "GET",
+                authorization_uri,
+                headers=self.get_client_access_token_headers(),
+                cert=self.cert,
+                format="xml",
+            )
         published_period_start = None
         for item in root.iter("{http://naesb.org/espi}publishedPeriod"):
             published_period_start = item.find("{http://naesb.org/espi}start").text
@@ -334,42 +343,6 @@ class FakeUtility(Api):
     """A demo utility for use in development."""
 
     def get_historical_data_incrementally(self):
-        @celery.task(bind=True, name="fake_fetch")
-        def fake_fetch(self):
-            """Fake server takes a long time."""
-            test_xml = [
-                "/home/jp/open-energy-view/test/data/espi/espi_2_years.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-16.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-17.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-18.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-19.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-20.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-21.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-22.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-23.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-24.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-25.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-26.xml",
-                "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-27.xml",
-            ]
-            test_xml.reverse()
-
-            for xml_path in test_xml:
-                response = requests.get(
-                    "http://slowwly.robertomurray.co.uk/delay/2500/url/https://www.jphutchins.com"
-                )
-                with open(xml_path) as xml_reader:
-                    xml = xml_reader.read()
-                db_insert_task = insert_espi_xml_into_db.delay(xml)
-
-            retries = 0
-            while not db_insert_task.ready():
-                if retries > 60:
-                    break
-                retries += 1
-                sleep(1)
-
-            return "done"
         return fake_fetch.delay()
 
 
@@ -397,32 +370,8 @@ class Pge(Api):
             save_espi_xml(response_text, filename=f"SubRespForSource{source.id}")
             return {"error": "could not find interval block url"}, 500
 
-        @celery.task(bind=True, name="fake_fetch")
-        def fetch_task(self):
-            four_weeks = 3600 * 24 * 28
-            end = int(time.time())
-            while end > source.published_period_start:
-                start = end - four_weeks + 3600
-                params = {
-                    "published-min": start,
-                    "published-max": end,
-                }
-                response_text = request_url(
-                    "GET",
-                    interval_block_url,
-                    params=params,
-                    headers=headers,
-                    cert=self.cert,
-                    format="text",
-                )
-                db_insert_task = insert_espi_xml_into_db.delay(response_text)
-                end = start - 3600
-            retries = 0
-            while not db_insert_task.ready():
-                if retries > 60:
-                    break
-                retries += 1
-                sleep(1)
-            return "done"
+        published_period_start = source.published_period_start
 
-        return fetch_task.delay()
+        return fetch_task.delay(
+            published_period_start, interval_block_url, headers, self.cert
+        )
