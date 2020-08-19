@@ -361,7 +361,7 @@ class AddPgeSourceFromOAuth(Resource):
             published_period_start=user_info.get("published_period_start"),
         )
         new_account.save_to_db()
-        task_id = pge_api.get_historical_data_incrementally().id
+        task_id = pge_api.get_historical_data_incrementally(new_account).id
 
         return task_id, 202
 
