@@ -59,9 +59,6 @@ def create_app(config_name) -> Flask:
     rest.add_resource(resources.DeleteSource, "/api/web/delete-source")
     rest.add_resource(resources.ChangeSourceName, "/api/web/change-source-name")
 
-    # Initialize demo data
-    rest.add_resource(resources.TestAddXml, "/api/test/add/xml")
-
     # Tests
     rest.add_resource(resources.FakeOAuthStart, "/api/utility/fake/redirect_uri")
     rest.add_resource(resources.AddFakeSourceFromFakeOAuth, "/api/web/add/fake_oauth")

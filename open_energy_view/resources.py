@@ -24,6 +24,7 @@ import xml.etree.ElementTree as ET
 from urllib.parse import quote, parse_qs
 from gevent import sleep
 from celery import chain
+from celery.result import AsyncResult
 
 from . import models
 from . import bcrypt
@@ -334,36 +335,19 @@ class PgeOAuthRedirect(Resource):
 
 
 class AddPgeSourceFromOAuth(Resource):
-    #  @async_api
     @jwt_required
     def get(self):
-        query_string = request.environ.get("QUERY_STRING")
-        query_dict = parse_qs(query_string)
-
-        name_list = query_dict.get("name")
-        if name_list and len(name_list) > 0:
-            name = name_list[0]
-        else:
-            return "Failure"
-
-        usage_point_list = query_dict.get("usage_point")
-        if usage_point_list and len(usage_point_list) > 0:
-            usage_point = usage_point_list[0]
-        else:
-            return "Failure"
-
-        payload_list = query_dict.get("payload")
-        if payload_list and len(payload_list) > 0:
-            payload = payload_list[0]
-        else:
-            return "Failure"
-
-        user_info = bytes.decode(f.decrypt(payload.encode("utf-8")))
-        user_info = json.loads(user_info)
+        args = get_data_parser.parse_args()
+        name = args.get("name")
+        usage_point = args.get("usage_point")
+        payload = args.get("payload")
 
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         if user.email == "jph@demo.com":
             return {"error": "cannot modify demo account"}, 403
+
+        user_info = bytes.decode(f.decrypt(payload.encode("utf-8")))
+        user_info = json.loads(user_info)
 
         new_account = models.Source(
             user_id=user.id,
@@ -377,9 +361,9 @@ class AddPgeSourceFromOAuth(Resource):
             published_period_start=user_info.get("published_period_start"),
         )
         new_account.save_to_db()
-        pge_api.get_historical_data_incrementally(new_account)
+        task_id = pge_api.get_historical_data_incrementally().id
 
-        return "Success"
+        return task_id, 202
 
 
 class FakeOAuthStart(Resource):
@@ -630,43 +614,6 @@ class UploadXml(Resource):
             sleep(1)
 
         return {}, 200
-
-
-class TestAddXml(Resource):
-    def post(self):
-        test_xml = [
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-16.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-17.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-18.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-19.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-20.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-21.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-22.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-23.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-24.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-25.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-26.xml",
-            "/home/jp/pgesmd/test/data/espi/Single Days/2019-10-27.xml",
-        ]
-        data = test_add_parser.parse_args()
-        with open(test_xml[int(data.xml)]) as xml_reader:
-            xml = xml_reader.read()
-        # bulk_id = get_bulk_id_from_xml(xml)
-        bulk_id = 55555
-
-        source_id = (
-            db.session.query(models.Source)
-            .filter_by(subscription_id=bulk_id)
-            .first()
-            .id
-        )
-
-        insert_espi_xml_into_db(xml, source_id)
-
-        return {}, 200
-
-
-from celery.result import AsyncResult
 
 
 class TestCelery(Resource):
