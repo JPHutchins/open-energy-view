@@ -276,7 +276,7 @@ class Api:
             save_espi_xml(response.text)
             xml = response.text
             root = ET.fromstring(xml)
-            insert_espi_xml_into_db(xml, save=save)
+            insert_espi_xml_into_db.delay(xml, save=save)
 
     def admin_request_bulk_data(self, start=None, end=None, dryrun=False):
         """Request bulk data for subscribers.
@@ -398,22 +398,32 @@ class Pge(Api):
             save_espi_xml(response_text, filename=f"SubRespForSource{source.id}")
             return {"error": "could not find interval block url"}, 500
 
-        four_weeks = 3600 * 24 * 28
-        end = int(time.time())
-        while end > source.published_period_start:
-            start = end - four_weeks + 3600
-            params = {
-                "published-min": start,
-                "published-max": end,
-            }
-            response_text = request_url(
-                "GET",
-                interval_block_url,
-                params=params,
-                headers=headers,
-                cert=self.cert,
-                format="text",
-            )
-            insert_espi_xml_into_db(response_text)
-            end = start - 3600
-        return
+        @celery.task(bind=True, name="fake_fetch")
+        def fetch_task(self):
+            four_weeks = 3600 * 24 * 28
+            end = int(time.time())
+            while end > source.published_period_start:
+                start = end - four_weeks + 3600
+                params = {
+                    "published-min": start,
+                    "published-max": end,
+                }
+                response_text = request_url(
+                    "GET",
+                    interval_block_url,
+                    params=params,
+                    headers=headers,
+                    cert=self.cert,
+                    format="text",
+                )
+                db_insert_task = insert_espi_xml_into_db.delay(response_text)
+                end = start - 3600
+            retries = 0
+            while not db_insert_task.ready():
+                if retries > 60:
+                    break
+                retries += 1
+                sleep(1)
+            return "done"
+
+        return fetch_task.delay()
