@@ -177,7 +177,6 @@ const App = () => {
           <Redirect to="/login" />
         </Route>
       </Switch>
-      <footer>Copyright 2020 J.P. Hutchins. All Rights Reserved.</footer>
     </Router>
   );
 };
