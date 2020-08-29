@@ -28,11 +28,11 @@ footer {
   background-position: center;
   width: 100%;
   background-size: auto 100%;
-  height:50px;
+  height: 50px;
 }
 
 .loading-historical {
-  color:white;
+  color: white;
 }
 
 #google-sign-in:hover {
@@ -429,6 +429,8 @@ footer {
   margin: auto;
   margin-top: 40px;
   padding: 10px;
+  max-width: 600px;
+  min-width: 200px;
 }
 
 .data-loader {

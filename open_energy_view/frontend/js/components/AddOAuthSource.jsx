@@ -25,7 +25,7 @@ const AddOAuthSource = (props) => {
         payload: payload,
         name: name,
         usage_point: usage_points.electricity[0],
-      }
+      },
     };
     axios
       .get("/api/web/add/pge_oauth", regInfo, AuthService.getAuthHeader())
@@ -43,6 +43,20 @@ const AddOAuthSource = (props) => {
 
   const nameSource = (
     <div className="register-box">
+      <h3>Accounts Successfully Linked</h3>
+      <div style={{ fontSize: "10pt", color: "gray" }}>
+        Complete adding your utility below.
+      </div>
+      <hr />
+      <h4>Name your meters</h4>
+      <div style={{ fontSize: "10pt", color: "gray" }}>
+        Below is the list of meters that will be synced with Open Energy View.
+        Please provide a descriptive nickname for each one so that you can
+        easily identify them. This nickname will be stored on our servers and
+        can be changed later. Any service address displayed below will not be
+        saved on our servers unless you include it in the nickname.
+      </div>
+      <br />
       <Form onSubmit={handleSubmit}>
         <Form.Group controlId="formPge">
           <Form.Label>Name</Form.Label>
@@ -53,8 +67,18 @@ const AddOAuthSource = (props) => {
             onChange={(e) => setName(e.target.value)}
           />
         </Form.Group>
+        <hr />
+        <h4>Synchronize your data</h4>
+        <div style={{ fontSize: "10pt", color: "gray" }}>
+          Click "Save All" to synchronize your utility data with Open Energy
+          View. This process may take a few minutes to fetch all of your
+          historical data so you should click the "reload button" in the upper
+          right corner when prompted. After synchronizing, your data will be
+          updated every day.
+        </div>
+        <br />
         <Button variant="primary" type="submit">
-          Add Source
+          Save All
         </Button>
         <hr />
       </Form>
