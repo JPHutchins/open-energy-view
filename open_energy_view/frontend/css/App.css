@@ -10,6 +10,10 @@ html,
   height: 100%;
 }
 
+.hover-pointer:hover {
+  cursor: pointer;
+}
+
 footer {
   color: gray;
   font-size: 8pt;
