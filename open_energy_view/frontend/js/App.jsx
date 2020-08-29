@@ -19,6 +19,7 @@ import { handleErrors } from "./api/handleErrors";
 import AuthService from "./api/AuthService";
 import axios from "axios";
 import { Button } from "react-bootstrap"
+import Privacy from "./components/Privacy"
 
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(cookie.load("logged_in"));
@@ -173,6 +174,7 @@ const App = () => {
         <Route exact path="/create_account">
           <UserRegistration callback={restrictView} />
         </Route>
+        <Route exact path="/privacy" component={Privacy}/>
         <Route>
           <Redirect to="/login" />
         </Route>
