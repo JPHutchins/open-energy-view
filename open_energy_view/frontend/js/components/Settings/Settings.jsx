@@ -4,7 +4,7 @@ import UploadXml from "./UploadXml";
 import AuthService from "../../api/AuthService";
 import { Button } from "react-bootstrap";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { withRouter } from "react-router-dom";
 
 // TODO: add link to account settings ... or just place as child ... could be confusing
@@ -13,7 +13,14 @@ const Settings = ({ energyHistory, restrictView, history }) => {
   const [friendlyName, setFriendlyName] = useState(energyHistory.friendlyName);
   const demo = energyHistory.email === "jph@demo.com";
 
+  useEffect(() => {
+    setFriendlyName(energyHistory.friendlyName);
+  }, [energyHistory]);
+
   const handleSaveName = () => {
+    // TODO: this is modifying the energyHistory object in memory upon success from server
+    // OK to reload instead after IndexedDB caching is implemented
+    // This will not change the name in the NavBar until reload
     const data = {
       friendly_name: energyHistory.friendlyName,
       new_friendly_name: friendlyName,
@@ -22,6 +29,7 @@ const Settings = ({ energyHistory, restrictView, history }) => {
       .post("/api/web/change-source-name", data, AuthService.getAuthHeader())
       .then((res) => {
         console.log(res);
+        energyHistory.friendlyName = friendlyName
       });
   };
 
