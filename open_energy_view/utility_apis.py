@@ -139,12 +139,13 @@ class Api:
             "POST",
             self.source_refresh_token_uri,
             params=params,
-            headers=self.get_client_id_headers,
+            headers=self.get_client_id_headers(),
             cert=self.cert,
             format="text",
         )
+
         response_json = json.loads(response_text)
-        source_row = db.session.query(models.Source).filter_by(id=source.id).first()
+        source_row = db.session.query(models.Source).filter_by(id=source.id)
         source_row.update(
             {
                 "access_token": response_json.get("access_token"),
@@ -337,6 +338,25 @@ class Api:
             f"{response.status_code}: {response.text}"
         )
         return False
+
+    def admin_get_authorization(self, subscription_id=5107956, usage_point=5391320451):
+        from . import create_app
+        from flask import has_app_context
+        import os
+        if not has_app_context():
+            app = create_app(f"open_energy_view.{os.environ.get('FLASK_CONFIG')}")
+            app.app_context().push()
+
+        url = f"{self.api_uri}/espi/1_1/resource/Subscription/{subscription_id}/UsagePoint/{usage_point}/ServiceLocation"
+        source = db.session.query(models.Source).filter_by(id=47).first()
+
+        response = request_url(
+            "GET",
+            url,
+            headers=self.get_access_token_headers(source),
+            cert=self.cert,
+        )
+        print(response)
 
 
 class FakeUtility(Api):
