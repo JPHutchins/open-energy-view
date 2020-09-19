@@ -121,6 +121,8 @@ class Api:
                 cert=self.cert,
                 format="xml",
             )
+        if not root:
+            return time.time() - 126100000
         published_period_start = None
         for item in root.iter("{http://naesb.org/espi}publishedPeriod"):
             published_period_start = item.find("{http://naesb.org/espi}start").text
@@ -128,7 +130,7 @@ class Api:
 
     def need_access_token(self, source):
         """Paramater source is SQL object."""
-        return source.token_exp < time.time() - 5
+        return source.token_exp > time.time() - 5
 
     def refresh_access_token(self, source):
         params = {
@@ -339,7 +341,7 @@ class Api:
         )
         return False
 
-    def admin_get_authorization(self, subscription_id=5107956, usage_point=5391320451):
+    def admin_get_authorization(self, endpoint, subscription_id=5206134, usage_point=5391320451):
         from . import create_app
         from flask import has_app_context
         import os
@@ -347,8 +349,9 @@ class Api:
             app = create_app(f"open_energy_view.{os.environ.get('FLASK_CONFIG')}")
             app.app_context().push()
 
-        url = f"{self.api_uri}/espi/1_1/resource/Subscription/{subscription_id}/UsagePoint/{usage_point}/ServiceLocation"
-        source = db.session.query(models.Source).filter_by(id=47).first()
+        url = f"{self.api_uri}/espi/1_1/resource/Subscription/{subscription_id}/UsagePoint/{usage_point}{endpoint}"
+        # /UsagePoint/{usage_point}{endpoint}
+        source = db.session.query(models.Source).filter_by(id=64).first()
 
         response = request_url(
             "GET",
@@ -356,7 +359,8 @@ class Api:
             headers=self.get_access_token_headers(source),
             cert=self.cert,
         )
-        print(response)
+        if response:
+            print(response.text)
 
 
 class FakeUtility(Api):
