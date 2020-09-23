@@ -130,7 +130,7 @@ class Api:
 
     def need_access_token(self, source):
         """Paramater source is SQL object."""
-        return source.token_exp > time.time() - 5
+        return source.token_exp < time.time() - 5
 
     def refresh_access_token(self, source):
         params = {
@@ -203,6 +203,36 @@ class Api:
                 else:
                     usage_points[key] = [cur_usage_point]
         return usage_points
+
+    def get_service_location(self, subscription_id, usage_points, access_token):
+        """Return a dictionary of {usage_point: address}."""
+        addresses = dict.fromkeys(usage_points, None)
+        headers = {"Authorization": f"Bearer {access_token}"}
+        url = (
+            f"{self.api_uri}/espi/1_1/resource/Batch/RetailCustomer/{subscription_id}/"
+        )
+        root = request_url("GET", url, headers=headers, cert=self.cert, format="xml")
+        if not root:
+            return addresses
+        ns0 = "{http://naesb.org/espi}"
+        ns1 = "{http://www.w3.org/2005/Atom}"
+        re_usage_point = r"(?<=CustomerAgreement\/)\d+"
+        for entry in root.iter(f"{ns1}entry"):
+            cur_usage_point = None
+            for item in entry:
+                url = item.attrib.get("href") or ""
+                if group := re.search(re_usage_point, url):
+                    cur_usage_point = group[0]
+                    break
+            if cur_usage_point and cur_usage_point in addresses:
+                ns0c = "{http://naesb.org/espi/customer}"
+                address_path = (
+                    f"./{ns1}content/{ns0c}ServiceLocation/{ns0c}mainAddress"
+                    f"/{ns0c}streetDetail/{ns0c}addressGeneral"
+                )
+                address = entry.find(address_path)
+                addresses[cur_usage_point] = address.text
+        return addresses
 
     def get_meter_reading(self, source, start=None, end=None):
         url = (
@@ -341,10 +371,43 @@ class Api:
         )
         return False
 
-    def admin_get_authorization(self, endpoint, subscription_id=5206134, usage_point=5391320451):
+    def admin_client_request(self, endpoint, method="GET"):
+        response = request_url(
+            method,
+            f"{self.api_uri}{endpoint}",
+            headers=self.get_client_access_token_headers(),
+            cert=self.cert,
+        )
+        if response:
+            print(response.text)
+
+    def admin_account_request(self, endpoint, method="GET"):
         from . import create_app
         from flask import has_app_context
         import os
+
+        if not has_app_context():
+            app = create_app(f"open_energy_view.{os.environ.get('FLASK_CONFIG')}")
+            app.app_context().push()
+
+        source = db.session.query(models.Source).filter_by(id=64).first()
+
+        response = request_url(
+            method,
+            f"{self.api_uri}{endpoint}",
+            headers=self.get_access_token_headers(source),
+            cert=self.cert,
+        )
+        if response:
+            return response.text
+
+    def admin_get_authorization(
+        self, endpoint, subscription_id=5206134, usage_point=5391320451
+    ):
+        from . import create_app
+        from flask import has_app_context
+        import os
+
         if not has_app_context():
             app = create_app(f"open_energy_view.{os.environ.get('FLASK_CONFIG')}")
             app.app_context().push()
@@ -354,10 +417,7 @@ class Api:
         source = db.session.query(models.Source).filter_by(id=64).first()
 
         response = request_url(
-            "GET",
-            url,
-            headers=self.get_access_token_headers(source),
-            cert=self.cert,
+            "GET", url, headers=self.get_access_token_headers(source), cert=self.cert,
         )
         if response:
             print(response.text)
