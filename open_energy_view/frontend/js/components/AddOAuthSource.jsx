@@ -6,25 +6,32 @@ import axios from "axios";
 import DataLoader from "./DataLoader";
 
 const AddOAuthSource = (props) => {
-  const [name, setName] = useState("");
+  const [names, setNames] = useState({});
   const [loading, setLoading] = useState(false);
   const { location, history, restrictView } = props;
 
   const params = new URLSearchParams(location.search);
   const payload = params.get("payload");
   const usage_points = JSON.parse(params.get("usage_points"));
-  // TODO: handle multiple usage points
 
   // TODO: server will respond 500 on failing UniqueConstraint for
   // "Provider ID" (third party ID) or name - update UI on promise reject
+
+  const namesAreValid = () => {
+    const nameCount = {}
+    for (let [usagePointId, {name, kind}] of Object.entries(names)) {
+      if (nameCount[kind + name]) return false;
+      nameCount[kind + name] = true;
+    }
+    return true;
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const regInfo = {
       params: {
-        payload: payload,
-        name: name,
-        usage_point: usage_points.electricity[0],
+        payload,
+        names
       },
     };
     axios
@@ -40,6 +47,23 @@ const AddOAuthSource = (props) => {
       });
     setLoading(<DataLoader />);
   };
+
+  const nameSources = Object.entries(usage_points).map(([usagePointId, { kind, address }]) => {
+    return (
+    <Form.Group controlId={usagePointId}>
+      <Form.Text>Resource type: {kind}</Form.Text>
+      <Form.Text>Location: {address}</Form.Text>
+      <Form.Label>Name</Form.Label>
+      <Form.Control
+        className="login-form"
+        type="text"
+        placeholder="Name, like PG&E or Home PG&E"
+        onChange={(e) => setNames({...names, [usagePointId]: { name: e.target.value, kind }})}
+      />
+      <hr />
+    </Form.Group>
+    )
+  })
 
   const nameSource = (
     <div className="register-box">
@@ -58,16 +82,7 @@ const AddOAuthSource = (props) => {
       </div>
       <br />
       <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="formPge">
-          <Form.Label>Name</Form.Label>
-          <Form.Control
-            className="login-form"
-            type="text"
-            placeholder="Name, like PG&E or Home PG&E"
-            onChange={(e) => setName(e.target.value)}
-          />
-        </Form.Group>
-        <hr />
+        {nameSources}
         <h4>Synchronize your data</h4>
         <div style={{ fontSize: "10pt", color: "gray" }}>
           Click "Save All" to synchronize your utility data with Open Energy
@@ -77,9 +92,10 @@ const AddOAuthSource = (props) => {
           updated every day.
         </div>
         <br />
-        <Button variant="primary" type="submit">
+        <Button variant="primary" type="submit" disabled={!namesAreValid()}>
           Save All
         </Button>
+        {!namesAreValid && <div style={{ fontSize: "10pt", color: "red" }}>Names must be unique.</div>}
         <hr />
       </Form>
     </div>
