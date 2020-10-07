@@ -412,7 +412,10 @@ class Api:
             app = create_app(f"open_energy_view.{os.environ.get('FLASK_CONFIG')}")
             app.app_context().push()
 
-        url = f"{self.api_uri}/espi/1_1/resource/Subscription/{subscription_id}/UsagePoint/{usage_point}{endpoint}"
+        url = (
+            f"{self.api_uri}/espi/1_1/resource/Subscription/"
+            f"{subscription_id}/UsagePoint/{usage_point}{endpoint}"
+        )
         # /UsagePoint/{usage_point}{endpoint}
         source = db.session.query(models.Source).filter_by(id=64).first()
 
