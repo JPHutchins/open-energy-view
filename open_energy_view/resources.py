@@ -87,6 +87,7 @@ get_data_parser = reqparse.RequestParser()
 get_data_parser.add_argument("source", required=False)
 get_data_parser.add_argument("lastUpdate", required=False)
 get_data_parser.add_argument("name", required=False)
+get_data_parser.add_argument("names", required=False)
 get_data_parser.add_argument("thirdPartyId", required=False)
 get_data_parser.add_argument("clientId", required=False)
 get_data_parser.add_argument("clientSecret", required=False)
@@ -273,6 +274,8 @@ class PgeOAuthRedirect(Resource):
         if args.get("state") != STATE:
             return {"error": "bad origin"}, 400
 
+        print(args)
+
         REDIRECT_URI = "https://www.openenergyview.com/api/utility/pge/redirect_uri"
         URL = "https://api.pge.com/datacustodian/oauth/v2/token"
 
@@ -285,6 +288,8 @@ class PgeOAuthRedirect(Resource):
 
         b64 = b64encode(f"{PGE_CLIENT_ID}:{PGE_CLIENT_SECRET}".encode("utf-8"))
         auth_header = f"Basic {bytes.decode(b64)}"
+
+        print(authorization_code)
 
         request_params = {
             "grant_type": "authorization_code",
@@ -302,17 +307,25 @@ class PgeOAuthRedirect(Resource):
         # print(response.text)
 
         user_info = json.loads(response.text)
+        if user_info.get("error"):
+            print(response.text)
+            return redirect("https://www.openenergyview.com")
+        print(response.text)
         authorization_uri = user_info.get("authorizationURI")
 
         published_period_start = pge_api.get_published_period_start(authorization_uri)
 
-        subscription_id = "unknown"
+        subscription_id = None
         if group := re.search(r"(?<=Subscription/)\d+", user_info.get("resourceURI")):
             subscription_id = group[0]
 
-        if subscription_id != "unknown":
-            usage_points = pge_api.get_usage_points(
-                subscription_id, user_info.get("access_token")
+        access_token = user_info.get("access_token")
+
+        # TODO: make these frontend initiated requests
+        if subscription_id and access_token:
+            usage_points = pge_api.get_usage_points(subscription_id, access_token)
+            usage_points = pge_api.get_service_locations(
+                subscription_id, usage_points, access_token
             )
 
         user_info_dict = {
@@ -338,32 +351,42 @@ class AddPgeSourceFromOAuth(Resource):
     @jwt_required
     def get(self):
         args = get_data_parser.parse_args()
-        name = args.get("name")
-        usage_point = args.get("usage_point")
+        names = args.get("names")
         payload = args.get("payload")
 
         user = db.session.query(models.User).filter_by(id=get_jwt_identity()).first()
         if user.email == "jph@demo.com":
             return {"error": "cannot modify demo account"}, 403
 
+        if names:
+            names = json.loads(names)
+        else:
+            return {"error": "no names received"}, 500
+
         user_info = bytes.decode(f.decrypt(payload.encode("utf-8")))
         user_info = json.loads(user_info)
 
-        new_account = models.Source(
-            user_id=user.id,
-            friendly_name=name,
-            reg_type="oauth",
-            subscription_id=user_info.get("subscription_id"),
-            access_token=user_info.get("access_token"),
-            token_exp=user_info.get("token_exp"),
-            refresh_token=user_info.get("refresh_token"),
-            usage_point=usage_point,
-            published_period_start=user_info.get("published_period_start"),
-        )
-        new_account.save_to_db()
-        task_id = pge_api.get_historical_data_incrementally(new_account).id
+        task_ids = []
 
-        return task_id, 202
+        for usage_point, entry in names.items():
+            if entry["kind"] != "electricity":
+                continue  # TODO: support gas records
+            new_source = models.Source(
+                user_id=user.id,
+                friendly_name=entry["name"],
+                resource_type=entry["kind"],
+                reg_type="oauth",
+                subscription_id=user_info.get("subscription_id"),
+                access_token=user_info.get("access_token"),
+                token_exp=user_info.get("token_exp"),
+                refresh_token=user_info.get("refresh_token"),
+                usage_point=usage_point,
+                published_period_start=user_info.get("published_period_start"),
+            )
+            new_source.save_to_db()
+            task_ids.append(pge_api.get_historical_data_incrementally(new_source).id)
+
+        return task_ids[0], 202  # TODO: rethink status bar? keep user busy while API fetch?
 
 
 class FakeOAuthStart(Resource):
