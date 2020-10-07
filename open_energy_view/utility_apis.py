@@ -176,6 +176,8 @@ class Api:
         headers = {"Authorization": f"Bearer {access_token}"}
         url = f"{self.api_uri}/espi/1_1/resource/Subscription/{subscription_id}/UsagePoint"
         root = request_url("GET", url, headers=headers, cert=self.cert, format="xml")
+        if not root:
+            return {}
         ns0 = "{http://naesb.org/espi}"
         ns1 = "{http://www.w3.org/2005/Atom}"
         re_usage_point = r"(?<=UsagePoint\/)\d+"
@@ -188,25 +190,23 @@ class Api:
                     cur_usage_point = group[0]
                     break
             if cur_usage_point:
-                kind = child.find(
+                usage_points[cur_usage_point] = {}
+                kind_code = child.find(
                     f"./{ns1}content/{ns0}UsagePoint/{ns0}ServiceCategory/{ns0}kind"
                 )
-                key = (
+                kind = (
                     "electricity"
-                    if kind.text == "0"
+                    if kind_code.text == "0"
                     else "gas"
-                    if kind.text == "1"
+                    if kind_code.text == "1"
                     else "unknown"
                 )
-                if usage_points.get(key):
-                    usage_points[key].append(cur_usage_point)
-                else:
-                    usage_points[key] = [cur_usage_point]
+                usage_points[cur_usage_point]["kind"] = kind
         return usage_points
 
-    def get_service_location(self, subscription_id, usage_points, access_token):
+    def get_service_locations(self, subscription_id, usage_points, access_token):
         """Return a dictionary of {usage_point: address}."""
-        addresses = dict.fromkeys(usage_points, None)
+        addresses = usage_points.copy()
         headers = {"Authorization": f"Bearer {access_token}"}
         url = (
             f"{self.api_uri}/espi/1_1/resource/Batch/RetailCustomer/{subscription_id}/"
@@ -231,7 +231,7 @@ class Api:
                     f"/{ns0c}streetDetail/{ns0c}addressGeneral"
                 )
                 address = entry.find(address_path)
-                addresses[cur_usage_point] = address.text
+                addresses[cur_usage_point]["address"] = address.text
         return addresses
 
     def get_meter_reading(self, source, start=None, end=None):
