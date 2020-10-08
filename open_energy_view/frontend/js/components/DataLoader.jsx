@@ -1,7 +1,8 @@
 import React from "react";
-import Loader from "react-loader-spinner";
+import { mdiGamepadCircleOutline } from "@mdi/js";
+import Icon from "@mdi/react";
 
-const DataLoader = props => {
+const DataLoader = (props) => {
   return (
     <div
       style={{
@@ -10,12 +11,15 @@ const DataLoader = props => {
         position: "relative",
         margin: "auto",
         width: "80vw",
-        height: "80vh"
+        height: "80vh",
       }}
     >
       <div className="data-loader">
-        Loading data...
-        <Loader type="Bars" color="purple" height={100} width={100} />
+        <Icon
+          className="sidebar-icon rotate"
+          color="#5f5566"
+          path={mdiGamepadCircleOutline}
+        />
       </div>
     </div>
   );

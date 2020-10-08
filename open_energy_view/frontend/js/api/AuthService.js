@@ -35,13 +35,16 @@ class AuthService {
   }
 
   refreshToken() {
-    return axios.post(
-      "/api/web/token/refresh",
-      {},
-      {
-        headers: { "X-CSRF-TOKEN": cookie.load("csrf_refresh_token") },
-      }
-    );
+    if (cookie.load("csrf_refresh_token")) {
+      return axios.post(
+        "/api/web/token/refresh",
+        {},
+        {
+          headers: { "X-CSRF-TOKEN": cookie.load("csrf_refresh_token") },
+        }
+      );
+    }
+    return Promise.reject("No refresh token available.")
   }
 
   logOut() {

@@ -43,13 +43,23 @@ onmessage = function (e) {
         });
 
   const { trendPercent, trendObject } = calculateTrend(linearRegressionData);
-  postMessage({
-    rollingData: rollingData,
-    rawData: groupedRawData,
-    trendPercent: trendPercent,
-    trendPoints: [
-      trendObject.points[0][1],
-      trendObject.points[trendObject.points.length - 1][1],
-    ],
-  });
+
+  if (!trendObject.points[0]) {
+    postMessage({
+      rollingData: [{}],
+      rawData: null,
+      trendPercent: 0,
+      trendPoints: []
+    });
+  } else {
+    postMessage({
+      rollingData: rollingData,
+      rawData: groupedRawData,
+      trendPercent: trendPercent,
+      trendPoints: [
+        trendObject.points[0][1],
+        trendObject.points[trendObject.points.length - 1][1],
+      ],
+    });
+  }
 };

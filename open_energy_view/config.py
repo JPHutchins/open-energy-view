@@ -12,6 +12,7 @@ class Config:
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_CSRF_IN_COOKIES = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    PROPAGATE_EXCEPTIONS = True
 
 
 class ProdConfig(Config):

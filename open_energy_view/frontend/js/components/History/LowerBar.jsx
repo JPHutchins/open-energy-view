@@ -3,12 +3,12 @@ import DatePicker from "react-datepicker";
 import { format, isBefore, isAfter, subMilliseconds, sub, add } from "date-fns";
 import { DropdownButton, Dropdown } from "react-bootstrap";
 import "../../../css/react-datepicker.css";
-
+import EnergyDisplay from "./EnergyDisplay"
 
 /**
  * The component to provide navigation of the data window.
  */
-const LowerBar = ({ energyHistory, setEnergyHistory }) => {
+const LowerBar = ({ energyHistory, setSources, sources }) => {
   const disablePrev = () => {
     if (energyHistory.windowMode === "Complete") return true;
     return isBefore(
@@ -16,6 +16,21 @@ const LowerBar = ({ energyHistory, setEnergyHistory }) => {
       energyHistory.firstDate
     );
   };
+
+  const setEnergyHistory = (energyHistory) => {
+    const updatedSources = sources.map((x) => {
+      if (x.title !== energyHistory.friendlyName) {
+        return x
+      }
+      
+      return {
+        title: x.title,
+        component: <EnergyDisplay energyHistoryInstance={energyHistory} />,
+        currentTab: x.currentTab
+      }
+    })
+    setSources(updatedSources)
+  }
 
   const disableNext = () => {
     if (energyHistory.windowMode === "Complete") return true;

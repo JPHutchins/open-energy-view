@@ -10,6 +10,10 @@ const Login = (props) => {
   const [badCreds, setBadCreds] = useState("");
   const [loginDisabled, setLoginDisabled] = useState(false);
 
+  const googleAuth = () => {
+    location.href = "/api/oauth/google"
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     setLoginDisabled(true);
@@ -19,7 +23,6 @@ const Login = (props) => {
         setBadCreds("Incorrect email and/or password.");
         setLoginDisabled(false);
       } else {
-        cookie.save("logged_in", credentials.email, { maxAge: 900 });
         props.callback();
         props.history.push("/");
       }
@@ -34,7 +37,6 @@ const Login = (props) => {
         setLoginDisabled(false);
         throw Error("That's weird, the demo credentials are missing.");
       } else {
-        cookie.save("logged_in", credentials.email, { maxAge: 900 });
         props.callback();
         props.history.push("/");
       }
@@ -75,7 +77,7 @@ const Login = (props) => {
           Login
         </Button>
         <hr />
-        <div className="g-signin2" dataOnsuccess="onSignIn"></div>
+        <div onClick={googleAuth} id="google-sign-in"></div>
         <hr />
         <Form.Text className="default-text">
           No account? <Link to="/create_account">Register now!</Link>

@@ -4,7 +4,7 @@ import TopBar from "./TopBar";
 import LowerBar from "./LowerBar";
 import RightBar from "./RightBar";
 
-const EnergyDisplay = ({ energyHistory, setEnergyHistory }) => {
+const EnergyDisplay = ({ energyHistory, setSources, sources }) => {
   return (
     <div className="energy-history">
       <div className="energy-history-main-div">
@@ -13,7 +13,8 @@ const EnergyDisplay = ({ energyHistory, setEnergyHistory }) => {
           <EnergyChart energyHistory={energyHistory} />
           <LowerBar
             energyHistory={energyHistory}
-            setEnergyHistory={setEnergyHistory}
+            setSources={setSources}
+            sources={sources}
           />
         </div>
         <RightBar energyHistory={energyHistory}/>

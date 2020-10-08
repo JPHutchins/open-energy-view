@@ -14,9 +14,9 @@ import { meanOf } from "../../functions/meanOf";
 export function calculatePassiveUse(database) {
   const WINDOW = 14; // days; global config variable?
 
-  const dailyMinimums = minOfEachDay(groupByDay(database));
-  const values = Either.Right(extract("min")(dailyMinimums));
-  const time = Either.Right(extract("x")(dailyMinimums));
+  const dailyMinimums = minOfEachDayArray(groupByDay(database));
+  const values = Either.Right(dailyMinimums.map((day) => day.min));
+  const time = Either.Right(dailyMinimums.map((day) => day.x));
 
   const passiveValues = values
     .map(removeOutliers(WINDOW))
@@ -26,12 +26,10 @@ export function calculatePassiveUse(database) {
   if (passiveValues.isLeft) return passiveValues;
 
   return Either.Right(
-    List(
-      zipWith(
-        (x, y) => Map({ x: x, passive: y }),
-        time.value,
-        passiveValues.value
-      )
+    zipWith(
+      (x, y) => ({ x: x, passive: y }),
+      time.value,
+      passiveValues.value
     )
   );
 }
@@ -55,6 +53,13 @@ function minOfEachDay(list) {
       min: minOf(extract("total")(x)),
     })
   );
+}
+
+function minOfEachDayArray(array) {
+  return array.map((day) => ({
+    x: getTime(startOf("day")(day[0].x)),
+    min: minOf(day.map((entry) => entry.total)),
+  }));
 }
 
 /*
