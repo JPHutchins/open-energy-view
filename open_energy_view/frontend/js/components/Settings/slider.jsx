@@ -107,8 +107,7 @@ const editMenu = (
       zIndex: 15,
       width: 240,
       height: "auto",
-      border: "solid",
-      borderColor: "#5f5566",
+      boxShadow: "0px 0px 5px -3px",
       backgroundColor: "white",
     }}
   >
@@ -117,29 +116,33 @@ const editMenu = (
         position: "absolute",
         right: 5,
         top: 5,
-        width: 20,
+        width: "auto",
         height: 20,
-        border: "solid",
-        borderColor: "#5f5566",
+        border: "none",
+        color: "gray",
+        fontSize: "12px",
         cursor: "pointer",
       }}
       onClick={() => setEdit(null)}
-    />
+    >Close</div>
     <div style={{ margin: "0 auto", width: 225 }}>
+      Edit Time Period
+    </div>
+    <hr/>
+    <div style={{ margin: "10px", width: 225, display: "grid", gridTemplateColumns: "auto auto", alignItems: "start" }}>
+      <label>Name: </label>
       <input
         style={{
-          width: "auto",
-          margin: "10px auto 10px auto",
-          border: "solid",
-          borderColor: "#5f5566",
-          textAlign: "center",
+          textAlign: "left",
           backgroundColor: "transparent",
+          width: "100%"
         }}
         id="changeName"
         type="text"
         placeholder={name || ""}
         onChange={(e) => updatePartitions("name", e.currentTarget.value, id)}
       />
+      
     </div>
     <div
       style={{
@@ -156,8 +159,8 @@ const editMenu = (
     <div
       style={{
         width: "auto",
-        margin: "10px auto 10px auto",
-        border: "solid",
+        margin: "10px",
+        border: "none",
         textAlign: "center",
         color: "white",
         backgroundColor: "#5f5566",
