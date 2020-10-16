@@ -60,6 +60,7 @@ const Settings = ({ energyHistory, restrictView, history }) => {
   return (
     <div className="main-tab-box">
       <h1>{friendlyName} Settings</h1>
+      <label>Set new name: 
       <input
         type="text"
         onChange={(e) => setFriendlyName(e.currentTarget.value)}
@@ -67,10 +68,12 @@ const Settings = ({ energyHistory, restrictView, history }) => {
       <Button
         disabled={demo}
         onClick={handleSaveName}
-        style={{ width: "auto" }}
+        style={{ width: "auto", marginLeft: "20px" }}
       >
         Save new name
       </Button>
+      </label>
+      
       <h3>Customize Daily Time Periods</h3>
       <div style={{ marginTop: "90px", padding: "40px 40px 40px 40px" }}>
         <SetPartitions
