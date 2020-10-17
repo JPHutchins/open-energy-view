@@ -13,6 +13,7 @@ import { lookupPartitionSums } from "../../functions/lookupPartitionSums";
 import { differenceInMilliseconds, roundToNearestMinutes } from "date-fns";
 import { editHsl } from "../../functions/editHsl";
 import { useEffect } from "react";
+import { customTooltips } from "../../data-structures/helpers/customTooltips";
 
 /**
  * Return a flexibly sized ChartJS pie chart.
@@ -127,6 +128,8 @@ const MiniPie = ({
       display: false,
     },
     tooltips: {
+      enabled: false,
+      custom: customTooltips,
       callbacks: {
         title: (tooltipItem) => {
           return data.labels[tooltipItem[0].index];

@@ -6,6 +6,7 @@ import { makeTrendDescription, calculateTrend } from "./functions";
 import { useEffect } from "react";
 import { useState } from "react";
 import Loader from "react-loader-spinner";
+import { customTooltips } from "../../data-structures/helpers/customTooltips";
 
 const TrendChart = ({
   getArrayArgs,
@@ -151,6 +152,8 @@ const TrendChart = ({
       },
     },
     tooltips: {
+      enabled: false,
+      custom: customTooltips,
       callbacks: {
         label: tooltipLabel,
         title: tooltipTitle,

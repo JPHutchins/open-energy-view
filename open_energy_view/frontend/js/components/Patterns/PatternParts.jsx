@@ -1,5 +1,6 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
+import { customTooltips } from "../../data-structures/helpers/customTooltips";
 
 const PatternParts = ({ yLabelWidth, yearParts }) => {
   const dataYear = {
@@ -55,6 +56,8 @@ const PatternParts = ({ yLabelWidth, yearParts }) => {
       intersect: true,
     },
     tooltips: {
+      enabled: false,
+      custom: customTooltips,
       callbacks: {
         label: (tooltipItems) => tooltipLabelYear(tooltipItems),
         title: (tooltipItems) => tooltipTitle(tooltipItems),

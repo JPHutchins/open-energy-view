@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { sum } from "ramda";
 import { readableWattHours } from "../../functions/readableWattHours";
 import { editHsl } from "../../functions/editHsl";
+import { customTooltips } from "../../data-structures/helpers/customTooltips";
 
 const CompleteHistoryLine = ({
   energyHistory,
@@ -79,6 +80,8 @@ const CompleteHistoryLine = ({
       intersect: true,
     },
     tooltips: {
+      enabled: false,
+      custom: customTooltips,
       callbacks: {
         label: (tooltipItems) => tooltipLabelYear(tooltipItems),
         title: (tooltipItems) => tooltipTitle(tooltipItems),

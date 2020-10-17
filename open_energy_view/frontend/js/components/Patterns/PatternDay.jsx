@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { minZero } from "../../functions/minZero";
 import { editHsl } from "../../functions/editHsl";
+import { customTooltips } from "../../data-structures/helpers/customTooltips";
 
 const PatternDay = ({
   energyHistory,
@@ -124,6 +125,8 @@ const PatternDay = ({
       intersect: true,
     },
     tooltips: {
+      enabled: false,
+      custom: customTooltips,
       callbacks: {
         label: (tooltipItems) => tooltipLabelDay(tooltipItems),
         title: (tooltipItems) => intToHour(tooltipItems[0].index),

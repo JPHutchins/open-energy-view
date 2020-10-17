@@ -1,5 +1,6 @@
 import { readableWattHours } from "../../functions/readableWattHours";
 import { format, roundToNearestMinutes } from "date-fns";
+import { customTooltips } from "./customTooltips";
 
 const title = (tooltipItem, energyHistory) => {
   const datapoint = energyHistory.chartData.get(tooltipItem.index);
@@ -95,6 +96,8 @@ export const chartOptions = (energyHistory) => {
     maintainAspectRatio: false,
     responsiveness: true,
     tooltips: {
+      enabled: false,
+      custom: customTooltips,
       callbacks: tooltip,
     },
     legend: {
