@@ -6,5 +6,6 @@ install:
 before_script:
   - export TZ=America/Los_Angeles
 script:
+  - black --check open_energy_view
   - py.test
   
