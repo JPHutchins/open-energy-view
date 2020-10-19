@@ -100,6 +100,10 @@ def test_delete_source(client, session):
         user_id=user_a_id, friendly_name="new_source", usage_point="1"
     )
     new_source.save_to_db()
-    assert 1 == session.query(resources.models.Source).filter_by(user_id=user_a_id).count()
+    assert (
+        1 == session.query(resources.models.Source).filter_by(user_id=user_a_id).count()
+    )
     resources.models.Source.delete(user_a, "new_source")
-    assert 0 == session.query(resources.models.Source).filter_by(user_id=user_a_id).count()
+    assert (
+        0 == session.query(resources.models.Source).filter_by(user_id=user_a_id).count()
+    )

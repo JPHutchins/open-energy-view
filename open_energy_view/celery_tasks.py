@@ -1,4 +1,5 @@
 from gevent import monkey
+
 monkey.patch_all()
 
 import time
@@ -42,9 +43,13 @@ def insert_espi_xml_into_db(self, xml, given_source_id=None, save=False):
             if given_source_id:
                 source_id_memo[usage_point] = [given_source_id]
             else:
-                sources = db.session.query(models.Source).filter_by(usage_point=usage_point)
+                sources = db.session.query(models.Source).filter_by(
+                    usage_point=usage_point
+                )
                 if sources.count() == 0:
-                    print(f"could not find usage point {usage_point} in db, probably gas")
+                    print(
+                        f"could not find usage point {usage_point} in db, probably gas"
+                    )
                     source_id_memo[usage_point] = []
                 elif sources.count() > 1:
                     print(f"WARNING: {usage_point} is associated with multiple sources")
@@ -82,6 +87,7 @@ def process_data(self, inc):
     print(inc)
     time.sleep(15)
     return inc
+
 
 @celery.task
 def add(x, y):
@@ -124,6 +130,7 @@ def fetch_task(self, published_period_start, interval_block_url, headers, cert):
         retries += 1
         sleep(1)
     return "done"
+
 
 @celery.task(bind=True, name="fake_fetch")
 def fake_fetch(self):

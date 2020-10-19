@@ -21,6 +21,7 @@ def _setup_app_context_for_test(request, app):
     yield  # tests will run here
     ctx.pop()
 
+
 @pytest.fixture(scope="session")
 def db(app, request):
     """Returns session-wide initialized database"""

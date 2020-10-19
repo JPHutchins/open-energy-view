@@ -1,4 +1,5 @@
 from gevent import monkey
+
 monkey.patch_all()
 
 
@@ -23,7 +24,7 @@ def create_app(config_name) -> Flask:
         instance_relative_config=False,
         template_folder="./frontend/dist/",
         static_folder="./frontend/dist/",
-        static_url_path=""
+        static_url_path="",
     )
     app.config.from_object(config_name)
     from . import resources
@@ -65,7 +66,7 @@ def create_app(config_name) -> Flask:
 
     # Task status
     rest.add_resource(resources.TestCelery, "/api/celery")
-    rest.add_resource(resources.CheckTaskStatus, '/api/web/task')
+    rest.add_resource(resources.CheckTaskStatus, "/api/web/task")
 
     # Initialize extensions with the Flask app
     db.init_app(app)
@@ -89,11 +90,11 @@ def create_app(config_name) -> Flask:
                 demo_user.save_to_db()
             except Exception as e:
                 print(e)
-     
+
         #  Really need to be setting Dev/Prod flags for stuff like this
         #  Technically this will get intercepted by Nginx in production
         @app.route("/")
         def index():
-            return render_template('index.html')
+            return render_template("index.html")
 
         return app
