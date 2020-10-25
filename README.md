@@ -10,7 +10,7 @@ If you are a PG&E customer you can link your account now!  If you are not a PG&E
 
 ## User Interface
 
-![Interface](/docs/energy-history-screenshot.png)
+![Interface](/docs/open-energy-view-dashboard.PNG)
 
 ## Design
 

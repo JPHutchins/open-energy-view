@@ -31,3 +31,12 @@ class DevConfig(Config):
     JWT_COOKIE_SECURE = False
     JWT_ACCESS_TOKEN_EXPIRES = False
     JWT_REFRESH_TOKEN_EXPIRES = False
+
+
+class TestConfig(Config):
+    DEBUG = True
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
+    JWT_COOKIE_SECURE = False
+    JWT_ACCESS_TOKEN_EXPIRES = False
+    JWT_REFRESH_TOKEN_EXPIRES = False
