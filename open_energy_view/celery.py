@@ -11,7 +11,7 @@ celery.conf.update(
         "imports": (
             "open_energy_view.celery_tasks",
             "open_energy_view.espi_helpers",
-            "open_energy_view.utility_apis"
+            "open_energy_view.utility_apis",
         ),
         "task_routes": {
             "get_jp": {"queue": "io"},
