@@ -386,7 +386,12 @@ class AddPgeSourceFromOAuth(Resource):
             new_source.save_to_db()
             task_ids.append(pge_api.get_historical_data_incrementally(new_source).id)
 
-        return task_ids[0], 202  # TODO: rethink status bar? keep user busy while API fetch?
+        if len(task_ids) == 0:
+            return {"message": "No electrical service submitted."}, 200
+        return (
+            task_ids[0],
+            202,
+        )  # TODO: rethink status bar? keep user busy while API fetch?
 
 
 class FakeOAuthStart(Resource):
