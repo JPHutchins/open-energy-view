@@ -31,9 +31,7 @@ const Trends = ({ energyHistory }) => {
         padding: "10px",
         position: "relative",
         margin: "auto",
-        height: "100%",
         width: "100%",
-        overflow: "hidden",
       }}
     >
       <h1>{`${energyHistory.friendlyName} Energy Usage Trends`}</h1>
