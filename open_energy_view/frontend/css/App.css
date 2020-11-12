@@ -63,8 +63,6 @@ tbody>tr>td {
   position: absolute;
   background: rgba(0, 0, 0, 0.7);
   color: white;
-  -webkit-transition: all 0.1s ease;
-  transition: all 0.1s ease;
   pointer-events: none;
   -webkit-transform: translate(-50%, 0);
   transform: translate(-50%, 0);
