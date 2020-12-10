@@ -79,9 +79,7 @@ class Source(db.Model):
     partition_options = db.Column(db.String(1000), nullable=True)
     # Relationship to data tables
     espi = db.relationship("Espi", backref="sources", lazy=True)
-    __table_args__ = (
-        db.UniqueConstraint("friendly_name", "user_id"),
-    )
+    __table_args__ = (db.UniqueConstraint("friendly_name", "user_id"),)
 
     def save_to_db(self) -> None:
         """Add the account to the TABLE sources."""
