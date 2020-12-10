@@ -81,7 +81,6 @@ class Source(db.Model):
     espi = db.relationship("Espi", backref="sources", lazy=True)
     __table_args__ = (
         db.UniqueConstraint("friendly_name", "user_id"),
-        db.UniqueConstraint("usage_point", "friendly_name"),
     )
 
     def save_to_db(self) -> None:
