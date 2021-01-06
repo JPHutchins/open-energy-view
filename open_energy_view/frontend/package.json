@@ -55,7 +55,7 @@
     "@babel/preset-typescript": "^7.7.7",
     "@mdi/js": "^4.7.95",
     "@mdi/react": "^1.2.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "babel-polyfill": "^6.26.0",
     "bootstrap": "^4.4.1",
     "chart.js": "^2.9.3",
