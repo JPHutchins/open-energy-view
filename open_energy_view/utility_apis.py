@@ -255,7 +255,7 @@ class Api:
                     url = item.attrib.get("href") or ""
                     if url:
                         urls.append(url)
-        re_interval_block_url = r"https:\/\/api\.pge\.com.*IntervalBlock"
+        re_interval_block_url = r"https:\/\/api\.pge\.com\/GreenButtonConnect\/espi\/1_1\/resource\/Subscription\/\d+\/UsagePoint\/\d+\/MeterReading\/\S+\/IntervalBlock"
         for url in urls:
             response_text = request_url(
                 "GET",
@@ -449,7 +449,11 @@ class Pge(Api):
         response_text = request_url(
             "GET", url, headers=headers, cert=self.cert, format="text"
         )
-        group = re.search(r"https:\/\/api\.pge\.com.*IntervalBlock", response_text)
+        save_espi_xml(response_text)
+        group = re.search(
+            r"https:\/\/api\.pge\.com\/GreenButtonConnect\/espi\/1_1\/resource\/Subscription\/\d+\/UsagePoint\/\d+\/MeterReading\/\S+\/IntervalBlock",
+            response_text,
+        )
         if group:
             interval_block_url = group[0]
         else:
