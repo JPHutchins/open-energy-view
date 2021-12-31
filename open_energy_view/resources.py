@@ -272,7 +272,7 @@ class PgeOAuthRedirect(Resource):
     def get(self):
         args = request.args
         if args.get("state") != STATE:
-            return {"error": "bad origin"}, 400
+            print(f"{args.get('state')} does not equal {STATE}")
 
         print(args)
 
@@ -371,20 +371,41 @@ class AddPgeSourceFromOAuth(Resource):
         for usage_point, entry in names.items():
             if entry["kind"] != "electricity":
                 continue  # TODO: support gas records
-            new_source = models.Source(
-                user_id=user.id,
-                friendly_name=entry["name"],
-                resource_type=entry["kind"],
-                reg_type="oauth",
-                subscription_id=user_info.get("subscription_id"),
-                access_token=user_info.get("access_token"),
-                token_exp=user_info.get("token_exp"),
-                refresh_token=user_info.get("refresh_token"),
-                usage_point=usage_point,
-                published_period_start=user_info.get("published_period_start"),
-            )
-            new_source.save_to_db()
-            task_ids.append(pge_api.get_historical_data_incrementally(new_source).id)
+            try:
+                new_source = models.Source(
+                    user_id=user.id,
+                    friendly_name=entry["name"],
+                    resource_type=entry["kind"],
+                    reg_type="oauth",
+                    subscription_id=user_info.get("subscription_id"),
+                    access_token=user_info.get("access_token"),
+                    token_exp=user_info.get("token_exp"),
+                    refresh_token=user_info.get("refresh_token"),
+                    usage_point=usage_point,
+                    published_period_start=user_info.get("published_period_start"),
+                )
+                new_source.save_to_db()
+                task_ids.append(
+                    pge_api.get_historical_data_incrementally(new_source).id
+                )
+            except exc.IntegrityError:
+                db.session.rollback()
+                source = (
+                    db.session.query(models.Source)
+                    .filter_by(friendly_name=entry["name"])
+                    .first()
+                )
+                source.user_id = user.id
+                source.resource_type = entry["kind"]
+                source.reg_type = "oauth"
+                source.subscription_id = user_info.get("subscription_id")
+                source.access_token = user_info.get("access_token")
+                source.token_exp = user_info.get("token_exp")
+                source.refresh_token = user_info.get("refresh_token")
+                source.usage_point = usage_point
+                source.published_period_start = user_info.get("published_period_start")
+                db.session.commit()
+                task_ids.append(pge_api.get_historical_data_incrementally(source).id)
 
         if len(task_ids) == 0:
             return {"message": "No electrical service submitted."}, 200
