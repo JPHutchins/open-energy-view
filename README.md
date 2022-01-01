@@ -30,7 +30,6 @@ Personally I use VSCode from the Windows host utilizing the "Remote - SSH" and "
 ```
 git clone git@github.com:JPHutchins/open-energy-view.git
 cd open-energy-view
-git status
 ```
 ### Install backend dependencies
 * **Install python requirements**
