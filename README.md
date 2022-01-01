@@ -16,6 +16,116 @@ If you are a PG&E customer you can link your account now!  If you are not a PG&E
 
 ![Design](/docs/PGESMD_sketch_full.png)
 
+# Development
+
+## Environment Setup (Ubuntu 20.04)
+
+Process notes here: https://github.com/JPHutchins/open-energy-view/issues/31
+
+The following notes are for setting up the environment with a Windows 10 host and Ubuntu 20.04 on WSL2.  Please submit a PR if you find necessary adaptations on your environment.
+
+Personally I use VSCode from the Windows host utilizing the "Remote - SSH" and "Remote - WSL" extensions.
+
+### Clone this repository
+```
+git clone git@github.com:JPHutchins/open-energy-view.git
+cd open-energy-view
+```
+### Install backend dependencies
+* **Install python requirements**
+
+  Note: check your python3 version
+  ```
+  sudo apt install python3.8-venv build-essential python3-dev
+  ```
+* **Create the virtual environment and install packages**
+  ```
+  python3 -m venv venv
+  source venv/bin/activate
+  pip3 install -r requirements.txt
+  ```
+* **Install and configure rabbitmq**
+  * Install erlang:
+    ```
+    sudo apt update
+    sudo apt install software-properties-common apt-transport-https
+    wget -O- https://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc | sudo apt-key add -
+    echo "deb https://packages.erlang-solutions.com/ubuntu focal contrib" | sudo tee /etc/apt/sources.list.d/rabbitmq.list
+    sudo apt update
+    sudo apt install erlang
+    ```
+  * Install rabbitmq
+    ```
+    curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.deb.sh | sudo bash
+    sudo apt install rabbitmq-server
+  * Start rabbitmq-server
+    ```
+    sudo service rabbitmq-server start
+    ```
+  * Verify that rabbitmq-server is running
+    ```
+    sudo service rabbitmq-server status
+    ```
+  * Configure rabbitmq
+    ```
+    sudo rabbitmqctl add_user jp admin
+    sudo rabbitmqctl set_user_tags jp administrator
+    sudo rabbitmqctl add_vhost myvhost
+    sudo rabbitmqctl set_permissions -p myvhost jp ".*" ".*" ".*"
+    ```
+
+### Install frontend dependencies and build
+* **Install nvm** (if you don't have it)
+
+  notes: https://github.com/nvm-sh/nvm
+  ```
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+  ```
+* **Install npm**
+  ```
+  nvm install 10.19.0
+  ```
+* **Install frontend packages**
+  ```
+  cd open_energy_view/frontend
+  nvm use 10
+  npm install
+  ```
+* **Build frontend**
+  
+  Assumes you are at path: `*/open-energy-view/open_energy_view/frontend`
+  ```
+  nvm use 10
+  npm run build
+  ```
+
+### Run the development server and workers
+* **Start the server and workers**
+  * Open four terminals (example from VSCode)
+
+  ![Four-Terminals](/docs/four-terminals.png)
+  * First terminal: `./run-wsgi-dev`
+  * Second terminal: `./run-io-worker`
+  * Third terminal: `./run-cpu-worker`
+* **Open the development site in a browser**
+  * Fourth terminal: `ip a`
+  * Note the IP address of your WSL2 instance, in this case `172.31.30.203`
+
+  ![ip-a](/docs/ip-a.png)
+  * On your host OS, open a Chrome or Firefox web browser and navigate to `http://<YOUR_WSL2_IP>:5000`
+
+  ![browser-address](/docs/browser-address.png)
+
+### Example account setup
+For first time setup you must register a user to your local database. Use something easily memorable and keep in mind that you can register as many users as you need while testing.
+* Click "Register now!"
+  * For email use: `dev@dev.com`
+  * For password use: `admin`
+* You are prompted to add energy sources. This is local development so there would be no way to add a real PGE account here. In the dropdown select "Fake Utility" and click "Authorize".
+* You are prompted to name the fake energy source. Enter `dev`, for example, then click "Add Source".
+
+After simulating API calls and parsing the retrieved ESPI data (J.P.'s old data) you will be greeted with an OEV instance that will respond to changes in your local Python/Flask/Celery backend and React frontend.
+
 ## Data Analysis
 
 ### Averages
