@@ -61,7 +61,10 @@ cd open-energy-view
   * Start rabbitmq-server
     ```
     sudo service rabbitmq-server start
-    sudo service rabbitmq-server status # verify that it is running
+    ```
+  * Verify that rabbitmq-server is running
+    ```
+    sudo service rabbitmq-server status
     ```
   * Configure rabbitmq
     ```
