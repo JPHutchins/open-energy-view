@@ -26,6 +26,7 @@ from gevent import sleep
 from celery import chain
 from celery.result import AsyncResult
 
+from . import errors
 from . import models
 from . import bcrypt
 from . import db
@@ -367,6 +368,7 @@ class AddPgeSourceFromOAuth(Resource):
         user_info = json.loads(user_info)
 
         task_ids = []
+        failed_usage_points = []
 
         for usage_point, entry in names.items():
             if entry["kind"] != "electricity":
@@ -384,10 +386,17 @@ class AddPgeSourceFromOAuth(Resource):
                     usage_point=usage_point,
                     published_period_start=user_info.get("published_period_start"),
                 )
+
+                try:
+                    task_ids.append(
+                        pge_api.get_historical_data_incrementally(new_source).id
+                    )
+                except errors.OEVErrorIntervalBlockURLNotFound:
+                    failed_usage_points.append(usage_point)
+                    continue
+
                 new_source.save_to_db()
-                task_ids.append(
-                    pge_api.get_historical_data_incrementally(new_source).id
-                )
+
             except exc.IntegrityError:
                 db.session.rollback()
                 source = (
@@ -408,6 +417,8 @@ class AddPgeSourceFromOAuth(Resource):
                 task_ids.append(pge_api.get_historical_data_incrementally(source).id)
 
         if len(task_ids) == 0:
+            if len(failed_usage_points > 0):
+                return {"error": f"Could not retrieve usage points: {failed_usage_points}"}, 500
             return {"message": "No electrical service submitted."}, 200
         return (
             task_ids[0],

@@ -9,6 +9,7 @@ from datetime import datetime
 from gevent import sleep
 
 
+from . import errors
 from . import models
 from . import db
 from .espi_helpers import save_espi_xml
@@ -459,7 +460,7 @@ class Pge(Api):
         else:
             print("Could not find interval block url")
             save_espi_xml(response_text, filename=f"SubRespForSource{source.id}")
-            return {"error": "could not find interval block url"}, 500
+            raise errors.OEVErrorIntervalBlockURLNotFound
 
         published_period_start = source.published_period_start
 
