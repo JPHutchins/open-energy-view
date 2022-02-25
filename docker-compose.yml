@@ -1,0 +1,23 @@
+services:
+  rabbit:
+    build: 
+      dockerfile: ./docker/service_rabbitmq/Dockerfile.rabbitmq
+      context: ./
+    environment:
+      - RABBITMQ_DEFAULT_USER=jp
+      - RABBITMQ_DEFAULT_PASS=admin
+  cpu:
+    tty: true
+    depends_on:
+     - rabbit
+    build:
+      context: ./
+      dockerfile: ./docker/service_web/Dockerfile.web
+      args:
+        NODE_OPTIONS: --openssl-legacy-provider
+    ports: 
+    - 5001:5001
+    links:
+    - rabbit
+
+      

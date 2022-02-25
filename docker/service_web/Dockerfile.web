@@ -1,0 +1,25 @@
+FROM node:latest as node
+
+    SHELL ["/bin/bash", "--login", "-c"]
+    WORKDIR /app
+    COPY . .
+
+    RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+    RUN nvm install 10.19.0 
+    RUN nvm use 10
+
+
+    ARG NODE_OPTIONS
+    WORKDIR /app/open_energy_view/frontend
+    RUN npm install
+    RUN npm run build
+
+    WORKDIR /app
+
+FROM python:3.9
+
+    COPY requirements.txt ./  
+    COPY --from=node /app ./
+    RUN pip install --no-cache-dir -r requirements.txt  
+
+    CMD ["./docker/service_web/init.sh"]

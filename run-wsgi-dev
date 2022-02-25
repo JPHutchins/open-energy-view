@@ -1,5 +1,5 @@
 #!/bin/bash
-source venv/bin/activate
+#source venv/bin/activate
 export FLASK_CONFIG=config.DevConfig
 export FLASK_APP=open_energy_view
 export FLASK_ENV=production
@@ -23,4 +23,4 @@ export CERT_PATH=test/cert/cert.crt
 export KEY_PATH=test/cert/private.key
 export API_RESPONSE_KEY=xS5MqJ6N9CyH-hvqAGrmBVAxFMOyauMpdrdqCZa1eqo=
 export IP_AND_PORT=$(hostname -I | awk '{print $1}'):5000
-./venv/bin/uwsgi --http 0.0.0.0:5000 --gevent 100 --wsgi-file wsgi.py --callable app
+./venv/bin/uwsgi --http 0.0.0.0:5001 --gevent 100 --wsgi-file wsgi.py --callable app
