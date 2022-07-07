@@ -63,7 +63,7 @@
     "fluture": "^12.2.1",
     "fs": "0.0.1-security",
     "immutable": "^4.0.0-rc.12",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "ramda": "^0.27.0",
     "ramda-fantasy": "^0.8.0",
     "react-bootstrap": "^1.0.0-beta.16",
