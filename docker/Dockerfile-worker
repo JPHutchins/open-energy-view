@@ -1,0 +1,2 @@
+FROM open-energy-view_app
+ENTRYPOINT celery worker --app open_energy_view.celery_tasks --hostname="$HOSTNAME" --queues="$QUEUES" --loglevel=info --pool="$POOL" --concurrency="$CONCURRENCY"

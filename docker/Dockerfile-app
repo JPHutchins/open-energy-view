@@ -1,0 +1,14 @@
+FROM node:10.19.0-slim AS ui
+ADD open_energy_view/frontend /frontend
+WORKDIR /frontend
+RUN npm ci && npm run build
+
+FROM python:3.8-slim
+ADD . /app
+WORKDIR /app
+RUN apt update && apt install -y build-essential
+RUN pip3 install -r ./requirements.txt
+RUN apt purge -y build-essential
+COPY --from=ui /frontend/dist /app/open_energy_view/frontend/dist
+COPY --from=ui /frontend/node_modules /app/open_energy_view/frontend/node_modules
+ENTRYPOINT uwsgi --http 0.0.0.0:"$PORT" --gevent 100 --wsgi-file wsgi.py --callable app

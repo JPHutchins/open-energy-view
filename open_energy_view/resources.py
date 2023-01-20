@@ -36,7 +36,7 @@ from .espi_helpers import save_espi_xml
 from .celery_tasks import get_jp, insert_espi_xml_into_db, process_data
 from .celery import celery
 
-IP_AND_PORT = os.environ.get("IP_AND_PORT")
+PORT = os.environ.get("PORT")
 
 PGE_BULK_ID = 51070
 PGE_CLIENT_ID = os.environ.get("PGE_CLIENT_ID")
@@ -429,8 +429,7 @@ class AddPgeSourceFromOAuth(Resource):
 
 class FakeOAuthStart(Resource):
     def get(self):
-        # TODO: get host IP on Dev mode - my WSL is not working on localhost...
-        return redirect(f"http://{IP_AND_PORT}/#/fake_oauth")
+        return redirect(f"http://127.0.0.1:{PORT}/#/fake_oauth")
 
 
 class AddFakeSourceFromFakeOAuthOLD(Resource):
