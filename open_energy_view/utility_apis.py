@@ -462,7 +462,9 @@ class Pge(Api):
             save_espi_xml(response_text, filename=f"SubRespForSource{source.id}")
             raise errors.OEVErrorIntervalBlockURLNotFound
 
-        published_period_start = source.published_period_start
+        published_period_start = int(source.published_period_start)
+
+        print(f"Fetching historical data starting from {published_period_start}, interval_block_url: {interval_block_url}")
 
         return fetch_task.delay(
             published_period_start, interval_block_url, headers, self.cert
