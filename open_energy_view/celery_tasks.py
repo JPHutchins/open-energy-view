@@ -107,6 +107,8 @@ def get_jp(self):
 def fetch_task(self, published_period_start, interval_block_url, headers, cert):
     four_weeks = 3600 * 24 * 28
     end = int(time.time())
+    published_period_start = int(published_period_start)
+    print(published_period_start, interval_block_url, headers, cert)
     while end > published_period_start:
         start = end - four_weeks + 3600
         params = {
@@ -121,11 +123,14 @@ def fetch_task(self, published_period_start, interval_block_url, headers, cert):
             cert=cert,
             format="text",
         )
+        save_espi_xml(response_text)
         db_insert_task = insert_espi_xml_into_db.delay(response_text)
         end = start - 3600
+        sleep(2)
     retries = 0
     while not db_insert_task.ready():
         if retries > 60:
+            print("Insert into DB failed!")
             break
         retries += 1
         sleep(1)
@@ -152,9 +157,7 @@ def fake_fetch(self):
     test_xml.reverse()
 
     for xml_path in test_xml:
-        response = requests.get(
-            "http://slowwly.robertomurray.co.uk/delay/2500/url/https://www.jphutchins.com"
-        )
+        time.sleep(2.5)
         with open(xml_path) as xml_reader:
             xml = xml_reader.read()
         db_insert_task = insert_espi_xml_into_db.delay(xml)
