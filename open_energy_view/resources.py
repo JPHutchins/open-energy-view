@@ -6,6 +6,7 @@ import time
 import json
 import requests
 import re
+from typing import List
 from flask_restful import Resource, reqparse, request
 from oauthlib.oauth2 import WebApplicationClient
 from flask_jwt_extended import (
@@ -417,7 +418,7 @@ class AddPgeSourceFromOAuth(Resource):
                 task_ids.append(pge_api.get_historical_data_incrementally(source).id)
 
         if len(task_ids) == 0:
-            if len(failed_usage_points > 0):
+            if len(failed_usage_points) > 0:
                 return {"error": f"Could not retrieve usage points: {failed_usage_points}"}, 500
             return {"message": "No electrical service submitted."}, 200
         return (
@@ -581,15 +582,68 @@ class GetHourlyData(Resource):
                 200,
             )
         # TODO: currently entries are coming in reversed - research ORDER BY performance
-        hours = (
+        intervals: List[models.Espi] = (
             db.session.query(models.Espi)
-            .filter_by(source_id=source.id, duration=3600)
+            .filter_by(source_id=source.id)
             .order_by(models.Espi.start)
             .all()
         )
-        database = ",".join(
-            [f"{entry.start//3600}{entry.watt_hours}" for entry in hours]
-        )
+
+        next_start = intervals[0].start if len(intervals) > 0 else -1
+        previous_start = next_start - 1
+        interval_duration_sum = 0
+        interval_watt_hours_sum = 0
+        hours = []
+        current_hour = -1
+        next_hour = -1
+
+        for interval in intervals:
+            if interval.start <= previous_start:
+                if interval.start == previous_start:
+                    # ignore duplicates
+                    print("Duplicate interval start!")
+                    continue
+                raise Exception("Intervals out of order!")
+
+            previous_start = interval.start
+
+            if interval.duration == 3600:
+                # interval duration accepted by OEV frontend
+                hours.append(f"{interval.start//3600}{interval.watt_hours}")
+                # set next_start to beginning of next hour
+                next_start = interval.start + interval.duration
+                continue
+            
+            # sum the intervals to an hour, if possible
+
+            # if we were "off track", this can find the start of an hour again
+            if float(interval.start / 3600).is_integer():
+                next_start = interval.start
+                interval_duration_sum = 0
+                interval_watt_hours_sum = 0
+                current_hour = interval.start
+                next_hour = current_hour + 3600
+
+            # we are "off track" - bad entry?
+            if interval.start != next_start:
+                print("Bad interval start?")
+                continue
+
+            interval_duration_sum += interval.duration
+            interval_watt_hours_sum += (interval.watt_hours * 3600 / interval.duration)
+            next_start = interval.start + interval.duration
+
+            if next_start == next_hour:
+                if interval_duration_sum != 3600:
+                    print("Bad interval sum!")
+                    interval_duration_sum = 0
+                    interval_watt_hours_sum = 0
+                    continue
+                # finished summing the intervals to an hour
+                hours.append(f"{current_hour//3600}{interval_watt_hours_sum}")
+
+        database = ",".join(hours)
+
         response = {
             "useLocalStorage": False,
             "utility": "pge",
