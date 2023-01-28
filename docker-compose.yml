@@ -1,0 +1,103 @@
+version: "3.9"
+services:
+  rabbitmq:
+    container_name: oev-rabbit
+    image: rabbitmq:3.11-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    hostname: "rabbitmq" # Important for how persistence works.
+    volumes:
+      - oev-rabbit:/var/lib/rabbitmq
+  rabbitmqsetup:
+    image: rabbitmq:3.11-alpine
+    restart: "no"
+    entrypoint: ["bash", "-c", "sleep 10 && rabbitmqctl -n rabbit@rabbitmq add_user jp admin && rabbitmqctl -n rabbit@rabbitmq set_user_tags jp administrator && rabbitmqctl -n rabbit@rabbitmq add_vhost myvhost && rabbitmqctl -n rabbit@rabbitmq set_permissions -p myvhost jp \".*\" \".*\" \".*\""]
+    volumes:
+      - oev-rabbit:/var/lib/rabbitmq
+    depends_on:
+      - rabbitmq # Make use of the cookie in the main container so we can run rabbitmqctl commands.
+  app:
+    container_name: oev
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile-app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_CONFIG=config.DevConfig
+      - FLASK_APP=open_energy_view
+      - FLASK_ENV=production
+      - SECRET_KEY=dev
+      - JWT_SECRET_KEY=dev
+      - JWT_BLACKLIST_ENABLED=True
+      - JWT_TOKEN_LOCATION=cookies
+      - JWT_ACCESS_COOKIE_PATH=/
+      - JWT_REFRESH_COOKIE_PATH=/api/web/token/refresh
+      - JWT_COOKIE_CSRF_PROTECT=True
+      - PROD_JWT_COOKIE_SECURE=True
+      - DEV_JWT_COOKIE_SECURE=False
+      - PROD_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
+      - DEV_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
+      - PGE_CLIENT_ID=client_id
+      - PGE_CLIENT_SECRET=client_secret
+      - GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET
+      - OAUTHLIB_INSECURE_TRANSPORT=True
+      - CERT_PATH=test/cert/cert.crt
+      - KEY_PATH=test/cert/private.key
+      - API_RESPONSE_KEY=xS5MqJ6N9CyH-hvqAGrmBVAxFMOyauMpdrdqCZa1eqo=
+      - PORT=5000
+    depends_on:
+      - rabbitmqsetup
+  cpu-worker:
+    restart: unless-stopped
+    container_name: oev-cpu-worker
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile-worker
+    environment:
+      - HOSTNAME=celery.cpus@%h
+      - QUEUES=cpu
+      - CONCURRENCY=1
+      - POOL=prefork
+      - FLASK_CONFIG=config.DevConfig
+      - FLASK_APP=open_energy_view
+      - FLASK_ENV=production
+      - SECRET_KEY=dev
+      - JWT_SECRET_KEY=dev
+      - JWT_BLACKLIST_ENABLED=True
+      - JWT_TOKEN_LOCATION=cookies
+      - JWT_ACCESS_COOKIE_PATH=/
+      - JWT_REFRESH_COOKIE_PATH=/api/web/token/refresh
+      - JWT_COOKIE_CSRF_PROTECT=True
+      - PROD_JWT_COOKIE_SECURE=True
+      - DEV_JWT_COOKIE_SECURE=False
+      - PROD_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
+      - DEV_DATABASE_URI=sqlite:///../test/data/energy_history_test.db
+      - PGE_CLIENT_ID=client_id
+      - PGE_CLIENT_SECRET=client_secret
+      - GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET
+      - OAUTHLIB_INSECURE_TRANSPORT=True
+      - CERT_PATH=test/cert/cert.crt
+      - KEY_PATH=test/cert/private.key
+      - API_RESPONSE_KEY=xS5MqJ6N9CyH-hvqAGrmBVAxFMOyauMpdrdqCZa1eqo=
+      - PORT=5000
+    depends_on:
+      - app
+  io-worker:
+    restart: unless-stopped
+    container_name: oev-io-worker
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile-worker
+    environment:
+      - HOSTNAME=celery.io@%h
+      - QUEUES=io
+      - CONCURRENCY=500
+      - POOL=gevent
+    depends_on:
+      - app
+volumes:
+  oev-rabbit:

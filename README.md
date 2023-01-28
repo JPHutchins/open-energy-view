@@ -18,6 +18,20 @@ If you are a PG&E customer you can link your account now!  If you are not a PG&E
 
 # Development
 
+## Environment Setup (Docker)
+
+You can get an environment setup easily using Docker. Make sure you have Docker and Docker Compose installed.
+
+```
+git clone git@github.com:JPHutchins/open-energy-view.git
+cd open-energy-view
+docker-compose up
+```
+
+On your host OS, open a Chrome or Firefox web browser and navigate to `http://localhost:5000`
+
+# Production
+
 ## Environment Setup (Ubuntu 20.04)
 
 Process notes here: https://github.com/JPHutchins/open-energy-view/issues/31
@@ -73,10 +87,8 @@ cd open-energy-view
     sudo rabbitmqctl add_vhost myvhost
     sudo rabbitmqctl set_permissions -p myvhost jp ".*" ".*" ".*"
     ```
-
 ### Install frontend dependencies and build
 * **Install nvm** (if you don't have it)
-
   notes: https://github.com/nvm-sh/nvm
   ```
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
@@ -98,23 +110,6 @@ cd open-energy-view
   nvm use 10
   npm run build
   ```
-
-### Run the development server and workers
-* **Start the server and workers**
-  * Open four terminals (example from VSCode)
-
-  ![Four-Terminals](/docs/four-terminals.png)
-  * First terminal: `./run-wsgi-dev`
-  * Second terminal: `./run-io-worker`
-  * Third terminal: `./run-cpu-worker`
-* **Open the development site in a browser**
-  * Fourth terminal: `ip a`
-  * Note the IP address of your WSL2 instance, in this case `172.31.30.203`
-
-  ![ip-a](/docs/ip-a.png)
-  * On your host OS, open a Chrome or Firefox web browser and navigate to `http://<YOUR_WSL2_IP>:5000`
-
-  ![browser-address](/docs/browser-address.png)
 
 ### Example account setup
 For first time setup you must register a user to your local database. Use something easily memorable and keep in mind that you can register as many users as you need while testing.

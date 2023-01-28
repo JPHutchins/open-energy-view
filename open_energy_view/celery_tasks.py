@@ -98,7 +98,7 @@ def add(x, y):
 @celery.task(bind=True, name="get_jp")
 def get_jp(self):
     response = requests.get(
-        "http://slowwly.robertomurray.co.uk/delay/2500/url/https://www.jphutchins.com"
+        "https://httpstat.us/200?sleep=2500"
     )
     return "BOOM"
 
@@ -140,19 +140,19 @@ def fetch_task(self, published_period_start, interval_block_url, headers, cert):
 @celery.task(bind=True, name="fake_fetch")
 def fake_fetch(self):
     test_xml = [
-        "/home/jp/open-energy-view/test/data/espi/espi_2_years.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-16.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-17.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-18.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-19.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-20.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-21.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-22.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-23.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-24.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-25.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-26.xml",
-        "/home/jp/open-energy-view/test/data/espi/Single Days/2019-10-27.xml",
+        "/app/test/data/espi/espi_2_years.xml",
+        "/app/test/data/espi/Single Days/2019-10-16.xml",
+        "/app/test/data/espi/Single Days/2019-10-17.xml",
+        "/app/test/data/espi/Single Days/2019-10-18.xml",
+        "/app/test/data/espi/Single Days/2019-10-19.xml",
+        "/app/test/data/espi/Single Days/2019-10-20.xml",
+        "/app/test/data/espi/Single Days/2019-10-21.xml",
+        "/app/test/data/espi/Single Days/2019-10-22.xml",
+        "/app/test/data/espi/Single Days/2019-10-23.xml",
+        "/app/test/data/espi/Single Days/2019-10-24.xml",
+        "/app/test/data/espi/Single Days/2019-10-25.xml",
+        "/app/test/data/espi/Single Days/2019-10-26.xml",
+        "/app/test/data/espi/Single Days/2019-10-27.xml",
     ]
     test_xml.reverse()
 
