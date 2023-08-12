@@ -1,5 +1,5 @@
 #!/bin/bash
-source venv/bin/activate
+#source venv/bin/activate
 export FLASK_CONFIG=config.DevConfig
 export FLASK_APP=open_energy_view
 export FLASK_ENV=production
@@ -22,5 +22,5 @@ export OAUTHLIB_INSECURE_TRANSPORT=True
 export CERT_PATH=test/cert/cert.crt
 export KEY_PATH=test/cert/private.key
 export API_RESPONSE_KEY=xS5MqJ6N9CyH-hvqAGrmBVAxFMOyauMpdrdqCZa1eqo=
-export IP_AND_PORT=$(hostname -I | awk '{print $1}'):5000
+export IP_AND_PORT=$(hostname -I | awk '{print $1}'):5001
 celery worker --app open_energy_view.celery_tasks --hostname=celery.cpus@%h --queues=cpu --loglevel=info --concurrency=1

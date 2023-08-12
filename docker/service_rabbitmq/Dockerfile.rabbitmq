@@ -1,0 +1,5 @@
+FROM rabbitmq:latest
+
+copy ./docker/service_rabbitmq/init.sh /app/init.sh
+
+CMD ["/app/init.sh"]

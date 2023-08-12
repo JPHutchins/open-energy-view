@@ -1,4 +1,4 @@
 #!/bin/bash
-source venv/bin/activate
+#source venv/bin/activate
 
 celery worker --app open_energy_view.celery_tasks --hostname=celery.io@%h --queues=io --loglevel=info --pool=gevent --concurrency=500
