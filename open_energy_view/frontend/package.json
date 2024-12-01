@@ -58,7 +58,7 @@
     "axios": "^0.19.2",
     "babel-polyfill": "^6.26.0",
     "bootstrap": "^4.4.1",
-    "chart.js": "^2.9.3",
+    "chart.js": "^2.9.4",
     "date-fns": "^2.14.0",
     "fluture": "^12.2.1",
     "fs": "0.0.1-security",
